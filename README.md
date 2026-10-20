@@ -1,16 +1,22 @@
 # Reader Simulator
 
-Try e-reader firmwares for the Xteink X3, X4 Classic and X4 Pro without the reader:
+Try e-reader firmwares for the Xteink X3, X4 Classic and X4 Pro without the reader.
 
-- **In your browser, nothing to install:** https://pewpewzxc.github.io/reader-simulator/ (Chrome, Edge, Firefox or Safari, on a computer, tablet or phone)
-- **On Windows:** the Reader Simulator app (see *How to use it* below)
+## ▶ [Open the simulator in your browser](https://pewpewzxc.github.io/reader-simulator/)
+
+**https://pewpewzxc.github.io/reader-simulator/**: nothing to install, free, works in Chrome, Edge, Firefox and
+Safari on a computer, tablet or phone.
+
+1. Pick a device (X4 Pro, X4 Classic or X3), a firmware and a version.
+2. Press **Start**. The firmware loads once (about 10 MB) and your browser keeps it.
+3. Use the reader like the real one: click or tap its keys, and on the X4 Pro touch its screen.
+   The **Controls** card under the reader lists every key and gesture.
+
+Every new simulated SD card comes with two free books and an English dictionary, so you can start reading and
+looking up words straight away. **Add books** puts your own EPUB and TXT files on it; they stay in your browser and
+are never uploaded. Each firmware offers its newest versions (3 by default), and new releases appear by themselves.
 
 This is an unofficial community tool, not made by or affiliated with Xteink.
-
-The simulator shows a drawing of the reader with the firmware running on its screen.
-Click the reader's keys to press them. On the X4 Pro, click the screen to touch it (on a phone or tablet, use your
-finger). Every new simulated SD card comes with two free books and an English dictionary, so you can try reading and
-looking up words straight away. In the browser, each firmware offers its newest versions (3 by default).
 
 | X4 Pro | X4 Classic | X3 |
 | --- | --- | --- |
@@ -20,17 +26,17 @@ The reader turns when the firmware turns the page sideways:
 
 ![X4 Pro turned](docs/live-x4-pro-turned-right.png)
 
-## How to use it
-1. Download [`ReaderSimulator-Setup.exe`](https://github.com/PewPewzxc/reader-simulator/releases/latest/download/ReaderSimulator-Setup.exe)
-   (also on the [Releases](../../releases) page) and run it.
-   No administrator rights are needed.
-2. Windows may say "Windows protected your PC": the program is not signed (a certificate costs money every year).
-   Click **More info**, then **Run anyway**.
-3. Open **Reader Simulator**, pick a device and a firmware, and click **Start**.
-   The firmware downloads the first time (about 7 MB).
-4. To read your own books, click **Add books** (EPUB, TXT and the other files the firmware reads).
+## Windows app (optional)
+The same simulator as a Windows program, for working offline or with books from a folder on your PC.
+Most people do not need it: the browser version above does the same.
 
-Each firmware has its own simulated SD card. **Fresh SD card** empties it.
+1. Download [`ReaderSimulator-Setup.exe`](https://github.com/PewPewzxc/reader-simulator/releases/latest/download/ReaderSimulator-Setup.exe)
+   (also on the [Releases](../../releases) page) and run it. No administrator rights are needed.
+2. The program is not signed yet, so Windows may say "Windows protected your PC". Click **More info**, then
+   **Run anyway**.
+3. Open **Reader Simulator**, pick a device and a firmware, and click **Start**. The firmware downloads the first
+   time (about 7 MB). The **Controls** page lists every key and gesture.
+4. **Add books** puts your own books on the simulated SD card; **Fresh SD card** empties it.
 
 ## Which firmwares
 The list comes from [`sim-windows/firmwares.json`](sim-windows/firmwares.json). A firmware is offered when its own source code
