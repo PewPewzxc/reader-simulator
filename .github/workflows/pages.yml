@@ -241,7 +241,11 @@ jobs:
           jq -r '.builds[] | .id as $id | .release as $rel | .files[] | [$id, $rel, .name, .asset, .sha256] | @tsv' builds.json |
           while IFS=$'\t' read -r id rel name asset sum; do
             case "$id/$rel/$name/$asset" in *..*|/*) echo "bad entry: $id $rel $name $asset"; exit 1;; esac
-            [ -f "dl/$rel/$asset" ] || gh release download "$rel" --repo "$REPO" --pattern "$asset" --dir "dl/$rel" --clobber
+            for try in 1 2 3; do  # GitHub answers a download with a 500 now and then
+              [ -f "dl/$rel/$asset" ] || gh release download "$rel" --repo "$REPO" --pattern "$asset" --dir "dl/$rel" --clobber || true
+              [ -f "dl/$rel/$asset" ] && break
+              sleep $((try * 15))
+            done
             echo "$sum  dl/$rel/$asset" | sha256sum --check --strict --quiet -
             mkdir -p "_site/builds/$id"
             cp "dl/$rel/$asset" "_site/builds/$id/$name"
