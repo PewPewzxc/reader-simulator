@@ -43,14 +43,12 @@ BODY_COLOURS = dict(face=("#38383a", "#2a2a2c"), face_dir=(1, .25), keys=("#1a1a
                     seam_path="#19191a", home=("#404043", "#343437"))
 for _m in MODELS.values():
     _l, _c = _m["look"], BODY_COLOURS
+    # the same rim on every reader: a thin dark edge with a light lip inside it (the X4 Pro's band was 0.8 mm and
+    # near black, the X4 Classic had a dark line instead of the lip)
     _l.update(face=_c["face"], face_dir=_c["face_dir"], keys=_c["keys"], well=_c["well"],
-              edge=(_c["edge"],) + _l["edge"][1:])
+              edge=(_c["edge"], 0.3), lip=(_c["lip"], 0.45, 0.9), seam=None)
     if _l.get("bar"):
         _l["bar"] = _c["bar"]
-    if _l.get("lip"):
-        _l["lip"] = (_c["lip"],) + _l["lip"][1:]
-    if _l.get("seam"):
-        _l["seam"] = (_c["seam"],) + _l["seam"][1:]
     if _l.get("seam_path"):
         _l["seam_path"] = dict(_l["seam_path"], color=_c["seam_path"])
     if _l.get("home"):

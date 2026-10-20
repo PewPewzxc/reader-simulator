@@ -298,3 +298,15 @@ jobs:
               --notes "builds.json: every build on https://pewpewzxc.github.io/reader-simulator/, with the release its files are in. Updated by the Web simulator (Pages) workflow."
           fi
           gh release upload "$FEED_TAG" builds.json --clobber --repo "$REPO"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: web-logs-*
+          path: logs
+      - name: Publish the build report
+        # every firmware version tried in this run, OK or FAILED with its first errors (for fixing the failures)
+        run: |
+          {
+            echo "Build report of run ${{ github.run_id }} ($(date -u +%Y-%m-%dT%H:%MZ))"
+            for f in logs/*/build-results.txt logs/*/*/build-results.txt; do [ -f "$f" ] && cat "$f"; done
+          } > build-report.txt
+          gh release upload "$FEED_TAG" build-report.txt --clobber --repo "$REPO"
