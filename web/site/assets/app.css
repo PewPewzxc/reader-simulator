@@ -129,6 +129,12 @@ kbd { display: inline-block; min-width: 26px; padding: 2px 7px; border: 1px soli
 .tip { margin: 14px 0 0; padding: 12px 14px; border-radius: 8px; background: var(--accent-soft); font-size: 14px; line-height: 1.5; }
 @media (hover: none) and (pointer: coarse) { .kbd-panel { display: none; } }
 @media (max-width: 560px) { .guide { padding: 18px 16px; } .ctl li { font-size: 14.5px; } }
+.maker { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 14px; color: var(--text2); }
+.maker > span { margin-right: 4px; }
+.social { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 18px; text-decoration: none;
+  color: var(--text); background: var(--control); border: 1px solid var(--control-stroke); font-weight: 600; font-size: 14px; }
+.social:hover { background: var(--accent-soft); border-color: var(--accent); }
+.social svg { width: 18px; height: 18px; fill: currentColor; }
 .prose ul { padding-left: 20px; }
 .prose li { margin: 4px 0; }
 
