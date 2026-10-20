@@ -1,0 +1,5 @@
+#!/bin/sh
+# Stand-in for sdl2-config while PlatformIO writes compile_commands.json for the browser build (Linux, CI):
+# the simulator envs ask it for SDL2 flags; Emscripten brings its own SDL2 (-sUSE_SDL=2), so build.py drops
+# every word with __EMSDL in it.
+echo "-I/__EMSDL/include -D__EMSDL"

@@ -2,7 +2,7 @@
 # Package the simulator builds that passed into release zips and write the download feed.
 #   tools/make_release.sh [results.tsv] [out dir]     package every passing build, then write the feed
 #   tools/make_release.sh --index-only [out dir]       only write the feed from the zips already in out dir (CI)
-# results.tsv: lines from try_all.sh; for each (repo, model) the LAST line counts, and only an OK line is packaged.
+# results.tsv: lines from try_all.sh; for each (repo, ref, model) the LAST line counts, and only an OK line is packaged.
 # out dir (default dev/rsim/release-staging) gets builds/<id>.zip, index.json (GitHub release URLs, with
 # OWNER/REPO placeholders unless RSIM_REPO=owner/name is set) and index.local.json (file: URLs, for local tests).
 # Release tag: RSIM_TAG, default builds-<today, UTC>.
@@ -91,7 +91,7 @@ if results:
     for row in open(results, encoding="utf-8"):
         p = row.rstrip("\n").split("\t")
         if len(p) >= 5 and p[2] != "-":
-            last[(p[0], p[2])] = p
+            last[(p[0], p[1], p[2])] = p  # per version: several versions of one firmware can be in one results.tsv
     for f in os.listdir(builds):  # only what passed this time
         if f.endswith(".zip"):
             os.remove(os.path.join(builds, f))

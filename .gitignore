@@ -1,1 +1,6 @@
 out/
+__pycache__/
+web/ci/
+web/fw/
+web/build/
+web/logs/
