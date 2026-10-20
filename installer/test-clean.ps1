@@ -23,7 +23,10 @@ if ($prior) { "existing install: $($prior.'Inno Setup: App Path') (put back at t
 $p = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/CURRENTUSER', '/NORESTART', '/MERGETASKS="!desktopicon"', "/DIR=`"$dir`"", "/LOG=`"$t\setup.log`"" -Wait -PassThru
 Step 'silent per-user install' ($p.ExitCode -eq 0 -and (Test-Path "$dir\ReaderSimulator.exe"))
 $lnk = Join-Path ([Environment]::GetFolderPath('Programs')) 'Reader Simulator.lnk'
-Step 'Start-menu shortcut' ((Target $lnk) -eq "$dir\ReaderSimulator.exe")
+$tgt = try { Target $lnk } catch { $null }
+"shortcut: $lnk -> $tgt"
+# no shell in a non-interactive session (GitHub Actions) answers with a target: then the shortcut file must exist
+Step 'Start-menu shortcut' ($(if ($tgt) { $tgt -eq "$dir\ReaderSimulator.exe" } else { Test-Path $lnk }))
 # by target: a desktop shortcut of an existing install may be there
 Step 'no desktop shortcut by default' ((Target (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Reader Simulator.lnk')) -ne "$dir\ReaderSimulator.exe")
 "installed size: {0:N0} bytes" -f ((Get-ChildItem $dir -Recurse -File | Measure-Object Length -Sum).Sum)
