@@ -1,6 +1,11 @@
 # Reader Simulator
 
-Try e-reader firmwares for the Xteink X3, X4 Classic and X4 Pro on a Windows PC, without the reader.
+Try e-reader firmwares for the Xteink X3, X4 Classic and X4 Pro without the reader:
+
+- **In your browser, nothing to install:** https://pewpewzxc.github.io/reader-simulator/ (Chrome, Edge or Firefox on a computer)
+- **On Windows:** the Reader Simulator app (see *How to use it* below)
+
+This is an unofficial community tool, not made by or affiliated with Xteink.
 
 The simulator shows a drawing of the reader with the firmware running on its screen.
 Click the reader's keys to press them. On the X4 Pro, click the screen to touch it.
