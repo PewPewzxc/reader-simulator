@@ -36,6 +36,7 @@ env:
   EMSDK_VERSION: "6.0.13"
   EMSDK_COMMIT: 35659964bc2762fffec0d257997fb61475f765b7  # emsdk tag 6.0.13
   PLATFORMIO_VERSION: "6.2.0"
+  ZOPFLI_VERSION: "0.4.3"  # firmware build scripts that compress their web pages (Witchhunt Reader's build_html.py)
   FEED_TAG: web-feed
   STATUSES: "ready untested"
 
@@ -121,7 +122,7 @@ jobs:
           "$RUNNER_TEMP/emsdk/emsdk" activate "$EMSDK_VERSION" > /dev/null
           echo "RSIM_EMSDK=$RUNNER_TEMP/emsdk" >> "$GITHUB_ENV"
           python -m venv "$HOME/.platformio/penv"
-          "$HOME/.platformio/penv/bin/python" -m pip install --quiet "platformio==$PLATFORMIO_VERSION"
+          "$HOME/.platformio/penv/bin/python" -m pip install --quiet "platformio==$PLATFORMIO_VERSION" "zopfli==$ZOPFLI_VERSION"
           "$RUNNER_TEMP/emsdk/upstream/emscripten/emcc" --version | head -1
       - name: Read access to VARAGH's private freeink-sdk
         # VARAGH's freeink-sdk submodule is a private repo. A read-only deploy key on that repo, stored as

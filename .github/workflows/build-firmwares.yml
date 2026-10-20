@@ -34,6 +34,7 @@ env:
   SDL_URL: https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-devel-2.32.10-mingw.tar.gz
   SDL_SHA256: 83a5d74012311edc3c0d40ea6faecbe57ad692aa033fa5dc273cc937e3938ff2
   PLATFORMIO_VERSION: "6.2.0"
+  ZOPFLI_VERSION: "0.4.3"  # firmware build scripts that compress their web pages (Witchhunt Reader's build_html.py)
   FEED_TAG: feed  # the app reads https://github.com/<this repo>/releases/download/feed/index.json
 
 jobs:
@@ -118,7 +119,7 @@ jobs:
           mkdir -p sim-windows/deps sim-windows/bin
           tar --force-local -xzf "$RUNNER_TEMP/sdl.tar.gz" -C sim-windows/deps  # D:\... is not a host
           python -m venv "$HOME/.platformio/penv"
-          "$HOME/.platformio/penv/Scripts/python.exe" -m pip install --quiet "platformio==$PLATFORMIO_VERSION"
+          "$HOME/.platformio/penv/Scripts/python.exe" -m pip install --quiet "platformio==$PLATFORMIO_VERSION" "zopfli==$ZOPFLI_VERSION"
       - name: Read access to VARAGH's private freeink-sdk
         # VARAGH's freeink-sdk submodule is a private repo. A read-only deploy key on that repo, stored as
         # this repo's secret, lets only this step fetch it. GitHub's published host key is pinned.
