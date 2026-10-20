@@ -1,0 +1,8 @@
+{
+ "_about": "Web-only builds not in release-staging/index.local.json (no Windows zip). Same fields plus env. Sources: %USERPROFILE%/rsim/fw/* by .rsim-name; CrossPoint gets its simulator envs from dev/rsim/crosspoint/adapter.py (platformio.local.ini).",
+ "builds": [
+  {"id": "crosspoint-reader-crosspoint-reader-1.6.5-x4-pro", "name": "CrossPoint Reader", "repo": "crosspoint-reader/crosspoint-reader", "ref": "1.6.5", "version": "1.6.5", "model": "X4 Pro", "frame": "x4-pro", "env": "x4-pro-simulator", "source_commit": "93e98bb78702e29868a16a13b80c40e6b36ccdff"},
+  {"id": "crosspoint-reader-crosspoint-reader-1.6.5-x4-classic", "name": "CrossPoint Reader", "repo": "crosspoint-reader/crosspoint-reader", "ref": "1.6.5", "version": "1.6.5", "model": "X4 Classic", "frame": "x4-classic", "env": "x4-classic-simulator", "source_commit": "93e98bb78702e29868a16a13b80c40e6b36ccdff"},
+  {"id": "crosspoint-reader-crosspoint-reader-1.6.5-x3", "name": "CrossPoint Reader", "repo": "crosspoint-reader/crosspoint-reader", "ref": "1.6.5", "version": "1.6.5", "model": "X3", "frame": "x3", "env": "simulator_x3", "source_commit": "93e98bb78702e29868a16a13b80c40e6b36ccdff"}
+ ]
+}

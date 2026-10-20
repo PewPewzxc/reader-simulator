@@ -2,7 +2,7 @@
  "schema": 1,
  "release": "web-builds-2026-10-20",
  "repo": "PewPewzxc/reader-simulator",
- "generated": "2026-10-20T20:11:12Z",
+ "generated": "2026-10-20T20:37:17Z",
  "builds": [
   {
    "id": "ashokslsk-pocketdeck-os-main-x3",
@@ -476,6 +476,81 @@
      "asset": "uxjulia-crossink-v1.6.1-x4-pro.wasm",
      "size": 10167834,
      "sha256": "51bf66b0840fa5169d2681aa3709167d2d7281a97059f691cb2921c06aabf4b8"
+    }
+   ]
+  },
+  {
+   "id": "crosspoint-reader-crosspoint-reader-1.6.5-x4-pro",
+   "name": "CrossPoint Reader",
+   "repo": "crosspoint-reader/crosspoint-reader",
+   "ref": "1.6.5",
+   "version": "1.6.5",
+   "model": "X4 Pro",
+   "frame": "x4-pro",
+   "source_commit": "93e98bb78702e29868a16a13b80c40e6b36ccdff",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "crosspoint-reader-crosspoint-reader-1.6.5-x4-pro.js",
+     "size": 239021,
+     "sha256": "0d709f80d49c0f3d4f7957e13f44377614376f64a1bb87a4c1ebf0b86efd7a31"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "crosspoint-reader-crosspoint-reader-1.6.5-x4-pro.wasm",
+     "size": 7839809,
+     "sha256": "b8aca3023bb55b174c6d17aadb1a2d5f864e1cfb294ddbb6d6cb42e886587ead"
+    }
+   ]
+  },
+  {
+   "id": "crosspoint-reader-crosspoint-reader-1.6.5-x4-classic",
+   "name": "CrossPoint Reader",
+   "repo": "crosspoint-reader/crosspoint-reader",
+   "ref": "1.6.5",
+   "version": "1.6.5",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "93e98bb78702e29868a16a13b80c40e6b36ccdff",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "crosspoint-reader-crosspoint-reader-1.6.5-x4-classic.js",
+     "size": 237805,
+     "sha256": "3077b40be6a3bcfe85f6a92b9e2c72ec235e055e96ee68ce273517d283514965"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "crosspoint-reader-crosspoint-reader-1.6.5-x4-classic.wasm",
+     "size": 7548028,
+     "sha256": "dcb76687af69424f3f79e4c74061caaefa5c0d0b3c9b4f3aa5d8738c5b90ca5b"
+    }
+   ]
+  },
+  {
+   "id": "crosspoint-reader-crosspoint-reader-1.6.5-x3",
+   "name": "CrossPoint Reader",
+   "repo": "crosspoint-reader/crosspoint-reader",
+   "ref": "1.6.5",
+   "version": "1.6.5",
+   "model": "X3",
+   "frame": "x3",
+   "source_commit": "93e98bb78702e29868a16a13b80c40e6b36ccdff",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "crosspoint-reader-crosspoint-reader-1.6.5-x3.js",
+     "size": 237805,
+     "sha256": "3077b40be6a3bcfe85f6a92b9e2c72ec235e055e96ee68ce273517d283514965"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "crosspoint-reader-crosspoint-reader-1.6.5-x3.wasm",
+     "size": 7548493,
+     "sha256": "c29bb6b420d48515ef8080d784a0f00e8e1718c9fe9bfc8675a56b127556714b"
     }
    ]
   }

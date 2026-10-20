@@ -48,7 +48,8 @@ def main():
     shutil.rmtree(os.path.join(SMALL, "builds"), ignore_errors=True)
     os.makedirs(ASSETS)
     index = json.load(open(os.path.join(HERE, "..", "release-staging", "index.local.json"), encoding="utf-8"))
-    order = [b["id"] for b in index["builds"]]
+    extra = json.load(open(os.path.join(HERE, "extra_builds.json"), encoding="utf-8"))  # web-only builds
+    order = [b["id"] for b in index["builds"]] + [b["id"] for b in extra["builds"]]
     out = []
     for build_id in order:
         d = os.path.join(HERE, "build", build_id)

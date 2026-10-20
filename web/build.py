@@ -51,9 +51,14 @@ FORBIDDEN = [w.lower().encode() for w in [os.environ.get("USERNAME", ""), *os.en
 def build_info(build_id):
     """index.local.json entry + env + source folders for one build."""
     index = json.load(open(os.path.join(STAGING, "index.local.json"), encoding="utf-8"))
-    b = next(x for x in index["builds"] if x["id"] == build_id)
-    with zipfile.ZipFile(os.path.join(STAGING, "builds", build_id + ".zip")) as z:
-        meta = json.loads(z.read("build.json"))
+    extra = json.load(open(os.path.join(HERE, "extra_builds.json"), encoding="utf-8"))  # web-only builds
+    b = next((x for x in index["builds"] if x["id"] == build_id), None)
+    if b:
+        with zipfile.ZipFile(os.path.join(STAGING, "builds", build_id + ".zip")) as z:
+            meta = json.loads(z.read("build.json"))
+    else:
+        b = dict(next(x for x in extra["builds"] if x["id"] == build_id))
+        meta = {"env": b.pop("env"), "source_commit": b.pop("source_commit")}
     name = "%s@%s" % (b["repo"], b["ref"])
     orig = os.environ.get("RSIM_FIRMWARE_SRC")
     if not orig:
@@ -113,6 +118,9 @@ def jobs(b, obj_dir):
                 skip = True
             elif "__EMSDL" not in a and a != "-c":
                 args.append(a)
+        if "rsim_crosspoint_prelude.h" in " ".join(args):  # CrossPoint adapter's MinGW-only prelude
+            i_ = args.index(next(a for a in args if "rsim_crosspoint_prelude.h" in a))
+            del args[i_ - 1:i_ + 1]  # "-include <path>"
         obj = os.path.join(obj_dir, "%03d_%s.o" % (i, os.path.basename(src)))
         yield src, [cc, "-c", src, "-o", obj] + args + COMMON, obj
 
