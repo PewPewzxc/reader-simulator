@@ -83,13 +83,30 @@ def setup(folder, envs, newest=False):
         subprocess.run([sys.executable, "-I", os.path.join(SIM, "pin_simlib.py"), folder, env], check=False)
 
 
+def errors(bid, limit=25):
+    """The distinct error lines of a failed attempt, for the job log (CI artifacts may not be at hand)."""
+    found = []
+    for log in (f"{bid}-compiledb.log", f"{bid}-compile.log", f"{bid}-link.log"):
+        p = os.path.join(HERE, "logs", log)
+        if os.path.isfile(p):
+            for line in open(p, encoding="utf-8", errors="replace"):
+                line = line.strip()
+                if re.search(r"error:|Error:|undefined symbol|Error \d", line) and line not in found:
+                    found.append(line)
+    return found[:limit]
+
+
 def one(info):
-    """prep + build; False with the log's first error when it fails."""
+    """prep + build; on failure prints the attempt's errors and returns False."""
     try:
         build.prep(info)
+        ok = build.build(info) == 0
     except subprocess.CalledProcessError:
-        return False
-    return build.build(info) == 0
+        ok = False
+    if not ok:
+        for line in errors(info["id"]):
+            print(f"  {info['id']}: {line[:300]}")
+    return ok
 
 
 def main(repo, ref, out):
@@ -127,15 +144,7 @@ def main(repo, ref, out):
             shutil.rmtree(os.path.join(HERE, "build", bid), ignore_errors=True)
             ok = one(info)
         if not ok:
-            err = ""
-            for log in (f"{bid}-compile.log", f"{bid}-link.log", f"{bid}-compiledb.log"):
-                p = os.path.join(HERE, "logs", log)
-                if os.path.isfile(p):
-                    err = next((line.strip() for line in open(p, encoding="utf-8", errors="replace")
-                                if re.search(r"error:|Error|undefined symbol", line)), "")
-                    if err:
-                        break
-            print(f"{bid} FAILED {err[:200]}")
+            print(f"{bid} FAILED {(errors(bid, 1) or [''])[0][:200]}")
             continue
         dst = os.path.join(out, bid)
         os.makedirs(dst, exist_ok=True)
