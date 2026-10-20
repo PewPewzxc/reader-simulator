@@ -1,6 +1,7 @@
 """The app's download list across releases: every version is built once, and later lists keep pointing at it.
   python -I tools/feed.py todo <refs.tsv> <previous index.json>
-      prints the refs.tsv lines (from latest_refs.py) whose version has no build in the previous list yet
+      prints the refs.tsv lines (from latest_refs.py) whose version has no build in the previous list yet, and every
+      followed branch (a catalogue entry's "refs"), which can have moved on
   python -I tools/feed.py merge <new index.json> <previous index.json> <refs.tsv> <out index.json> [status ...]
       new builds plus the previous ones still wanted: a version stays while refs.tsv lists it. A firmware
       missing from refs.tsv entirely (its GitHub lookup failed, or this run built other statuses) keeps its
@@ -41,8 +42,11 @@ def refs(path):
 
 def todo(refs_path, previous_path):
     built = {(b["repo"], b["ref"]) for b in load(previous_path)}
+    # branches a catalogue entry follows ("refs") move on: built again every run, the new build replaces the old
+    catalogue = json.load(open(os.path.join(HERE, "firmwares.json"), encoding="utf-8"))["firmwares"]
+    followed = {(f["repo"], r) for f in catalogue for r in f.get("refs", [])}
     for repo, ref in refs(refs_path):
-        if (repo, ref) not in built:
+        if (repo, ref) not in built or (repo, ref) in followed:
             print(f"{repo}\t{ref}")
 
 

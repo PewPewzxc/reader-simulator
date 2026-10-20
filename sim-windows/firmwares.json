@@ -1,5 +1,5 @@
 {
- "_about": "Firmware menu of the reader simulator. repo = GitHub owner/name. status: ready (built and run on Windows here), untested (has a simulator setup, not tried yet), broken (its own simulator setup does not build, also on Linux), adapter (no simulator setup; the reader simulator adds one), unsupported (cannot run in this simulator). frame: the reader picture with clickable keys works (both simulator libraries since 2026-10-20). Sources: readme.club/firmware and GitHub, checked and built on Windows 2026-10-20 (tools/try_all.sh). Versions are read live from each repo's releases. Order: the order the app and the web page list the firmwares in (VARAGH, CrossPoint Reader, CrossInk first).",
+ "_about": "Firmware menu of the reader simulator. repo = GitHub owner/name. status: ready (built and run on Windows here), untested (has a simulator setup, not tried yet), broken (its own simulator setup does not build, also on Linux), adapter (no simulator setup; the reader simulator adds one), unsupported (cannot run in this simulator). frame: the reader picture with clickable keys works (both simulator libraries since 2026-10-20). Sources: readme.club/firmware and GitHub, checked and built on Windows 2026-10-20 (tools/try_all.sh). Versions are read live from each repo's releases. Order: the order the app and the web page list the firmwares in (VARAGH, CrossPoint Reader, CrossInk first). refs: branches to build instead of the newest releases (rebuilt every run).",
  "firmwares": [
   {
    "name": "VARAGH",
@@ -28,6 +28,16 @@
    "status": "untested",
    "frame": true,
    "about": "CrossPoint fork (from Dave Allie's CrossPoint, MIT) by jpirnay, for the X4, X3 and X4 Pro (and the LilyGo T5 S3, which the simulator does not have). No simulator setup of its own; the reader simulator adds one (adapter.py, crosspoint-simulator library). Its freeink-sdk submodule is jpirnay's public fork. Added 2026-10-20, not built yet."
+  },
+  {
+   "name": "InkPointX",
+   "repo": "yokki-vans/InkPointX",
+   "status": "untested",
+   "frame": true,
+   "refs": [
+    "dev"
+   ],
+   "about": "CrossPoint fork by yokki-vans (MIT), built from its dev branch (refs), rebuilt every run because the branch moves. No simulator setup of its own; the reader simulator adds one (adapter.py). Its SDK submodule is yokki-vans/community-sdk. Added 2026-10-20, not built yet."
   },
   {
    "name": "YACP",
@@ -88,9 +98,9 @@
   {
    "name": "inx",
    "repo": "obijuankenobiii/inx",
-   "status": "broken",
+   "status": "untested",
    "frame": false,
-   "about": "CrossPoint fork for the X4. Does not build on Windows: its platformio.ini writes -include${PROJECT_DIR}/..., and the Windows backslashes in that path are lost (would need a change in the firmware). Tested 1.0.20-BETA."
+   "about": "CrossPoint fork for the X4. Does not build on Windows: its platformio.ini writes -include${PROJECT_DIR}/..., and the Windows backslashes in that path are lost (would need a change in the firmware). Tested 1.0.20-BETA. 2026-10-20: tried again (the browser build on Linux has no backslash problem)."
   },
   {
    "name": "aalu",
@@ -144,9 +154,9 @@
   {
    "name": "cpr-vcodex",
    "repo": "franssjz/cpr-vcodex",
-   "status": "broken",
+   "status": "untested",
    "frame": false,
-   "about": "CrossPoint fork. Its simulator setup does not build: HalHaptics.h is missing from its pinned simulator library."
+   "about": "CrossPoint fork. Its simulator setup does not build: HalHaptics.h is missing from its pinned simulator library. 2026-10-20: tried again; its simulator library is boydj/crosspoint-simulator#cpr-vcodex, which carries its HAL stubs."
   },
   {
    "name": "vcodex on steroids",
