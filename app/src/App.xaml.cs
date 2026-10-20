@@ -202,6 +202,9 @@ namespace ReaderSimulator
             // the simulators read paths with the ANSI code page: what they get must be plain ASCII (I-004, I-005)
             if (p.StartInfo.WorkingDirectory.Any(c => c > 127) || (b.Frame != null && p.StartInfo.EnvironmentVariables["CROSSPOINT_SIM_FRAME"].Any(c => c > 127)))
                 throw new Exception("the simulator was given a non-ASCII path (no 8.3 short names on this drive?)");
+            if (Directory.Exists(Store.SamplesDir) && !File.Exists(Path.Combine(Store.SdCard(b), "books", "Pride and Prejudice.epub")))
+                throw new Exception("the sample books were not copied onto the SD card");
+            if (Directory.Exists(Store.SamplesDir)) Log("sample books and dictionary on the SD card: ok");
             // updating a build while its simulator runs must replace it cleanly (I-003)
             await Task.Delay(1500);
             if (p.HasExited) throw new Exception("simulator quit too early for the running-update check");

@@ -1,0 +1,90 @@
+# Builds the Windows app (app/, WPF on .NET Framework 4.8) and its setup (installer/, Inno Setup 6), tests them like
+# a clean PC (installer/test-clean.ps1: silent install, app self-test against the live download list, which
+# downloads, checks and runs a real firmware build, UI pictures, silent uninstall) and publishes
+# ReaderSimulator-Setup.exe in the release app-v<version> (version: <Version> in app/src/ReaderSimulator.csproj).
+name: Windows app
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", "installer/**", "device-frames/frames/**", "samples/sd-card/**", ".github/workflows/app.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-app
+  cancel-in-progress: false
+
+jobs:
+  app:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write  # the release with the setup
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Version
+        id: version
+        run: |
+          $v = ([xml](Get-Content app/src/ReaderSimulator.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "unexpected version '$v'" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          "Reader Simulator $v"
+      - name: Build the app
+        run: ./app/build.ps1
+      - name: Build the setup
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y | Out-Null }
+          & $iscc /Q "/DAppVersion=$env:APP_VERSION" installer/ReaderSimulator.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Item installer/Output/ReaderSimulator-Setup.exe | Format-List Name, Length
+      - name: Test like a clean PC (install, self-test, UI, uninstall)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          # the list the app reads; before the first "Build firmwares" run published it, the newest builds-* list
+          $feed = "https://github.com/$env:REPO/releases/download/feed/index.json"
+          gh release view feed --repo $env:REPO *> $null
+          if ($LASTEXITCODE -ne 0) {
+            $tag = gh release list --repo $env:REPO --limit 100 --json tagName --jq '[.[].tagName | select(startswith("builds-"))] | first'
+            $feed = "https://github.com/$env:REPO/releases/download/$tag/index.json"
+          }
+          $env:RSIM_TEST_FEED = $feed
+          ./installer/test-clean.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: app-test
+          path: |
+            app/renders/
+            installer/Output/
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: app-v${{ steps.version.outputs.version }}
+        run: |
+          gh release view $env:TAG --repo $env:REPO *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:TAG installer/Output/ReaderSimulator-Setup.exe --clobber --repo $env:REPO
+          } else {
+            $notes = "Windows setup of Reader Simulator. Download ReaderSimulator-Setup.exe and run it (no administrator rights needed). " +
+              "Windows may say 'Windows protected your PC': the program is not signed. Click More info, then Run anyway."
+            gh release create $env:TAG installer/Output/ReaderSimulator-Setup.exe --repo $env:REPO --latest `
+              --title "Reader Simulator $($env:TAG.Substring(5)) for Windows" --notes $notes
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

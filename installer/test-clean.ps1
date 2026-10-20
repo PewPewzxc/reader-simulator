@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $app = Resolve-Path (Join-Path $here '..\app')
 $staged = Join-Path $here '..\release-staging\index.local.json' # the release agent's local feed (file: URLs), when it exists
-$feed = if (Test-Path $staged) { Resolve-Path $staged } else { Join-Path $app 'testfeed\index.json' }
+$feed = if ($env:RSIM_TEST_FEED) { $env:RSIM_TEST_FEED } elseif (Test-Path $staged) { Resolve-Path $staged } else { Join-Path $app 'testfeed\index.json' } # RSIM_TEST_FEED: GitHub Actions
 "feed: $feed"
 # Persian + u-umlaut in the path (app folder and data folder), like a non-ASCII Windows user name (I-004, I-005)
 $t = Join-Path $env:TEMP ("rsim-clean-$([char]0x06A9)$([char]0xFC)-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
