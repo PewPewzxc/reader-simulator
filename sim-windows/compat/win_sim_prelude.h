@@ -57,6 +57,10 @@ inline int setenv(const char *name, const char *value, int overwrite) {
 }
 inline int unsetenv(const char *name) { return _putenv_s(name, ""); }  // "" removes it on Windows
 #include <cstdio>
+#include <fcntl.h>
+// The SD-card stand-in opens files without O_BINARY. Windows' default text mode turns CR LF into LF and stops
+// reading at byte 0x1A, so books (zip files) and caches came back damaged. Binary, like a real SD card.
+__attribute__((constructor)) static void winSimBinaryFiles() { _set_fmode(_O_BINARY); }
 // std::filesystem::path::c_str() is wchar_t on Windows; firmware test code passes it to fopen (CrossInk 1.6.1).
 inline FILE *fopen(const wchar_t *path, const char *mode) {
   wchar_t wmode[16] = {};

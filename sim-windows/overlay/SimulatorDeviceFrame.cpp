@@ -147,4 +147,6 @@ void simFrameSetPressed(const std::string &key) {
   redraw.store(true);
 }
 
+void simFrameRequestRedraw() { redraw.store(true); }
+
 bool simFrameTakeRedraw() { return redraw.exchange(false); }

@@ -252,3 +252,7 @@ if group_end("device frame"):
         data = open(src, "rb").read()
         if not os.path.isfile(dst) or open(dst, "rb").read() != data:
             open(dst, "wb").write(data)
+    # The sleep loop (startDeepSleep) only listened to the keyboard: with the frame the reader could not be
+    # woken by clicking its keys, and its window was never repainted. Same loop in both libraries.
+    patch(G, '      if (e.type == SDL_KEYDOWN && !e.key.repeat &&\n          scancodeToButton(e.key.keysym.scancode) >= 0) {\n        clearButtonState();\n        SimulatorLifecycle::rebootAsPowerWake();\n      }\n',
+          '      if (e.type == SDL_KEYDOWN && !e.key.repeat &&\n          scancodeToButton(e.key.keysym.scancode) >= 0) {\n        clearButtonState();\n        SimulatorLifecycle::rebootAsPowerWake();\n      }\n      // Device frame while asleep: a click on a drawn key wakes the reader like the real key, and the\n      // window is drawn again when Windows asks (otherwise the sleep screen looks frozen).\n      if (simFrameActive() && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {\n        float nx = 0.0f, ny = 0.0f;\n        const std::string key = simFrameHit(e.button.x, e.button.y, &nx, &ny);\n        if (!key.empty() && key != "SCREEN") {\n          clearButtonState();\n          SimulatorLifecycle::rebootAsPowerWake();\n        }\n      }\n      if (simFrameActive() && e.type == SDL_WINDOWEVENT) {\n        extern HalDisplay display;\n        simFrameRequestRedraw();\n        display.presentIfNeeded();\n      }\n')

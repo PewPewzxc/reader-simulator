@@ -50,6 +50,9 @@ bash tools/make_release.sh                                 # zips + index.json +
 | frame on the older `crosspoint-simulator` library | `patch_libdeps.py` picks its anchors (`OLD_LIB`) and crops the same 2 px edge the newer library hides, so one set of frames fits both |
 | `pin_simlib.py`: short pins, `GITHUB_TOKEN`, `.rsim-pin.json` | a library pinned by a short commit id cannot be fetched by PlatformIO, so it is written out in full; answers are cached per checkout |
 | `build.sh` install lock | PlatformIO's package cache breaks when two installs run at once (WinError 32) |
+| `win_sim_prelude.h`: `_set_fmode(_O_BINARY)` | the SD-card stand-in opens files without `O_BINARY`; in Windows' text mode CR LF became LF and reading stopped at byte 0x1A, so no EPUB opened ("Failed to index") and caches were damaged; self-check `tests/binmode_check.cpp` |
+| `build.sh`: `-ffile-prefix-map`, `-fmacro-prefix-map`, `-g0`, `strip` | builds get published: no user name or folder of this PC inside `program.exe`; `make_release.sh` refuses a build that still contains the Windows user name or the e-mail name (plus `RSIM_PRIVATE_WORDS`) |
+| `compat/utf8.manifest` + `compat/set_manifest.py` (run by build.sh after `strip`) | UTF-8 code page for program.exe (Windows 10 1903+): card and frame folders with non-ASCII letters (user names) work; replaces MinGW's default manifest (same id and language) |
 | `-Wno-narrowing`, `PYTHONUTF8=1` | g++ narrowing errors; PlatformIO prints Persian text to the console |
 
 After changing anything in `compat/`, delete `<firmware>/.pio/build/<env>`:

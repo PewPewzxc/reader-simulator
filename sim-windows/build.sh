@@ -23,6 +23,13 @@ export PATH="$O/bin:$SDL/bin:$PATH"
 
 # Extra flags for every file (project + libraries), Windows build only.
 export PLATFORMIO_BUILD_FLAGS="-I$(m "$O/compat") -L$(m "$O/compat/lib") -include $(m "$O/compat/win_sim_prelude.h") -Wno-narrowing -DtskNO_AFFINITY=0x7FFFFFFF -DportNUM_PROCESSORS=1"
+# Builds may be published: no user name or folder of this PC inside program.exe (__FILE__ in asserts and logs,
+# debug info). The last matching map wins, so the specific folders come after the user profile.
+GXX_BIN="$(dirname "$(command -v g++)")"
+for map in "$(m "$HOME")=~" "$(m "$SRC")=/fw" "$(m "$O")=/sim" "$(m "$GXX_BIN/..")=/gcc"; do
+  PLATFORMIO_BUILD_FLAGS+=" -ffile-prefix-map=$map -fmacro-prefix-map=$map"
+done
+PLATFORMIO_BUILD_FLAGS+=" -g0"
 
 # PlatformIO's package cache is shared: two installs at once break each other (WinError 32), so
 # downloads of libraries wait for each other when several firmwares build side by side.
@@ -54,7 +61,8 @@ if ! "$PIO" run -e "$ENV"; then
   fi
 fi
 # Everything program.exe needs besides Windows itself, so the build folder runs on any PC.
-GXX_BIN="$(dirname "$(command -v g++)")"
+strip "$SRC/.pio/build/$ENV/program.exe"  # any debug info left (libraries built with -g)
+"$HOME/.platformio/penv/Scripts/python.exe" -I "$O/compat/set_manifest.py" "$SRC/.pio/build/$ENV/program.exe"  # UTF-8 file names
 cp -f "$SDL/bin/SDL2.dll" "$GXX_BIN/libgcc_s_seh-1.dll" "$GXX_BIN/libstdc++-6.dll" "$GXX_BIN/libwinpthread-1.dll" "$SRC/.pio/build/$ENV/"
 printf '%s\n%s\n' "$SRC" "$ENV" > "$O/.last-firmware"
 echo "built: $SRC/.pio/build/$ENV/program.exe"

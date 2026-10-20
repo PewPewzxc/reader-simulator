@@ -39,6 +39,23 @@ def licence(folder):
         if os.path.isfile(os.path.join(folder, n)):
             return os.path.join(folder, n)
 
+def private_words():
+    """This PC's user name etc.: none may be inside a published build (paths from __FILE__, debug info).
+    Not written here (this script is published): the Windows user name, the part of git's e-mail before
+    the @ (git's user name is the public GitHub name, which firmwares rightly contain), RSIM_PRIVATE_WORDS
+    (comma-separated)."""
+    words = {os.environ.get("USERNAME", ""), os.path.basename(os.environ.get("USERPROFILE", "") or os.path.expanduser("~"))}
+    email = subprocess.run(["git", "config", "user.email"], capture_output=True, text=True).stdout.strip()
+    words.add(email.split("@")[0])
+    words.update(os.environ.get("RSIM_PRIVATE_WORDS", "").split(","))
+    return sorted({w.strip().lower().encode() for w in words if len(w.strip()) >= 4})
+
+PRIVATE = private_words()
+
+def private_hits(data):
+    low = data.lower()
+    return [w.decode() for w in PRIVATE if w in low]
+
 def package(repo, ref, env, line):
     import launcher  # here, not at the top: --index-only runs on Linux, where tkinter may be missing
     folder = launcher.download(repo, ref)
@@ -52,6 +69,9 @@ def package(repo, ref, env, line):
     missing = [f for f in FILES if not os.path.isfile(os.path.join(bdir, f))]
     if missing:
         return print(f"make_release: {bid}: {missing[0]} missing in {bdir}, not packaged")
+    leaks = {f: private_hits(open(os.path.join(bdir, f), "rb").read()) for f in FILES}
+    if any(leaks.values()):
+        return print(f"make_release: {bid}: {next(f for f in leaks if leaks[f])} contains this PC's user name, not packaged")
     commit = subprocess.run(["git", "-C", folder, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     info = {"id": bid, "name": names.get(repo, repo), "repo": repo, "ref": ref, "version": version_of(folder, ref),
             "model": model, "env": env, "frame": launcher.MODELS[model] if used and int(used.group(1)) else None,
@@ -90,6 +110,12 @@ for f in sorted(os.listdir(builds)):
         info = json.loads(z.read("build.json"))
         assert sorted(z.namelist()) == sorted(FILES + ["LICENSE-firmware.txt", "build.json"]), f
     data = open(path, "rb").read()
+    with zipfile.ZipFile(path) as z:
+        leaks = [n for n in FILES if private_hits(z.read(n))]
+    if leaks:  # also zips packed earlier: never into a feed
+        print(f"make_release: {f}: {leaks[0]} contains this PC's user name, removed")
+        os.remove(path)
+        continue
     entries.append({k: info[k] for k in ("id", "name", "repo", "ref", "version", "model", "frame")} |
                    {"size": len(data), "sha256": hashlib.sha256(data).hexdigest(), "file": f})
 now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -20,5 +20,7 @@ void simFrameRender(SDL_Renderer *renderer, SDL_Texture *panel, const SDL_Rect &
 std::string simFrameHit(int windowX, int windowY, float *panelNx, float *panelNy);
 // Shows a key as pressed ("" for none) and asks for a redraw.
 void simFrameSetPressed(const std::string &key);
+// Asks for one redraw (e.g. Windows repainting the sleeping reader's window).
+void simFrameRequestRedraw();
 // True once after something on the frame changed.
 bool simFrameTakeRedraw();
