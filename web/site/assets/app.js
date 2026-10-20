@@ -395,8 +395,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveC
 showView();
 
 // A version is named by its release (v1.8.1-yacp.9 -> 1.8.1-yacp.9): the number inside the source is often not
-// updated between releases. A build from a branch (main) keeps that number.
-const versionLabel = b => /^v?\d/.test(b.ref) ? b.ref.replace(/^v(?=\d)/, '') : b.version;
+// updated between releases. A build from a branch is named by the branch, with that number: dev (2.3.6).
+const versionLabel = b => /^v?\d/.test(b.ref) ? b.ref.replace(/^v(?=\d)/, '') : b.version && b.version !== b.ref ? b.ref + ' (' + b.version + ')' : b.ref;
 
 fetch('builds.json').then(r => r.json()).then(j => {
   builds = j.builds;

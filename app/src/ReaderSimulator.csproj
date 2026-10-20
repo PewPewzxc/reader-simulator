@@ -13,7 +13,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <DebugType>none</DebugType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Product>Reader Simulator</Product>
     <AssemblyTitle>Reader Simulator</AssemblyTitle>
     <Company>Reader Simulator contributors</Company>

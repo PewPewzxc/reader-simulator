@@ -1,6 +1,7 @@
 """Versions of each catalogue firmware to offer: its newest releases (newest first), or the default branch if it has none.
 python -I tools/latest_refs.py [status ...]      (default statuses: ready untested)
-How many releases: the firmware's "versions" in firmwares.json, else RSIM_VERSIONS, else 3.
+How many releases: the firmware's "versions" in firmwares.json, else RSIM_VERSIONS, else 3. A firmware with "refs"
+(branches to follow, e.g. ["dev"]) is built from those instead of its releases.
 Prints one tab-separated line per version: repo, ref. Uses GITHUB_TOKEN when set (60 calls an hour without)."""
 import json
 import os
@@ -48,6 +49,13 @@ def main(statuses):
     for fw in json.load(open(os.path.join(HERE, "firmwares.json"), encoding="utf-8"))["firmwares"]:
         if fw["repo"] and fw["status"] in statuses:
             try:
+                if fw.get("refs"):
+                    for ref in fw["refs"]:
+                        if SAFE_REF.fullmatch(ref):
+                            print(f"{fw['repo']}\t{ref}", flush=True)
+                        else:
+                            print(f"latest_refs: {fw['repo']}: unusual ref name {ref!r}, skipped", file=sys.stderr)
+                    continue
                 for ref in newest(fw["repo"], max(1, int(fw.get("versions", default)))):
                     print(f"{fw['repo']}\t{ref}", flush=True)
             except Exception as e:  # one unreachable repo must not stop the list

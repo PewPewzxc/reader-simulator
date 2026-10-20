@@ -61,9 +61,11 @@ namespace ReaderSimulator
         }
 
         /// <summary>A version is named by its release (v1.8.1-yacp.9 -> 1.8.1-yacp.9): the number inside the source is often
-        /// not updated between releases. A build from a branch (main) keeps that number.</summary>
+        /// not updated between releases. A build from a branch is named by the branch, with that number: dev (2.3.6).</summary>
         public static string VersionLabel(string gitRef, string version) =>
-            gitRef != null && Regex.IsMatch(gitRef, @"\Av?\d") ? Regex.Replace(gitRef, @"\Av(?=\d)", "") : version ?? gitRef;
+            gitRef == null ? version
+            : Regex.IsMatch(gitRef, @"\Av?\d") ? Regex.Replace(gitRef, @"\Av(?=\d)", "")
+            : version != null && version != gitRef ? $"{gitRef} ({version})" : gitRef;
 
         /// <summary>Valid builds of a feed; anything malformed or not allowed is skipped.</summary>
         public static List<Build> Parse(string json, Uri feed)
