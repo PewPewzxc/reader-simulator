@@ -1,0 +1,173 @@
+<Window x:Class="ReaderSimulator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Reader Simulator" Width="1160" Height="780" MinWidth="940" MinHeight="600"
+        WindowStartupLocation="CenterScreen" Icon="ReaderSimulator.ico"
+        Background="{DynamicResource Bg}" Foreground="{DynamicResource Text}"
+        FontFamily="{StaticResource UiFont}" FontSize="14"
+        TextOptions.TextFormattingMode="Ideal" UseLayoutRounding="True" SnapsToDevicePixels="True">
+  <Grid x:Name="Root" Background="{DynamicResource Bg}" TextElement.Foreground="{DynamicResource Text}" TextElement.FontFamily="{StaticResource UiFont}" TextElement.FontSize="14">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="240" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <!-- Navigation -->
+    <StackPanel Margin="12,18,12,12">
+      <StackPanel Orientation="Horizontal" Margin="10,0,0,22">
+        <Image Source="ReaderSimulator.ico" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality" />
+        <TextBlock Text="Reader Simulator" FontSize="13" Margin="12,0,0,0" VerticalAlignment="Center" />
+      </StackPanel>
+      <RadioButton x:Name="NavSim" Style="{StaticResource NavItem}" IsChecked="True" Checked="Nav_Checked">
+        <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8EA;" /><TextBlock Text="Simulator" Margin="14,0,0,0" /></StackPanel>
+      </RadioButton>
+      <RadioButton x:Name="NavAbout" Style="{StaticResource NavItem}" Checked="Nav_Checked">
+        <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE946;" /><TextBlock Text="About" Margin="14,0,0,0" /></StackPanel>
+      </RadioButton>
+    </StackPanel>
+
+    <!-- Simulator page -->
+    <Grid x:Name="SimPage" Grid.Column="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="5*" MinWidth="440" MaxWidth="620" />
+        <ColumnDefinition Width="4*" />
+      </Grid.ColumnDefinitions>
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="16,18,16,16">
+        <StackPanel>
+          <TextBlock Style="{StaticResource H1}" Text="Simulator" />
+
+          <Border Style="{StaticResource CardBox}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource H2}" Text="Device" />
+              <UniformGrid Columns="3" x:Name="DevicePanel" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource CardBox}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource H2}" Text="Firmware" />
+              <ListBox x:Name="FirmwareList" Foreground="{DynamicResource Text}" ItemContainerStyle="{StaticResource Row}" Background="Transparent" BorderThickness="0"
+                       MaxHeight="232" ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="Firmware_Changed" />
+              <TextBlock x:Name="NoFeed" Style="{StaticResource Caption}" Visibility="Collapsed" Margin="0,0,0,6" />
+              <TextBlock Style="{StaticResource Caption}" Text="Version" Margin="0,12,0,8" />
+              <WrapPanel x:Name="VersionPanel" />
+              <Grid Margin="0,6,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusIcon" Style="{StaticResource Icon}" FontSize="14" Foreground="{DynamicResource Text2}" Margin="0,0,8,0" VerticalAlignment="Top" Padding="0,1,0,0" />
+                <TextBlock x:Name="StatusText" Grid.Column="1" Style="{StaticResource Caption}" FontSize="13" />
+              </Grid>
+              <ProgressBar x:Name="Progress" Margin="0,10,0,0" Maximum="1" Visibility="Collapsed" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource CardBox}" Padding="0">
+            <StackPanel>
+              <Grid Margin="20,14">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="200" /><ColumnDefinition Width="52" /></Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Icon}" Text="&#xE83F;" Margin="0,0,16,0" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <TextBlock Text="Battery" />
+                  <TextBlock Style="{StaticResource Caption}" Text="What the reader shows" />
+                </StackPanel>
+                <Slider x:Name="Battery" Grid.Column="2" Style="{StaticResource FluentSlider}" Minimum="0" Maximum="100"
+                        IsSnapToTickEnabled="True" TickFrequency="1" SmallChange="1" LargeChange="10" VerticalAlignment="Center" ValueChanged="Battery_Changed" />
+                <TextBlock x:Name="BatteryText" Grid.Column="3" HorizontalAlignment="Right" VerticalAlignment="Center" />
+              </Grid>
+              <Border Height="1" Background="{DynamicResource CardStroke}" />
+              <Grid Margin="20,14">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Icon}" Text="&#xE88E;" Margin="0,0,16,0" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <TextBlock Text="USB cable" />
+                  <TextBlock Style="{StaticResource Caption}" Text="Pretend the reader is plugged in and charging" />
+                </StackPanel>
+                <CheckBox x:Name="Usb" Grid.Column="2" Style="{StaticResource Toggle}" VerticalAlignment="Center" Click="Usb_Click" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource CardBox}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource H2}" Text="SD card" />
+              <TextBlock Style="{StaticResource Caption}" Margin="0,-4,0,12"
+                         Text="Each firmware version and device has its own simulated SD card. Books go in the books folder." />
+              <WrapPanel>
+                <Button x:Name="BtnBooks" Style="{StaticResource Btn}" Margin="0,0,8,0" Click="AddBooks_Click">
+                  <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE710;" /><TextBlock Text="Add books" Margin="8,0,0,0" /></StackPanel>
+                </Button>
+                <Button x:Name="BtnFolder" Style="{StaticResource Btn}" Margin="0,0,8,0" Click="OpenCard_Click">
+                  <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE8B7;" /><TextBlock Text="Open folder" Margin="8,0,0,0" /></StackPanel>
+                </Button>
+                <Button x:Name="BtnFresh" Style="{StaticResource Btn}" Click="FreshCard_Click">
+                  <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE72C;" /><TextBlock Text="Fresh SD card" Margin="8,0,0,0" /></StackPanel>
+                </Button>
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Preview -->
+      <Grid Grid.Column="1" Margin="8,18,24,20">
+        <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <Border Background="{DynamicResource Stage}" CornerRadius="12">
+          <Viewbox Margin="36" Stretch="Uniform">
+            <Grid x:Name="PreviewFrame">
+              <!-- the frame's screen is see-through: show a blank e-paper page behind it -->
+              <Rectangle x:Name="PreviewScreen" Fill="#F2F1EC" HorizontalAlignment="Left" VerticalAlignment="Top" />
+              <Image x:Name="Preview" Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality" />
+            </Grid>
+          </Viewbox>
+        </Border>
+        <StackPanel Grid.Row="1" Margin="4,16,4,0">
+          <TextBlock x:Name="PreviewTitle" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+          <TextBlock x:Name="PreviewSub" Style="{StaticResource Caption}" FontSize="13" Margin="0,2,0,14" TextTrimming="CharacterEllipsis" />
+          <Button x:Name="BtnStart" Style="{StaticResource AccentBtn}" Padding="20,11" FontSize="15" HorizontalAlignment="Stretch" Click="Start_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock x:Name="StartIcon" Style="{StaticResource Icon}" Text="&#xE768;" /><TextBlock x:Name="StartText" Text="Start" Margin="10,0,0,0" /></StackPanel>
+          </Button>
+          <TextBlock Style="{StaticResource Caption}" Margin="0,10,0,0" TextAlignment="Center"
+                     Text="In the simulator: click the drawn keys, or use Esc, Enter and the arrow keys." />
+        </StackPanel>
+      </Grid>
+    </Grid>
+
+    <!-- About page -->
+    <ScrollViewer x:Name="AboutPage" Grid.Column="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="16,18,24,16">
+      <StackPanel MaxWidth="820" HorizontalAlignment="Left">
+        <TextBlock Style="{StaticResource H1}" Text="About" />
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <TextBlock Style="{StaticResource H2}" x:Name="AboutTitle" Text="Reader Simulator" />
+            <TextBlock Style="{StaticResource Body}" Text="Try e-reader firmwares for the Xteink X4 Pro, X4 Classic and X3 on your PC, before you put them on a real reader. Ready-made simulator builds are downloaded from the list on GitHub the first time you use them." />
+            <TextBlock Style="{StaticResource Caption}" x:Name="AboutFeed" Margin="0,10,0,0" />
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+              <TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" Foreground="{DynamicResource Accent}" />
+              <TextBlock Style="{StaticResource H2}" Text="Please read" Margin="10,0,0,0" />
+            </StackPanel>
+            <TextBlock Style="{StaticResource Body}" xml:space="preserve">This is an unofficial tool. It is not made by, affiliated with or endorsed by Xteink.
+The simulator is approximate: screens, speed, battery and buttons can differ from a real reader. Use it at your own risk; it comes with no warranty.</TextBlock>
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <TextBlock Style="{StaticResource H2}" Text="Privacy" />
+            <TextBlock Style="{StaticResource Body}" Text="No account, no telemetry, no automatic updates. The app only reads the firmware list and downloads the builds you pick, over HTTPS from GitHub. Every download is checked with SHA-256 before it is used. Files stay in %LOCALAPPDATA%\ReaderSimulator." />
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <TextBlock Style="{StaticResource H2}" Text="Credits" />
+            <TextBlock Style="{StaticResource Body}" xml:space="preserve">Firmwares: by their authors, each under its own licence (included with every build as LICENSE-firmware.txt). Shown in the list with their GitHub project.
+Simulator library: crosspoint-simulator / crossink-simulator by Julia Nguyen (uxjulia) and the crosspoint-reader community, MIT licence.
+SDL 2 by the SDL developers, zlib licence.
+Device frames and this app: Reader Simulator contributors, MIT licence.</TextBlock>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</Window>

@@ -1,0 +1,159 @@
+{
+ "_about": "Firmware menu of the reader simulator. repo = GitHub owner/name. status: ready (built and run on Windows here), untested (has a simulator setup, not tried yet), broken (its own simulator setup does not build, also on Linux), adapter (no simulator setup; the launcher will add one, not done yet), unsupported (cannot run in this simulator). frame: the reader picture with clickable keys works (both simulator libraries since 2026-10-20). Sources: readme.club/firmware and GitHub, checked and built on Windows 2026-10-20 (tools/try_all.sh). Versions are read live from each repo's releases.",
+ "firmwares": [
+  {
+   "name": "VARAGH",
+   "repo": "PewPewzxc/VARAGH",
+   "status": "ready",
+   "frame": true,
+   "about": "CrossInk fork: dictionaries, Persian, games, Control Center. Built and tested 1.2.1 for X4 Pro, X4 Classic and X3. Note: its freeink-sdk submodule (PewPewzxc/freeink-sdk) is not public, so a clean download (and the GitHub workflow) cannot build it until that repo is public; the local build used the owner's copy at the same commit."
+  },
+  {
+   "name": "CrossInk",
+   "repo": "uxjulia/crossink",
+   "status": "ready",
+   "frame": true,
+   "about": "CrossPoint fork with X3, X4 Classic and X4 Pro support. Built and tested v1.6.1 for all three."
+  },
+  {
+   "name": "YACP",
+   "repo": "Sichroteph/YACP",
+   "status": "ready",
+   "frame": true,
+   "about": "Opinionated CrossPoint fork focused on battery life and rendering. X4 and X3. Built and tested v1.8.1-yacp.9 (older crosspoint-simulator library; the frame works there now)."
+  },
+  {
+   "name": "CrossInk Bookorbit",
+   "repo": "agosez/CrossInk-Bookorbit",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossInk fork. Its simulator setup does not build: its code needs HalClock::syncSystemTimeFromNTP (and canDisplayTime), which no public simulator library version has (tested v1.6.1+bookorbit.2 with the dated and the newest library)."
+  },
+  {
+   "name": "CrossNotes",
+   "repo": "HilbergK/CrossNotes",
+   "status": "ready",
+   "frame": true,
+   "about": "CrossInk fork. Built and tested v1.2.1 for all three models."
+  },
+  {
+   "name": "Xteink Pokemon game",
+   "repo": "padge01/xteink-pokemon-game",
+   "status": "ready",
+   "frame": true,
+   "about": "Reading-powered Pokemon companion game, built on CrossInk. Built and tested v0.1.1 for all three models."
+  },
+  {
+   "name": "CrossDiTo",
+   "repo": "dito94/CrossDiTo",
+   "status": "ready",
+   "frame": true,
+   "about": "CrossInk fork for the X4 Pro. Built and tested v1.5.1 (X4 Pro only)."
+  },
+  {
+   "name": "CrossPDF",
+   "repo": "davemessew/CrossPDF",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossInk fork with PDF. Its simulator setup does not build: its own code does not compile for the simulator ('epub_' and 'icon_pointer_off_24' not declared; tested crosspdf-v1.6.1-rc.1)."
+  },
+  {
+   "name": "Ink-boy",
+   "repo": "hellominecraft913-dev/Ink-boy",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossInk fork. Its simulator setup does not build: its C file src/walnut_cgb_impl.c includes the simulator's esp_heap_caps.h, which is C++ only (tested 3.0.0)."
+  },
+  {
+   "name": "PocketDeck OS",
+   "repo": "ashokslsk/PocketDeck-OS",
+   "status": "ready",
+   "frame": true,
+   "about": "CrossInk fork. No releases; built and tested the main branch for all three models."
+  },
+  {
+   "name": "inx",
+   "repo": "obijuankenobiii/inx",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossPoint fork for the X4. Does not build on Windows: its platformio.ini writes -include${PROJECT_DIR}/..., and the Windows backslashes in that path are lost (would need a change in the firmware). Tested 1.0.20-BETA."
+  },
+  {
+   "name": "aalu",
+   "repo": "dawsonfi/aalu",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossPoint fork for the X4. Builds and starts, but it pins an old simulator library (crosspoint-simulator efe37c6) without scripted input and screenshots, so it cannot be tested here and the frame does not fit (tested v3.3.0)."
+  },
+  {
+   "name": "Foulad eInk",
+   "repo": "sfoulad/foulad-eink",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossPoint fork. Its simulator setup does not build: FreeInkApp.h (FreeInk UI library) is not part of its simulator setup (tested v1.8.99-rc+edc5cd6)."
+  },
+  {
+   "name": "duet",
+   "repo": "lauren-alexandra/duet-xteink",
+   "status": "ready",
+   "frame": true,
+   "about": "CrossPoint fork for the X4. Built and tested v0.1.0-alpha.9 (X4 Classic; older simulator library, frame works)."
+  },
+  {
+   "name": "Folio Nooir",
+   "repo": "toshio2011/folio-nooir",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossPoint fork for the X3. Does not build on Windows: the tjpgd.h in its freeink-sdk declares its own uint32_t when _WIN32 is set, which clashes with the compiler's (tested 1.6.5)."
+  },
+  {
+   "name": "KatiePoint",
+   "repo": "InsiderPhD/crosspoint-reader",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossPoint fork with Bluetooth, Hardcover and BookFusion. Its simulator setup expects the simulator library in a folder next to the firmware (../crosspoint-simulator), so it does not build from a download (tested 1.13.0-rc1)."
+  },
+  {
+   "name": "CrossPlant",
+   "repo": "0xKnowles/CrossPlant",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossPoint fork. Its simulator setup does not build: it needs HWCDC::read(buffer, size), which the simulator library lacks (tested CrossPlant_v0.1.4)."
+  },
+  {
+   "name": "CrumBLE",
+   "repo": "imshentastic/CrumBLE",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossInk fork for the X4. Its simulator setup does not build: its code needs simulator functions (readFileWithFallback, freertos/portmacro.h) that no public simulator version has."
+  },
+  {
+   "name": "cpr-vcodex",
+   "repo": "franssjz/cpr-vcodex",
+   "status": "broken",
+   "frame": false,
+   "about": "CrossPoint fork. Its simulator setup does not build: HalHaptics.h is missing from its pinned simulator library."
+  },
+  {
+   "name": "vcodex on steroids",
+   "repo": "marcoand75/cpr-vcodex-steroids",
+   "status": "broken",
+   "frame": false,
+   "about": "cpr-vcodex fork. Cannot be downloaded completely: its freeink-sdk submodule points at a commit that is not on GitHub (tested 1.6.0.38-dev1-cpr-vcodex-steroids)."
+  },
+  {
+   "name": "CrossPoint Reader",
+   "repo": "crosspoint-reader/crosspoint-reader",
+   "status": "adapter",
+   "frame": false,
+   "about": "The original open-source firmware. No simulator setup of its own (also true for 29 other firmwares on readme.club)."
+  },
+  {
+   "name": "Xteink factory firmware",
+   "repo": "",
+   "status": "unsupported",
+   "frame": false,
+   "about": "Closed source: only .bin files (the X4 Classic and X4 Pro ones are encrypted). This simulator builds firmware from source, so it cannot run them."
+  }
+ ]
+}

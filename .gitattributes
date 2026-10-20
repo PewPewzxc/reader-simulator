@@ -1,0 +1,5 @@
+# bash scripts must keep LF line endings on Windows checkouts (the runner sets core.autocrlf)
+* text=auto eol=lf
+*.png binary
+*.a binary
+*.zip binary

@@ -1,0 +1,36 @@
+READER SIMULATOR - LICENCE AND DISCLAIMER
+
+PLEASE READ
+Reader Simulator is an unofficial tool. It is not made by, affiliated with or
+endorsed by Xteink. The simulator is approximate: screens, speed, battery and
+buttons can differ from a real reader. Use it at your own risk.
+
+Reader Simulator downloads ready-made simulator builds of e-reader firmwares
+from a list on GitHub, over HTTPS, and checks every download with SHA-256.
+It has no telemetry and no automatic updates. Each firmware belongs to its
+authors and comes with its own licence (LICENSE-firmware.txt in its folder).
+The simulator library is crosspoint-simulator / crossink-simulator by Julia
+Nguyen (uxjulia) and the crosspoint-reader community (MIT licence).
+SDL 2 is by the SDL developers (zlib licence).
+
+MIT LICENCE (the Reader Simulator app and its device frames)
+
+Copyright (c) 2026 PewPewzxc and Reader Simulator contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

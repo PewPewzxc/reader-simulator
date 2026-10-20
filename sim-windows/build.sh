@@ -1,0 +1,60 @@
+#!/bin/bash
+# Build the VARAGH X4 Pro simulator on Windows (Git Bash + WinLibs g++ + SDL2).
+#   ./build.sh [firmware source folder] [env]
+#   (defaults: github/varagh-lion-1.3.0, x4-pro-simulator)
+# Any CrossInk-based source folder works (VARAGH, CrossInk); sim.sh then runs
+# the firmware built last. A finished .bin cannot run here: it is code for the
+# reader's own chip, so the simulator always builds from source.
+# Every Windows-only fix lives in this folder; the firmware source is not edited.
+# The downloaded simulator libraries (.pio/libdeps) get the fixes in patch_libdeps.py.
+set -e
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
+O="$(cd "$(dirname "$0")" && pwd)"
+SRC="${1:-$O/../../github/varagh-lion-1.3.0}"; SRC="$(cd "$SRC" && pwd)"
+SDL="$O/deps/SDL2-2.32.10/x86_64-w64-mingw32"
+PIO="$HOME/.platformio/penv/Scripts/pio.exe"
+ENV="${2:-x4-pro-simulator}"
+[ -f "$SDL/lib/libSDL2.dll.a" ] || { echo "SDL2 missing: see README.md"; exit 1; }
+
+# platformio.ini runs `sdl2-config --cflags --libs` through cmd.exe.
+m() { cygpath -m "$1"; }
+printf '@echo -I%s/include/SDL2 -DSDL_MAIN_HANDLED -L%s/lib -lSDL2 -lws2_32\r\n' "$(m "$SDL")" "$(m "$SDL")" > "$O/bin/sdl2-config.cmd"
+export PATH="$O/bin:$SDL/bin:$PATH"
+
+# Extra flags for every file (project + libraries), Windows build only.
+export PLATFORMIO_BUILD_FLAGS="-I$(m "$O/compat") -L$(m "$O/compat/lib") -include $(m "$O/compat/win_sim_prelude.h") -Wno-narrowing -DtskNO_AFFINITY=0x7FFFFFFF -DportNUM_PROCESSORS=1"
+
+# PlatformIO's package cache is shared: two installs at once break each other (WinError 32), so
+# downloads of libraries wait for each other when several firmwares build side by side.
+LOCK="$HOME/.platformio/.rsim-install-lock"
+lock() { find "$LOCK" -maxdepth 0 -mmin +15 -exec rmdir {} \; 2>/dev/null || true; until mkdir "$LOCK" 2>/dev/null; do sleep 2; done; }
+unlock() { rmdir "$LOCK" 2>/dev/null || true; }
+trap unlock EXIT
+
+cd "$SRC"
+lock
+[ -n "$NO_PIN" ] || "$HOME/.platformio/penv/Scripts/python.exe" -I "$O/pin_simlib.py" "$SRC" "$ENV" || true  # downloaded firmwares only
+"$PIO" pkg install -e "$ENV" > /dev/null
+"$HOME/.platformio/penv/Scripts/python.exe" -I "$O/patch_libdeps.py" "$SRC/.pio/libdeps/$ENV"
+unlock
+if ! "$PIO" run -e "$ENV"; then
+  # The library from the firmware's own date is a guess (pin_simlib.py); some firmwares were written
+  # against a newer one. Try once more with the newest library before giving up.
+  if grep -q "written by the reader simulator" platformio.local.ini 2>/dev/null; then
+    echo "build failed with the dated simulator library; retrying with the newest one"
+    mv -f platformio.local.ini platformio.local.ini.dated
+    rm -rf ".pio/libdeps/$ENV/simulator"  # PlatformIO would keep the dated copy otherwise
+    lock
+    "$PIO" pkg install -e "$ENV" > /dev/null
+    "$HOME/.platformio/penv/Scripts/python.exe" -I "$O/patch_libdeps.py" "$SRC/.pio/libdeps/$ENV"
+    unlock
+    "$PIO" run -e "$ENV"
+  else
+    exit 1
+  fi
+fi
+# Everything program.exe needs besides Windows itself, so the build folder runs on any PC.
+GXX_BIN="$(dirname "$(command -v g++)")"
+cp -f "$SDL/bin/SDL2.dll" "$GXX_BIN/libgcc_s_seh-1.dll" "$GXX_BIN/libstdc++-6.dll" "$GXX_BIN/libwinpthread-1.dll" "$SRC/.pio/build/$ENV/"
+printf '%s\n%s\n' "$SRC" "$ENV" > "$O/.last-firmware"
+echo "built: $SRC/.pio/build/$ENV/program.exe"
