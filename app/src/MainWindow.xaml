@@ -280,8 +280,12 @@ The simulator is approximate: screens, speed, battery and buttons can differ fro
         <Border Style="{StaticResource CardBox}">
           <StackPanel>
             <TextBlock Style="{StaticResource H2}" Text="Credits" />
-            <TextBlock Style="{StaticResource Body}" xml:space="preserve">Firmwares (VARAGH, CrossPoint Reader, CrossInk and more): by their authors, each under its own licence (included with every build as LICENSE-firmware.txt). Shown in the list with their GitHub project.
-Simulator library: crosspoint-simulator / crossink-simulator by Julia Nguyen (uxjulia) and the crosspoint-reader community, MIT licence.
+            <TextBlock Style="{StaticResource Body}" FontWeight="SemiBold" Text="Firmwares" Margin="0,0,0,6" />
+            <TextBlock Style="{StaticResource Caption}" FontSize="13" Margin="0,0,0,8" Text="By their authors, each under its own licence, which comes with every build (LICENSE-firmware.txt)." />
+            <!-- filled from the firmware list: every firmware the app offers, in the app's order -->
+            <StackPanel x:Name="FirmwareCredits" Margin="0,0,0,14" />
+            <TextBlock Style="{StaticResource Body}" FontWeight="SemiBold" Text="Also inside" Margin="0,0,0,6" />
+            <TextBlock Style="{StaticResource Body}" xml:space="preserve">Simulator library: crosspoint-simulator / crossink-simulator by Julia Nguyen (uxjulia) and the crosspoint-reader community, MIT licence.
 SDL 2 by the SDL developers, zlib licence.
 Device frames and this app: Reader Simulator contributors, MIT licence.</TextBlock>
           </StackPanel>
