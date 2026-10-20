@@ -36,6 +36,25 @@ MODELS = {
                   seam=None, keys=("#08080a", "#2c2c2f"), bar=None, well="#18181a", hole_r=0.5,
                   home=("#38393c", "#2e2f32"))),
 }
+# One body colour for every reader: the shapes above stay per model (lip, seam, home key), the colours come
+# from here (the X3's dark grey), so the three drawings look like the same material.
+BODY_COLOURS = dict(face=("#38383a", "#2a2a2c"), face_dir=(1, .25), keys=("#1a1a1b", "#2e2e30"),
+                    bar=("#333335", "#0c0c0d"), well="#1f1f20", edge="#141415", lip="#404043", seam="#1e1e1f",
+                    seam_path="#19191a", home=("#404043", "#343437"))
+for _m in MODELS.values():
+    _l, _c = _m["look"], BODY_COLOURS
+    _l.update(face=_c["face"], face_dir=_c["face_dir"], keys=_c["keys"], well=_c["well"],
+              edge=(_c["edge"],) + _l["edge"][1:])
+    if _l.get("bar"):
+        _l["bar"] = _c["bar"]
+    if _l.get("lip"):
+        _l["lip"] = (_c["lip"],) + _l["lip"][1:]
+    if _l.get("seam"):
+        _l["seam"] = (_c["seam"],) + _l["seam"][1:]
+    if _l.get("seam_path"):
+        _l["seam_path"] = dict(_l["seam_path"], color=_c["seam_path"])
+    if _l.get("home"):
+        _l["home"] = _c["home"]
 KEY_HIT_IN = 4.0   # mm of the body next to a key that also counts as pressing it
 KEY_HIT_PAD = 1.0  # mm added along a key's length, so short keys are easy to hit
 MARGIN = 1.5       # mm of transparent space around the body for the keys
