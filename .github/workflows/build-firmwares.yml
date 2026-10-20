@@ -80,9 +80,24 @@ jobs:
           curl -fsSL -o "$RUNNER_TEMP/sdl.tar.gz" "$SDL_URL"
           echo "$SDL_SHA256  $RUNNER_TEMP/sdl.tar.gz" | sha256sum -c -
           mkdir -p sim-windows/deps sim-windows/bin
-          tar -xzf "$RUNNER_TEMP/sdl.tar.gz" -C sim-windows/deps
+          tar --force-local -xzf "$RUNNER_TEMP/sdl.tar.gz" -C sim-windows/deps  # D:\... is not a host
           python -m venv "$HOME/.platformio/penv"
           "$HOME/.platformio/penv/Scripts/python.exe" -m pip install --quiet "platformio==$PLATFORMIO_VERSION"
+      - name: Read access to VARAGH's private freeink-sdk
+        # VARAGH's freeink-sdk submodule is a private repo. A read-only deploy key on that repo, stored as
+        # this repo's secret, lets only this step fetch it. GitHub's published host key is pinned.
+        if: matrix.repo == 'PewPewzxc/VARAGH'
+        env:
+          DEPLOY_KEY: ${{ secrets.FREEINK_SDK_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then echo "No FREEINK_SDK_DEPLOY_KEY secret: VARAGH builds without its SDK"; exit 0; fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/freeink_sdk && chmod 600 ~/.ssh/freeink_sdk
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > ~/.ssh/known_hosts
+          git config --global core.sshCommand "ssh -i ~/.ssh/freeink_sdk -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          for u in https://github.com/PewPewzxc/freeink-sdk.git https://github.com/PewPewzxc/freeink-sdk; do
+            git config --global --add "url.git@github.com:PewPewzxc/freeink-sdk.git.insteadOf" "$u"
+          done
       - name: Build and test every model
         env:
           GITHUB_TOKEN: ${{ github.token }}
