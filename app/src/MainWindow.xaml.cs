@@ -105,7 +105,7 @@ namespace ReaderSimulator
         void Populate()
         {
             FirmwareList.Items.Clear();
-            foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name)) // the feed's order: VARAGH, CrossPoint Reader, CrossInk, then the rest
+            foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name).OrderBy(g => FirstRank(g.Key))) // stable: the rest keep the feed's order
             {
                 var first = g.First();
                 var row = new Grid { Tag = g.Key };
@@ -131,6 +131,10 @@ namespace ReaderSimulator
             CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 1, 8, 2), Margin = new Thickness(6, 0, 0, 0),
             Child = new TextBlock { Text = text, FontSize = 11.5, Foreground = (Brush)FindResource("Text2") },
         };
+
+        // The order every firmware list in the app uses: VARAGH, CrossPoint Reader, CrossInk, then the rest.
+        static readonly string[] First = { "PewPewzxc/VARAGH", "crosspoint-reader/crosspoint-reader", "uxjulia/crossink" };
+        static int FirstRank(string repo) { int i = Array.IndexOf(First, repo); return i < 0 ? First.Length : i; }
 
         static string Plural(int n, string w) => n + " " + w + (n == 1 ? "" : "s");
 
