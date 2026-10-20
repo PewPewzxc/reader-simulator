@@ -104,6 +104,7 @@ namespace ReaderSimulator
 
         void Populate()
         {
+            FillCredits();
             FirmwareList.Items.Clear();
             foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name).OrderBy(g => FirstRank(g.Key))) // stable: the rest keep the feed's order
             {
@@ -244,6 +245,40 @@ namespace ReaderSimulator
             SimPage.Visibility = NavSim.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             AboutPage.Visibility = NavAbout.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             ControlsPage.Visibility = NavControls.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        static readonly System.Text.RegularExpressions.Regex RepoRe = new System.Text.RegularExpressions.Regex(@"\A[A-Za-z0-9-]{1,39}/[A-Za-z0-9_.-]{1,100}\z");
+
+        /// <summary>About: every firmware in the list, in the app's order, with its GitHub project and versions.</summary>
+        void FillCredits()
+        {
+            FirmwareCredits.Children.Clear();
+            foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name).OrderBy(g => FirstRank(g.Key)))
+            {
+                var first = g.First();
+                var line = new TextBlock { Style = (Style)FindResource("Body"), Margin = new Thickness(0, 0, 0, 6) };
+                line.Inlines.Add(new System.Windows.Documents.Run("•  "));
+                if (first.Repo != null && RepoRe.IsMatch(first.Repo))
+                {
+                    var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(first.Name))
+                    {
+                        NavigateUri = new Uri("https://github.com/" + first.Repo), Foreground = (Brush)FindResource("Accent"),
+                    };
+                    link.RequestNavigate += (s, e) =>
+                    {
+                        try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); } catch (Exception) { }
+                    };
+                    line.Inlines.Add(link);
+                    line.Inlines.Add(new System.Windows.Documents.Run($" by {first.Repo.Split('/')[0]} and contributors ({first.Repo})"));
+                }
+                else line.Inlines.Add(new System.Windows.Documents.Run(first.Name));
+                var versions = g.Select(b => b.Version).Distinct().ToList();
+                line.Inlines.Add(new System.Windows.Documents.Run($", {Plural(versions.Count, "version")}: {string.Join(", ", versions)}")
+                    { Foreground = (Brush)FindResource("Text2") });
+                FirmwareCredits.Children.Add(line);
+            }
+            if (builds.Count == 0)
+                FirmwareCredits.Children.Add(new TextBlock { Style = (Style)FindResource("Caption"), Text = "The firmware list could not be read, so no firmware is shown." });
         }
 
         // Only these two pages open: the links are fixed, not read from the feed.
