@@ -92,7 +92,7 @@ output { min-width: 44px; text-align: right; }
 .keys { margin-top: 16px; font-size: 15.5px; line-height: 1.45; }
 .keys h2 { margin-top: 0; }
 .keys h3 { font-size: 14px; font-weight: 600; color: var(--text); margin: 18px 0 8px; }
-.keys dl { display: grid; grid-template-columns: minmax(130px, max-content) 1fr; gap: 8px 18px; margin: 0; }
+.keys dl { display: grid; grid-template-columns: 220px 1fr; gap: 8px 18px; margin: 0; }
 .keys dt { font-weight: 600; color: var(--text); }
 .keys dd { margin: 0; color: var(--text2); }
 .gestures { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }

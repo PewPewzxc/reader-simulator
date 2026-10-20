@@ -103,7 +103,9 @@ function deleteDb(name) {
 
 async function boot(b) {
   if (!self.crossOriginIsolated) {
-    status(sessionStorage.getItem('coiReloaded') ? 'This browser cannot run the simulator here (no cross-origin isolation). Try a current Chrome, Edge, Firefox or Safari.' : 'Preparing the page...');
+    status(window.coiError ? 'This browser blocked the page\'s helper (' + window.coiError + '). Private browsing does that: open the page in a normal tab.'
+      : sessionStorage.getItem('coiReloaded') ? 'This browser cannot run the simulator here (no cross-origin isolation). Try a current Chrome, Edge, Firefox or Safari.'
+      : 'Preparing the page...');
     return;
   }
   sessionStorage.removeItem('coiReloaded');
@@ -131,6 +133,7 @@ async function boot(b) {
     setStatus: t => { $('loadingText').textContent = t.replace(/\(.*\)/, '') || 'Starting'; },
     onRuntimeInitialized: () => { $('loading').hidden = true; status(samplesNote); },
     onExit: () => status('The reader turned off. Press Restart to turn it on again.'),
+    onAbort: what => startFailed(what),
     preRun: [() => {
       const FS = Module.FS, ENV = Module.ENV;
       ENV.VARAGH_SIM_BATTERY = String($('battery').value);
@@ -188,6 +191,18 @@ async function addSamples(root) {
   FS.writeFile(mark, 'sample books and dictionary added\n');
   samplesNote = 'Sample books and an English dictionary are on the SD card: open the books folder on the reader.';
 }
+
+// A start that fails (no memory for the simulator, a broken download) must not leave the spinner turning.
+function startFailed(what) {
+  if (!running) return;
+  $('loading').hidden = true;
+  const text = String(what && what.message || what || 'unknown error');
+  status(/memory|RangeError/i.test(text)
+    ? 'This device did not give the simulator enough memory (' + text + '). Close other tabs and press Restart.'
+    : 'The simulator stopped: ' + text);
+}
+addEventListener('error', e => { if (running && !$('loading').hidden) startFailed(e.error || e.message); });
+addEventListener('unhandledrejection', e => { if (running && !$('loading').hidden) startFailed(e.reason); });
 
 function saveCard() {
   return new Promise(resolve => window.Module && Module.FS ? Module.FS.syncfs(false, resolve) : resolve());

@@ -16,7 +16,9 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
     if (sessionStorage.getItem('coiReloaded')) return;
     sessionStorage.setItem('coiReloaded', '1');
     navigator.serviceWorker.ready.then(() => location.reload());
-  });
+  }).catch(e => { window.coiError = String(e && e.message || e); });  // private browsing, blocked storage
+} else if (!self.crossOriginIsolated && !('serviceWorker' in navigator)) {
+  window.coiError = 'no service workers';
 }
 </script>
 </head>

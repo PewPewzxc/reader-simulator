@@ -46,7 +46,9 @@ COMMON = ["-DtskNO_AFFINITY=0x7FFFFFFF", "-DportNUM_PROCESSORS=1", "-sUSE_SDL=2"
           "-I" + os.path.join(HERE, "compat"), "-include", os.path.join(HERE, "compat", "web_prelude.h")] + PREFIX_MAPS
 LINK = ["-Wl,--allow-multiple-definition",  # uzlib checksums: simulator stubs = same code
         "-sUSE_SDL=2", "-pthread", "-O2", "-sASYNCIFY", "-sASYNCIFY_STACK_SIZE=131072",
-        "-sALLOW_MEMORY_GROWTH", "-sINITIAL_MEMORY=64MB", "-sSTACK_SIZE=1MB", "-sDEFAULT_PTHREAD_STACK_SIZE=1MB",
+        "-sALLOW_MEMORY_GROWTH", "-sINITIAL_MEMORY=64MB",
+        "-sMAXIMUM_MEMORY=512MB",  # shared memory is reserved up front: iPad/iPhone Safari refuse the default 2 GB
+        "-sSTACK_SIZE=1MB", "-sDEFAULT_PTHREAD_STACK_SIZE=1MB",
         "-sPTHREAD_POOL_SIZE=8", "-sEXIT_RUNTIME=0", "-sFORCE_FILESYSTEM", "-lidbfs.js",
         "-sEXPORTED_RUNTIME_METHODS=FS,ENV,IDBFS,callMain", "-sENVIRONMENT=web,worker"] + PREFIX_MAPS
 # Words that must never end up in published files: this PC's user name and folder, plus RSIM_PRIVATE_WORDS

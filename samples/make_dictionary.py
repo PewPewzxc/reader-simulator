@@ -1,7 +1,7 @@
 """English sample dictionary for the simulated SD card: WordNet 3.0 definitions of every word in the sample books.
   python -I make_dictionary.py <wordnet.zip> [book.epub ...]     (default: sd-card/books/*.epub)
 wordnet.zip: nltk_data's corpora/wordnet.zip (WordNet 3.0, Princeton's licence: free to copy with its notice).
-Writes sd-card/dictionary/wordnet/wordnet.{ifo,idx,dict} (StarDict 2.4.2, plain text entries), its LICENSE,
+Writes sd-card/dictionaries/wordnet/wordnet.{ifo,idx,dict} (StarDict 2.4.2, plain text entries), its LICENSE,
 and sd-card/.crosspoint/dictionary.bin, which makes it the reader's dictionary (CrossInk-family firmwares).
 Inflected forms in the books ("walked") get their own index entry pointing at the base word's definition."""
 import glob
@@ -77,7 +77,7 @@ def entry(lemma, senses):
     for pos, label in POS.items():
         for i, gloss in enumerate(senses[pos].get(lemma, []), 1):
             lines.append(f"{label} {i}. {gloss}")
-    return lemma.replace("_", " ") + "\n" + "\n".join(lines)
+    return "\n".join(lines)  # the reader shows the headword itself
 
 
 def stardict_key(word):  # StarDict's order: g_ascii_strcasecmp, then strcmp
@@ -93,7 +93,7 @@ def main(zip_path, books):
         lemmas.update(bases)
         if bases and w not in bases:
             extra[w] = bases[0]  # "walked" -> "walk"
-    out = os.path.join(CARD, "dictionary", NAME)
+    out = os.path.join(CARD, "dictionaries", NAME)  # where CrossInk-family firmwares list dictionaries
     os.makedirs(out, exist_ok=True)
     offsets, data = {}, bytearray()
     for lemma in sorted(lemmas):
@@ -114,7 +114,7 @@ def main(zip_path, books):
     open(os.path.join(out, "LICENSE.txt"), "w", encoding="utf-8", newline="\n").write(licence)
     os.makedirs(os.path.join(CARD, ".crosspoint"), exist_ok=True)
     open(os.path.join(CARD, ".crosspoint", "dictionary.bin"), "w", encoding="utf-8", newline="").write(
-        f"/dictionary/{NAME}/{NAME}")
+        f"/dictionaries/{NAME}/{NAME}")
     print(f"{len(index)} words ({len(lemmas)} with their own definition), {len(data) // 1024} KB, in {out}")
 
 
