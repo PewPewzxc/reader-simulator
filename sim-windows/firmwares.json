@@ -23,6 +23,13 @@
    "about": "CrossPoint fork with X3, X4 Classic and X4 Pro support. Built and tested v1.6.1 for all three."
   },
   {
+   "name": "Witchhunt Reader",
+   "repo": "jpirnay/witchhunt-reader",
+   "status": "untested",
+   "frame": true,
+   "about": "CrossPoint fork (from Dave Allie's CrossPoint, MIT) by jpirnay, for the X4, X3 and X4 Pro (and the LilyGo T5 S3, which the simulator does not have). No simulator setup of its own; the reader simulator adds one (adapter.py, crosspoint-simulator library). Its freeink-sdk submodule is jpirnay's public fork. Added 2026-10-20, not built yet."
+  },
+  {
    "name": "YACP",
    "repo": "Sichroteph/YACP",
    "status": "ready",
