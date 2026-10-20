@@ -246,6 +246,17 @@ namespace ReaderSimulator
             ControlsPage.Visibility = NavControls.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        // Only these two pages open: the links are fixed, not read from the feed.
+        static readonly string[] Links = { "https://github.com/PewPewzxc", "https://www.linkedin.com/in/alireza-pakseresht-koubijari/" };
+
+        void Link_Click(object sender, RoutedEventArgs e)
+        {
+            var url = (sender as FrameworkElement)?.Tag as string;
+            if (Array.IndexOf(Links, url) < 0) return;
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+            catch (Exception ex) { MessageBox.Show(this, "Could not open the browser: " + ex.Message, "Reader Simulator"); }
+        }
+
         void Battery_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (BatteryText == null) return;
