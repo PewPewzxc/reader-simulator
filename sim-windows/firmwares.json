@@ -6,7 +6,7 @@
    "repo": "PewPewzxc/VARAGH",
    "status": "ready",
    "frame": true,
-   "about": "CrossInk fork: dictionaries, Persian, games, Control Center. Built and tested 1.2.1 for X4 Pro, X4 Classic and X3. Note: its freeink-sdk submodule (PewPewzxc/freeink-sdk) is not public, so a clean download (and the GitHub workflow) cannot build it until that repo is public; the local build used the owner's copy at the same commit."
+   "about": "CrossInk fork: dictionaries, Persian, games, Control Center. Built and tested 1.2.1 for X4 Pro, X4 Classic and X3. Its freeink-sdk submodule (PewPewzxc/freeink-sdk) is private; the build workflows fetch it with a read-only deploy key."
   },
   {
    "name": "CrossPoint Reader",
@@ -140,7 +140,7 @@
   {
    "name": "CrossPlant",
    "repo": "0xKnowles/CrossPlant",
-   "status": "broken",
+   "status": "untested",
    "frame": false,
    "about": "CrossPoint fork. Its simulator setup does not build: it needs HWCDC::read(buffer, size), which the simulator library lacks (tested CrossPlant_v0.1.4)."
   },

@@ -1,6 +1,7 @@
 # Plan: ready-made Windows downloads of the reader simulator
 
-Nothing here is published yet. Publishing needs your yes.
+Done: this plan is live. The `Build firmwares` workflow publishes the builds and the `feed` download list, and
+`app.yml` publishes the Windows app (`app-v*` releases). The web page has its own pipeline (`web/README.md`).
 
 ## What a user gets
 1. **One download, `ReaderSimulator-Windows.zip`** (about 15 MB) from the tool's GitHub Releases page:

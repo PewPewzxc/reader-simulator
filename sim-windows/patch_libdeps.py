@@ -256,3 +256,62 @@ if group_end("device frame"):
     # woken by clicking its keys, and its window was never repainted. Same loop in both libraries.
     patch(G, '      if (e.type == SDL_KEYDOWN && !e.key.repeat &&\n          scancodeToButton(e.key.keysym.scancode) >= 0) {\n        clearButtonState();\n        SimulatorLifecycle::rebootAsPowerWake();\n      }\n',
           '      if (e.type == SDL_KEYDOWN && !e.key.repeat &&\n          scancodeToButton(e.key.keysym.scancode) >= 0) {\n        clearButtonState();\n        SimulatorLifecycle::rebootAsPowerWake();\n      }\n      // Device frame while asleep: a click on a drawn key wakes the reader like the real key, and the\n      // window is drawn again when Windows asks (otherwise the sleep screen looks frozen).\n      if (simFrameActive() && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {\n        float nx = 0.0f, ny = 0.0f;\n        const std::string key = simFrameHit(e.button.x, e.button.y, &nx, &ny);\n        if (!key.empty() && key != "SCREEN") {\n          clearButtonState();\n          SimulatorLifecycle::rebootAsPowerWake();\n        }\n      }\n      if (simFrameActive() && e.type == SDL_WINDOWEVENT) {\n        extern HalDisplay display;\n        simFrameRequestRedraw();\n        display.presentIfNeeded();\n      }\n')
+
+
+# ---- API compatibility -----------------------------------------------------------------------------------
+# Firmwares are written against one simulator library version; many pin an older one that lacks functions the
+# newer crossink-simulator has (CrossNotes 1.1.1.1, CrossPlant, ...). These add the missing ones, with the newer
+# library's names and arguments, to the library a firmware downloaded. The firmware's own code is never changed.
+# Each is added only when the library does not have it yet, so a library that has it keeps its own.
+def add_member(path, anchor, have, code, before=False):
+    """Put `code` after (or before) the unique `anchor` line(s), unless the file already matches the regex `have`."""
+    if not os.path.isfile(path):
+        return
+    s = open(path, encoding="utf-8").read()
+    if re.search(have, s):
+        return
+    if s.count(anchor) != 1:
+        print(f"patch_libdeps: compat skipped, anchor not found in {path}: {anchor.splitlines()[0][:60]!r}")
+        return
+    s = s.replace(anchor, code + anchor if before else anchor + code)
+    open(path, "w", encoding="utf-8").write(s)
+
+
+def add_to_class(path, class_head, have, code):
+    """Put `code` right after the first 'public:' of the class that `class_head` opens."""
+    if not os.path.isfile(path):
+        return
+    s = open(path, encoding="utf-8").read()
+    if re.search(have, s) or s.count(class_head) != 1:
+        return
+    at = s.find("public:\n", s.index(class_head))
+    if at < 0:
+        return
+    at += len("public:\n")
+    open(path, "w", encoding="utf-8").write(s[:at] + code + s[at:])
+
+
+SRC = L + "/simulator/src/"
+# USB serial: buffer sizes (file transfer over USB) and a block read (CrossNotes, CrossPlant).
+add_to_class(SRC + "HardwareSerial.h", "class HWCDC : public Stream {", r"setRxBufferSize\s*\(",
+             "  size_t setRxBufferSize(size_t) { return 0; }  // reader simulator: no USB serial here\n"
+             "  size_t setTxBufferSize(size_t) { return 0; }\n")
+add_to_class(SRC + "HardwareSerial.h", "class HWCDC : public Stream {", r"read\s*\(\s*(const\s+)?uint8_t\s*\*",
+             "  size_t read(uint8_t *buffer, size_t size) { (void)buffer; (void)size; return 0; }\n")
+# Wi-Fi: disconnect with a timeout, which reports whether it finished (crossink-simulator's form).
+add_member(SRC + "WiFi.h", "  void disconnect(bool wifioff = false, bool eraseap = false) {\n",
+           r"disconnect\s*\([^)]*,[^)]*,[^)]*\)",
+           "  bool disconnect(bool wifioff, bool eraseap, unsigned long timeoutMs) {\n"
+           "    (void)timeoutMs;\n    disconnect(wifioff, eraseap);\n    return true;\n  }\n", before=True)
+# Power button: the wake check with the firmware's settings (crossink-simulator's form).
+add_member(SRC + "HalGPIO.h", "  bool verifyPowerButtonWakeup();\n", r"verifyPowerButtonWakeup\s*\(\s*uint16_t",
+           "  bool verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed) {\n"
+           "    (void)requiredDurationMs;\n    (void)shortPressAllowed;\n    return verifyPowerButtonWakeup();\n  }\n")
+# SD card file dates from the reader's clock offset: the simulator uses the PC's clock as it is.
+add_to_class(SRC + "HalStorage.h", "class HalStorage {", r"installDateTimeCallback\s*\(",
+             "  void installDateTimeCallback(const uint8_t *utcOffsetQuarterHoursBiased) { (void)utcOffsetQuarterHoursBiased; }\n")
+# FreeRTOS: deleting a semaphore (a no-op: this library's static semaphores must not be freed).
+if os.path.isfile(SRC + "freertos/semphr.h") and not re.search(r"void\s+vSemaphoreDelete", open(SRC + "freertos/semphr.h", encoding="utf-8").read()):
+    with open(SRC + "freertos/semphr.h", "a", encoding="utf-8") as f:
+        f.write("\n// reader simulator: firmwares delete semaphores they no longer need; a no-op here\n"
+                "inline void vSemaphoreDelete(SemaphoreHandle_t) {}\n")
