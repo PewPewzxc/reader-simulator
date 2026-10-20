@@ -12,6 +12,9 @@ $dir = Join-Path $t 'Reader Simulator'
 New-Item -ItemType Directory $t | Out-Null
 function Step($name, $ok) { "{0,-34} {1}" -f $name, $(if ($ok) { 'PASS' } else { 'FAIL' }); if (-not $ok) { $script:failed = $true } }
 $failed = $false
+# 8.3 short names (C:\Users\RUNNER~1, from TEMP on GitHub's runners) to long ones, so equal paths compare equal
+Add-Type -Namespace RSim -Name Paths -MemberDefinition '[DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern uint GetLongPathName(string s, System.Text.StringBuilder l, uint n);'
+function LongPath($p) { if (-not $p) { return $p }; $b = New-Object Text.StringBuilder 2048; if ([RSim.Paths]::GetLongPathName($p, $b, 2048)) { $b.ToString() } else { $p } }
 function Target($l) { if (Test-Path $l) { (New-Object -ComObject Shell.Application).Namespace((Split-Path $l)).ParseName((Split-Path -Leaf $l)).GetLink.Path } } # Unicode (WScript.Shell gives "?")
 $setup = Join-Path $here 'Output\ReaderSimulator-Setup.exe'
 $uninstKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{6C2B7E7A-3F0D-4C51-9A57-2E6B3C8D9F41}_is1'
@@ -25,10 +28,10 @@ Step 'silent per-user install' ($p.ExitCode -eq 0 -and (Test-Path "$dir\ReaderSi
 $lnk = Join-Path ([Environment]::GetFolderPath('Programs')) 'Reader Simulator.lnk'
 $tgt = try { Target $lnk } catch { $null }
 "shortcut: $lnk -> $tgt"
-# no shell in a non-interactive session (GitHub Actions) answers with a target: then the shortcut file must exist
-Step 'Start-menu shortcut' ($(if ($tgt) { $tgt -eq "$dir\ReaderSimulator.exe" } else { Test-Path $lnk }))
+# when no shell answers with a target, the shortcut file must at least exist
+Step 'Start-menu shortcut' ($(if ($tgt) { (LongPath $tgt) -eq (LongPath "$dir\ReaderSimulator.exe") } else { Test-Path $lnk }))
 # by target: a desktop shortcut of an existing install may be there
-Step 'no desktop shortcut by default' ((Target (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Reader Simulator.lnk')) -ne "$dir\ReaderSimulator.exe")
+Step 'no desktop shortcut by default' ((LongPath (Target (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Reader Simulator.lnk'))) -ne (LongPath "$dir\ReaderSimulator.exe"))
 "installed size: {0:N0} bytes" -f ((Get-ChildItem $dir -Recurse -File | Measure-Object Length -Sum).Sum)
 
 $oldPath = $env:PATH; $oldLad = $env:LOCALAPPDATA
