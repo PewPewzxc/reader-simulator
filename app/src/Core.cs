@@ -158,6 +158,7 @@ namespace ReaderSimulator
         public static readonly string[] PackageFiles =
             { "program.exe", "SDL2.dll", "libgcc_s_seh-1.dll", "libstdc++-6.dll", "libwinpthread-1.dll", "LICENSE-firmware.txt", "build.json" };
         public static string FramesDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "frames");
+        public static string SamplesDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "samples");
         public static string BuildDir(Build b) => Path.Combine(Root, "builds", b.Id);
         public static string CardDir(Build b) => Path.Combine(Root, "cards", b.Id);
         public static string SdCard(Build b) => Path.Combine(CardDir(b), "fs_");
@@ -253,9 +254,28 @@ namespace ReaderSimulator
             return found;
         }
 
+        /// <summary>Free books and an English dictionary (samples\ next to the app), copied once onto each SD card.
+        /// Files already on the card are kept, so a reader's own dictionary choice (.crosspoint\dictionary.bin) stays.</summary>
+        public static bool AddSamples(Build b)
+        {
+            var card = SdCard(b);
+            var mark = Path.Combine(card, ".rsim-samples");
+            if (File.Exists(mark) || !Directory.Exists(SamplesDir)) return false;
+            foreach (var src in Directory.GetFiles(SamplesDir, "*", SearchOption.AllDirectories))
+            {
+                var dst = Path.Combine(card, src.Substring(SamplesDir.Length).TrimStart(Path.DirectorySeparatorChar));
+                if (File.Exists(dst)) continue;
+                Directory.CreateDirectory(Path.GetDirectoryName(dst));
+                File.Copy(src, dst);
+            }
+            File.WriteAllText(mark, "sample books and dictionary added" + Environment.NewLine);
+            return true;
+        }
+
         public static Process Start(Build b, int battery, bool usb, IDictionary<string, string> extraEnv = null)
         {
             Directory.CreateDirectory(SdCard(b));
+            try { AddSamples(b); } catch (Exception) { } // a full or read-only disk must not stop the simulator
             var psi = new ProcessStartInfo(Path.Combine(BuildDir(b), "program.exe"))
             {
                 WorkingDirectory = AnsiSafe(CardDir(b)), UseShellExecute = false, CreateNoWindow = true,

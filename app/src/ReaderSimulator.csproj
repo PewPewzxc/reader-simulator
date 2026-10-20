@@ -29,6 +29,15 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Resource Include="..\ReaderSimulator.ico" Link="ReaderSimulator.ico" />
-    <Content Include="..\..\..\device-frames\frames\*.png;..\..\..\device-frames\frames\*.keys" LinkBase="frames" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <PropertyGroup>
+    <!-- the repo has device-frames/ and samples/ next to app/; the PC this was first built on has them one level up -->
+    <RepoRoot Condition="Exists('..\..\device-frames')">..\..\</RepoRoot>
+    <RepoRoot Condition="'$(RepoRoot)' == ''">..\..\..\</RepoRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(RepoRoot)device-frames\frames\*.png;$(RepoRoot)device-frames\frames\*.keys" LinkBase="frames" CopyToOutputDirectory="PreserveNewest" />
+    <!-- free books and a dictionary, copied onto each new simulated SD card (Store.AddSamples) -->
+    <Content Include="$(RepoRoot)samples\sd-card\**\*" LinkBase="samples" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

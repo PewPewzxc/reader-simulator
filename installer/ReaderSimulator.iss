@@ -1,7 +1,9 @@
 ; Reader Simulator setup (Inno Setup 6). Per-user, no admin.
 ; Build: ..\tools\inno\ISCC.exe ReaderSimulator.iss   (after ..\app\build.ps1)
 #define AppName "Reader Simulator"
-#define AppVersion "1.0.0"
+#ifndef AppVersion
+  #define AppVersion "1.0.0"
+#endif
 #define AppExe "ReaderSimulator.exe"
 #define Bin "..\app\bin"
 
@@ -42,6 +44,7 @@ Source: "{#Bin}\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Bin}\{#AppExe}.config"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Bin}\frames\*.png"; DestDir: "{app}\frames"; Flags: ignoreversion
 Source: "{#Bin}\frames\*.keys"; DestDir: "{app}\frames"; Flags: ignoreversion
+Source: "{#Bin}\samples\*"; DestDir: "{app}\samples"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]

@@ -21,7 +21,8 @@ The reader turns when the firmware turns the page sideways:
 ![X4 Pro turned](docs/live-x4-pro-turned-right.png)
 
 ## How to use it
-1. Download `ReaderSimulator-Setup.exe` from the [Releases](../../releases) page and run it.
+1. Download [`ReaderSimulator-Setup.exe`](https://github.com/PewPewzxc/reader-simulator/releases/latest/download/ReaderSimulator-Setup.exe)
+   (also on the [Releases](../../releases) page) and run it.
    No administrator rights are needed.
 2. Windows may say "Windows protected your PC": the program is not signed (a certificate costs money every year).
    Click **More info**, then **Run anyway**.

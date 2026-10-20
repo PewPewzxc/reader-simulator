@@ -218,7 +218,7 @@ jobs:
           if gh release view "$RSIM_TAG" --repo "$RSIM_REPO" > /dev/null 2>&1; then
             gh release upload "$RSIM_TAG" out/builds/*.zip out/index.json --clobber --repo "$RSIM_REPO"
           else
-            gh release create "$RSIM_TAG" out/builds/*.zip out/index.json --repo "$RSIM_REPO" \
+            gh release create "$RSIM_TAG" out/builds/*.zip out/index.json --repo "$RSIM_REPO" --latest=false \
               --title "Simulator builds $RSIM_TAG" \
               --notes "Windows simulator builds of the firmwares in firmwares.json. index.json lists every version offered on this date (also builds from earlier releases); each zip is checked against its SHA-256."
           fi
