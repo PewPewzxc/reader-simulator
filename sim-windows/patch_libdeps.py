@@ -311,7 +311,36 @@ add_member(SRC + "HalGPIO.h", "  bool verifyPowerButtonWakeup();\n", r"verifyPow
 add_to_class(SRC + "HalStorage.h", "class HalStorage {", r"installDateTimeCallback\s*\(",
              "  void installDateTimeCallback(const uint8_t *utcOffsetQuarterHoursBiased) { (void)utcOffsetQuarterHoursBiased; }\n")
 # FreeRTOS: deleting a semaphore (a no-op: this library's static semaphores must not be freed).
-if os.path.isfile(SRC + "freertos/semphr.h") and not re.search(r"void\s+vSemaphoreDelete", open(SRC + "freertos/semphr.h", encoding="utf-8").read()):
+if os.path.isfile(SRC + "freertos/semphr.h") and "vSemaphoreDelete" not in open(SRC + "freertos/semphr.h", encoding="utf-8").read():
     with open(SRC + "freertos/semphr.h", "a", encoding="utf-8") as f:
         f.write("\n// reader simulator: firmwares delete semaphores they no longer need; a no-op here\n"
                 "inline void vSemaphoreDelete(SemaphoreHandle_t) {}\n")
+# struct timeval: on the reader Arduino.h brings in sys/time.h, and firmwares rely on it (CrossPlant).
+A = SRC + "Arduino.h"
+if os.path.isfile(A) and "sys/time.h" not in open(A, encoding="utf-8").read():
+    a = open(A, encoding="utf-8").read()
+    at = a.find("#include")
+    if at >= 0:
+        open(A, "w", encoding="utf-8").write(a[:at] + "#include <sys/time.h>  // reader simulator: as on the reader\n" + a[at:])
+# Setting the clock (CrossPoint 2.0): Emscripten declares settimeofday but has none; the simulator keeps the PC's
+# clock. Weak, so a C library that has one keeps its own.
+if os.path.isdir(SRC) and not os.path.isfile(SRC + "rsim_compat.cpp"):
+    open(SRC + "rsim_compat.cpp", "w", encoding="utf-8").write(
+        "// Added by the reader simulator (patch_libdeps.py): functions some firmwares need that this platform lacks.\n"
+        "struct timeval;\nstruct timezone;\n"
+        "extern \"C\" __attribute__((weak)) int settimeofday(const struct timeval *, const struct timezone *) { return 0; }\n")
+# The newest library's link stubs name headers only the newest firmwares have (LcpLicense.h, Crypto.h,
+# ContentProtection.h): an older firmware without them builds without that part.
+LS = SRC + "firmware_link_stubs.cpp"
+if os.path.isfile(LS):
+    t = open(LS, encoding="utf-8").read()
+    inc = "#include <ContentProtection.h>\n#include <Crypto.h>\n#include <LcpLicense.h>\n"
+    end = "  err.clear();\n  return nullptr;\n}\n"
+    if inc in t and "RSIM_HAS_LCP" not in t and t.count(end) == 1 and t.count("namespace freeink::content {") >= 1:
+        guard = ("#if __has_include(<ContentProtection.h>) && __has_include(<Crypto.h>) && __has_include(<LcpLicense.h>)\n"
+                 "#define RSIM_HAS_LCP 1\n" + inc + "#else\n#define RSIM_HAS_LCP 0\n#endif\n")
+        t = t.replace(inc, guard)
+        a = t.index("namespace freeink::content {")
+        b = t.index(end) + len(end)
+        t = t[:a] + "#if RSIM_HAS_LCP\n" + t[a:b] + "#endif  // RSIM_HAS_LCP\n" + t[b:]
+        open(LS, "w", encoding="utf-8").write(t)

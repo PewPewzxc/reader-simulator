@@ -8,7 +8,7 @@ import os
 import sys
 
 # x/y in mm from the body's top-left corner; keys: (name, side, start, end).
-# v2/v3: numbers and colours from two rounds of three reviews against the photos (REVIEWS.md).
+# Sizes from the readers' official dimensions, checked against photos.
 MODELS = {
     "x3": dict(
         body=(63.7, 97.6), radius=3.6, panel=(528, 792), screen=(5.5, 5.0, 57.8, 83.5), key_out=0.8,

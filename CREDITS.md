@@ -1,6 +1,7 @@
 # Credits
 
-This project only puts other people's work together for Windows. Thank you to all of them.
+Reader Simulator puts other people's work together for the browser and Windows. Thank you to all of them.
+The web simulator's own credits are in [web/CREDITS.md](web/CREDITS.md).
 
 ## Simulator libraries
 The firmwares are built against one of these desktop simulator libraries (they replace the reader's hardware):
@@ -27,15 +28,31 @@ and keep its MIT licence.
 
 | Firmware | Authors | Licence |
 | --- | --- | --- |
-| [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS) | ashokslsk and contributors (licence: Copyright (c) 2025 Dave Allie) | MIT |
-| [CrossDiTo](https://github.com/dito94/CrossDiTo) | dito94 and contributors (licence: Copyright (c) 2025 Dave Allie) | MIT |
-| [CrossNotes](https://github.com/HilbergK/CrossNotes) | HilbergK and contributors (licence: Copyright (c) 2025 Dave Allie) | MIT |
-| [duet](https://github.com/lauren-alexandra/duet-xteink) | lauren-alexandra and contributors (licence: Copyright (c) 2025 Dave Allie; 2026 Lauren Landau, for Duet modifications and original additions) | MIT |
-| [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | padge01 and contributors (licence: Copyright (c) 2025 Dave Allie) | MIT |
-| [VARAGH](https://github.com/PewPewzxc/VARAGH) | PewPewzxc and contributors (licence: Copyright (c) 2025 Dave Allie; 2026 PewPewzxc (VARAGH changes)) | MIT |
-| [YACP](https://github.com/Sichroteph/YACP) | Sichroteph and contributors (licence: Copyright (c) 2025 Dave Allie) | MIT |
-| [CrossInk](https://github.com/uxjulia/crossink) | uxjulia and contributors (licence: Copyright (c) 2025 Dave Allie) | MIT |
+| [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS) | ashokslsk and contributors (licence: Copyright (c) 2025 Dave Allie
+) | MIT |
+| [CrossDiTo](https://github.com/dito94/CrossDiTo) | dito94 and contributors (licence: Copyright (c) 2025 Dave Allie
+) | MIT |
+| [CrossNotes](https://github.com/HilbergK/CrossNotes) | HilbergK and contributors (licence: Copyright (c) 2025 Dave Allie
+) | MIT |
+| [duet](https://github.com/lauren-alexandra/duet-xteink) | lauren-alexandra and contributors (licence: Copyright (c) 2025 Dave Allie
+; 2026 Lauren Landau, for Duet modifications and original additions
+) | MIT |
+| [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | padge01 and contributors (licence: Copyright (c) 2025 Dave Allie
+) | MIT |
+| [VARAGH](https://github.com/PewPewzxc/VARAGH) | PewPewzxc and contributors (licence: Copyright (c) 2025 Dave Allie
+; 2026 PewPewzxc (VARAGH changes)
+) | MIT |
+| [YACP](https://github.com/Sichroteph/YACP) | Sichroteph and contributors (licence: Copyright (c) 2025 Dave Allie
+) | MIT |
+| [CrossInk](https://github.com/uxjulia/crossink) | uxjulia and contributors (licence: Copyright (c) 2025 Dave Allie
+) | MIT |
 
 ## Device drawings
 `device-frames/` are our own drawings of the Xteink X3, X4 Classic and X4 Pro (MIT, this repo), made from the
 official sizes. Xteink is named only to say which reader is simulated; this project is not made by Xteink.
+
+## Sample SD card
+| Part | Licence |
+| --- | --- |
+| Pride and Prejudice, The Adventures of Sherlock Holmes ([Standard Ebooks](https://standardebooks.org)) | CC0 1.0 (public domain) |
+| English dictionary from [WordNet 3.0](https://wordnet.princeton.edu), (c) Princeton University | WordNet License (`samples/sd-card/dictionaries/wordnet/LICENSE.txt`) |
