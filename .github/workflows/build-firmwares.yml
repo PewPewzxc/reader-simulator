@@ -235,3 +235,4 @@ jobs:
               --notes "index.json: every firmware version the app offers, with the release each zip is in. Updated by the Build firmwares workflow."
           fi
           gh release upload "$FEED_TAG" out/index.json --clobber --repo "$RSIM_REPO"
+          REPO="$RSIM_REPO" bash sim-windows/tools/prune_releases.sh builds- out/index.json  # dated releases nothing offers any more

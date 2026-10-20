@@ -106,3 +106,12 @@ jobs:
               --title "Reader Simulator $($env:TAG.Substring(5)) for Windows" --notes $notes
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Remove older app releases
+        # only the newest setup stays on the Releases page
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: app-v${{ steps.version.outputs.version }}
+        run: |
+          $old = gh release list --repo $env:REPO --limit 100 --json tagName --jq '.[].tagName | select(startswith("app-v"))' | Where-Object { $_ -and $_ -ne $env:TAG }
+          foreach ($t in $old) { gh release delete $t --repo $env:REPO --cleanup-tag --yes; "deleted $t" }
