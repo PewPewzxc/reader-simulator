@@ -134,11 +134,9 @@ public issue.
 | [`samples/`](samples/) | Books and dictionary placed on every new simulated SD card |
 | [`.github/workflows/`](.github/workflows/) | Builds, tests and releases |
 
-The device drawings are original artwork made from the readers' official dimensions:
+The device drawings are original artwork made from the readers' official dimensions (X4 Pro, X4 Classic, X3):
 
-| X4 Pro | X4 Classic | X3 |
-| :---: | :---: | :---: |
-| <img src="docs/x4-pro-v3.png" alt="X4 Pro drawing" width="200"> | <img src="docs/x4-classic-v3.png" alt="X4 Classic drawing" width="200"> | <img src="docs/x3-v3.png" alt="X3 drawing" width="200"> |
+<p align="center"><img src="docs/devices.png" alt="Drawings of the X4 Pro, X4 Classic and X3" width="640"></p>
 
 ## Contributing
 
