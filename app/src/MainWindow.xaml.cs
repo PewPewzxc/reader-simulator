@@ -105,7 +105,7 @@ namespace ReaderSimulator
         void Populate()
         {
             FirmwareList.Items.Clear();
-            foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name).OrderBy(g => g.First().Name, StringComparer.OrdinalIgnoreCase))
+            foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name)) // the feed's order: VARAGH, CrossPoint Reader, CrossInk, then the rest
             {
                 var first = g.First();
                 var row = new Grid { Tag = g.Key };

@@ -4,8 +4,8 @@
   python -I tools/feed.py merge <new index.json> <previous index.json> <refs.tsv> <out index.json> [status ...]
       new builds plus the previous ones still wanted: a version stays while refs.tsv lists it. A firmware
       missing from refs.tsv entirely (its GitHub lookup failed, or this run built other statuses) keeps its
-      builds while its catalogue status is ready, untested or one of the statuses given. Sorted by firmware,
-      newest version first, then model.
+      builds while its catalogue status is ready, untested or one of the statuses given. Sorted by firmware (in
+      firmwares.json's order), newest version first, then model.
 A missing or empty previous file counts as an empty list."""
 import datetime
 import json
@@ -57,7 +57,8 @@ def merge(new_path, previous_path, refs_path, out_path, statuses):
     kept = [b for b in previous if b["id"] not in ids and (
         (b["repo"], b["ref"]) in rank or (b["repo"] not in looked_up and b["repo"] in still_offered))]
     builds = new + kept
-    builds.sort(key=lambda b: (b["name"].casefold(), b["repo"], rank.get((b["repo"], b["ref"]), len(rank)),
+    order = {f["repo"]: i for i, f in enumerate(catalogue)}  # firmwares.json lists them in the order to show
+    builds.sort(key=lambda b: (order.get(b["repo"], len(order)), b["name"].casefold(), b["repo"], rank.get((b["repo"], b["ref"]), len(rank)),
                                MODELS.index(b["model"]) if b["model"] in MODELS else len(MODELS)))
     feed = {"schema": 1, "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "builds": builds}
