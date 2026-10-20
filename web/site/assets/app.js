@@ -343,18 +343,31 @@ for (const type of ['keydown', 'keyup']) {
 // ---- about ----
 function credits() {
   const repos = firmwareList();
+  const versionsOf = r => [...new Map(builds.filter(x => x.repo === r.repo).map(x => [x.ref, x.version])).values()];
+  $('aboutStats').replaceChildren(...[[repos.length, 'firmwares'], [new Set(builds.map(x => x.repo + '@' + x.ref)).size, 'versions'],
+    [new Set(builds.map(x => x.model)).size, 'readers']].map(([n, what]) => {
+    const el = document.createElement('span');
+    el.innerHTML = '<b></b> ';
+    el.firstChild.textContent = n;
+    el.append(what);
+    return el;
+  }));
   $('fwCredits').replaceChildren(...repos.map(r => {
     const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = 'https://github.com/' + r.repo;
-    a.textContent = r.name;
-    const versions = [...new Set(builds.filter(x => x.repo === r.repo).map(x => x.ref))].join(', ');
-    li.append(a, ' by ' + r.repo.split('/')[0] + ' and contributors (' + r.repo + ', ' + versions + '), licence ' + r.licence +
-      '. Each build includes its licence: ');
-    const l = document.createElement('a');
-    l.href = 'builds/' + r.id + '/LICENSE-firmware.txt';
-    l.textContent = 'LICENSE';
-    li.append(l);
+    li.innerHTML = '<div class="fw-main"><a target="_blank" rel="noopener noreferrer"></a><span class="fw-by"></span></div>' +
+      '<div class="fw-versions"></div><div class="fw-meta"><span class="lic"></span><a class="fw-lic">Licence</a></div>';
+    const name = li.querySelector('a');
+    name.href = 'https://github.com/' + r.repo;
+    name.textContent = r.name;
+    li.querySelector('.fw-by').textContent = 'by ' + r.repo.split('/')[0] + ' and contributors';
+    li.querySelector('.fw-versions').replaceChildren(...versionsOf(r).map(v => {
+      const c = document.createElement('span');
+      c.className = 'vchip';
+      c.textContent = v;
+      return c;
+    }));
+    li.querySelector('.lic').textContent = r.licence;
+    li.querySelector('.fw-lic').href = 'builds/' + r.id + '/LICENSE-firmware.txt';
     return li;
   }));
 }
@@ -381,8 +394,13 @@ addEventListener('pagehide', () => { saveCard(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveCard(); });
 showView();
 
+// A version is named by its release (v1.8.1-yacp.9 -> 1.8.1-yacp.9): the number inside the source is often not
+// updated between releases. A build from a branch (main) keeps that number.
+const versionLabel = b => /^v?\d/.test(b.ref) ? b.ref.replace(/^v(?=\d)/, '') : b.version;
+
 fetch('builds.json').then(r => r.json()).then(j => {
   builds = j.builds;
+  for (const b of builds) b.version = versionLabel(b);
   const b = builds.find(x => x.id === params.get('b'));
   if (b) sel = { model: b.model, repo: b.repo, ref: b.ref };
   render();

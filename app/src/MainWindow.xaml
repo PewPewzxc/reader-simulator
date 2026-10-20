@@ -19,6 +19,22 @@
         <Style TargetType="TextBlock"><Setter Property="FontSize" Value="12.5" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
       </Style.Resources>
     </Style>
+    <Style x:Key="Lic" TargetType="Border">
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlStroke}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="Padding" Value="6,0,6,1" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Style.Resources>
+        <Style TargetType="TextBlock"><Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Text2}" /></Style>
+      </Style.Resources>
+    </Style>
+    <Style x:Key="PartHead" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource Text2}" />
+      <Setter Property="Margin" Value="0,14,0,0" />
+    </Style>
     <Style x:Key="CtlResult" TargetType="TextBlock">
       <Setter Property="Foreground" Value="{DynamicResource Text2}" />
       <Setter Property="TextAlignment" Value="Right" />
@@ -241,55 +257,77 @@
       </StackPanel>
     </ScrollViewer>
 
-    <!-- About page -->
+    <!-- About page: a header with the project and its maker, then three columns -->
     <ScrollViewer x:Name="AboutPage" Grid.Column="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="16,18,24,16">
-      <StackPanel MaxWidth="820" HorizontalAlignment="Left">
-        <TextBlock Style="{StaticResource H1}" Text="About" />
-        <Border Style="{StaticResource CardBox}">
-          <StackPanel>
-            <TextBlock Style="{StaticResource H2}" x:Name="AboutTitle" Text="Reader Simulator" />
-            <TextBlock Style="{StaticResource Body}" Text="Try e-reader firmwares for the Xteink X4 Pro, X4 Classic and X3 on your PC, before you put them on a real reader. Ready-made simulator builds are downloaded from the list on GitHub the first time you use them." />
-            <TextBlock Style="{StaticResource Caption}" x:Name="AboutFeed" Margin="0,10,0,0" />
-            <WrapPanel Margin="0,14,0,0">
-              <TextBlock Style="{StaticResource Caption}" FontSize="13" Text="Made by PewPewzxc" VerticalAlignment="Center" Margin="0,0,12,0" />
-              <Button Style="{StaticResource Btn}" Margin="0,0,8,0" Tag="https://github.com/PewPewzxc" Click="Link_Click" ToolTip="https://github.com/PewPewzxc">
-                <StackPanel Orientation="Horizontal"><Path Data="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" Fill="{DynamicResource Text}" Width="16" Height="16" Stretch="Uniform" /><TextBlock Text="GitHub" Margin="8,0,0,0" /></StackPanel>
-              </Button>
-              <Button Style="{StaticResource Btn}" Margin="0,0,8,0" Tag="https://www.linkedin.com/in/alireza-pakseresht-koubijari/" Click="Link_Click" ToolTip="https://www.linkedin.com/in/alireza-pakseresht-koubijari/">
-                <StackPanel Orientation="Horizontal"><Path Data="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" Fill="{DynamicResource Text}" Width="16" Height="16" Stretch="Uniform" /><TextBlock Text="LinkedIn" Margin="8,0,0,0" /></StackPanel>
-              </Button>
-            </WrapPanel>
-          </StackPanel>
-        </Border>
-        <Border Style="{StaticResource CardBox}">
-          <StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-              <TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" Foreground="{DynamicResource Accent}" />
-              <TextBlock Style="{StaticResource H2}" Text="Please read" Margin="10,0,0,0" />
+      <StackPanel MaxWidth="1180" HorizontalAlignment="Left">
+        <Border Style="{StaticResource CardBox}" Padding="28,24">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <StackPanel Margin="0,0,32,0" VerticalAlignment="Center">
+              <TextBlock Text="ABOUT" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Accent}" Margin="0,0,0,6" />
+              <TextBlock x:Name="AboutTitle" Text="Reader Simulator" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,10" />
+              <TextBlock Style="{StaticResource Body}" FontSize="15" Foreground="{DynamicResource Text2}" MaxWidth="560" HorizontalAlignment="Left"
+                         Text="Try e-reader firmwares for the Xteink X4 Pro, X4 Classic and X3 on your PC, before you put them on a real reader. Ready-made simulator builds are downloaded from the list on GitHub the first time you use them." />
+              <TextBlock Style="{StaticResource Caption}" x:Name="AboutFeed" Margin="0,12,0,0" />
             </StackPanel>
-            <TextBlock Style="{StaticResource Body}" xml:space="preserve">This is an unofficial tool. It is not made by, affiliated with or endorsed by Xteink.
-The simulator is approximate: screens, speed, battery and buttons can differ from a real reader. Use it at your own risk; it comes with no warranty.</TextBlock>
-          </StackPanel>
+            <Border Grid.Column="1" Background="{DynamicResource Bg}" BorderBrush="{DynamicResource CardStroke}" BorderThickness="1" CornerRadius="10" Padding="18,16" VerticalAlignment="Center">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Caption}" Text="Made by" />
+                <TextBlock Text="PewPewzxc" FontSize="18" FontWeight="SemiBold" Margin="0,2,0,10" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource Btn}" Margin="0,0,8,0" Tag="https://github.com/PewPewzxc" Click="Link_Click" ToolTip="https://github.com/PewPewzxc">
+                      <StackPanel Orientation="Horizontal"><Path Data="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" Fill="{DynamicResource Text}" Width="16" Height="16" Stretch="Uniform" /><TextBlock Text="GitHub" Margin="8,0,0,0" /></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Btn}" Margin="0,0,8,0" Tag="https://www.linkedin.com/in/alireza-pakseresht-koubijari/" Click="Link_Click" ToolTip="https://www.linkedin.com/in/alireza-pakseresht-koubijari/">
+                      <StackPanel Orientation="Horizontal"><Path Data="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" Fill="{DynamicResource Text}" Width="16" Height="16" Stretch="Uniform" /><TextBlock Text="LinkedIn" Margin="8,0,0,0" /></StackPanel>
+                    </Button>
+                </StackPanel>
+                <Button Style="{StaticResource Btn}" Margin="0,10,0,0" HorizontalAlignment="Left" Tag="https://github.com/PewPewzxc/reader-simulator" Click="Link_Click" Content="Source code on GitHub  &#x2192;" />
+              </StackPanel>
+            </Border>
+          </Grid>
         </Border>
-        <Border Style="{StaticResource CardBox}">
-          <StackPanel>
-            <TextBlock Style="{StaticResource H2}" Text="Privacy" />
-            <TextBlock Style="{StaticResource Body}" Text="No account, no telemetry, no automatic updates. The app only reads the firmware list and downloads the builds you pick, over HTTPS from GitHub. Every download is checked with SHA-256 before it is used. Files stay in %LOCALAPPDATA%\ReaderSimulator." />
+
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="1.5*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="1.1*" /></Grid.ColumnDefinitions>
+          <Border Style="{StaticResource CardBox}" VerticalAlignment="Top">
+            <StackPanel>
+              <TextBlock Style="{StaticResource H2}" Text="Firmwares" Margin="0,0,0,2" />
+              <TextBlock Style="{StaticResource Caption}" FontSize="12.5" Margin="0,0,0,4" Text="By their authors, each under its own licence (LICENSE-firmware.txt in every build)." />
+              <!-- filled from the firmware list: every firmware the app offers, in the app's order -->
+              <StackPanel x:Name="FirmwareCredits" />
+            </StackPanel>
+          </Border>
+          <StackPanel Grid.Column="2">
+            <Border Style="{StaticResource CardBox}">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8"><TextBlock Style="{StaticResource Icon}" Text="&#xE72E;" Foreground="{DynamicResource Accent}" /><TextBlock Style="{StaticResource H2}" Text="Privacy" Margin="10,0,0,0" /></StackPanel>
+                <TextBlock Style="{StaticResource Body}" Foreground="{DynamicResource Text2}" Text="No account, no telemetry, no automatic updates. The app only reads the firmware list and downloads the builds you pick, over HTTPS from GitHub, and checks every download with SHA-256. Files stay in %LOCALAPPDATA%\ReaderSimulator." />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBox}">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8"><TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" Foreground="{DynamicResource Accent}" /><TextBlock Style="{StaticResource H2}" Text="Please read" Margin="10,0,0,0" /></StackPanel>
+                <TextBlock Style="{StaticResource Body}" Foreground="{DynamicResource Text2}" Text="Unofficial: not made by, affiliated with or endorsed by Xteink. The simulator is approximate: screens, speed, battery and buttons can differ from a real reader. Use it at your own risk; it comes with no warranty." />
+              </StackPanel>
+            </Border>
           </StackPanel>
-        </Border>
-        <Border Style="{StaticResource CardBox}">
-          <StackPanel>
-            <TextBlock Style="{StaticResource H2}" Text="Credits" />
-            <TextBlock Style="{StaticResource Body}" FontWeight="SemiBold" Text="Firmwares" Margin="0,0,0,6" />
-            <TextBlock Style="{StaticResource Caption}" FontSize="13" Margin="0,0,0,8" Text="By their authors, each under its own licence, which comes with every build (LICENSE-firmware.txt)." />
-            <!-- filled from the firmware list: every firmware the app offers, in the app's order -->
-            <StackPanel x:Name="FirmwareCredits" Margin="0,0,0,14" />
-            <TextBlock Style="{StaticResource Body}" FontWeight="SemiBold" Text="Also inside" Margin="0,0,0,6" />
-            <TextBlock Style="{StaticResource Body}" xml:space="preserve">Simulator library: crosspoint-simulator / crossink-simulator by Julia Nguyen (uxjulia) and the crosspoint-reader community, MIT licence.
-SDL 2 by the SDL developers, zlib licence.
-Device frames and this app: Reader Simulator contributors, MIT licence.</TextBlock>
-          </StackPanel>
-        </Border>
+          <Border Grid.Column="4" Style="{StaticResource CardBox}" VerticalAlignment="Top">
+            <StackPanel>
+              <TextBlock Style="{StaticResource H2}" Text="Also inside" Margin="0,0,0,2" />
+              <TextBlock Style="{StaticResource PartHead}" Text="SIMULATOR LIBRARY" />
+              <TextBlock Style="{StaticResource Body}" Text="crosspoint-simulator and crossink-simulator by uxjulia" Margin="0,4,0,4" /><Border Style="{StaticResource Lic}" HorizontalAlignment="Left"><TextBlock Text="MIT" /></Border>
+              <TextBlock Style="{StaticResource PartHead}" Text="GRAPHICS AND INPUT" />
+              <TextBlock Style="{StaticResource Body}" Text="SDL 2" Margin="0,4,0,4" /><Border Style="{StaticResource Lic}" HorizontalAlignment="Left"><TextBlock Text="zlib" /></Border>
+              <TextBlock Style="{StaticResource PartHead}" Text="SAMPLE BOOKS" />
+              <TextBlock Style="{StaticResource Body}" Text="Pride and Prejudice, The Adventures of Sherlock Holmes (Standard Ebooks)" Margin="0,4,0,4" /><Border Style="{StaticResource Lic}" HorizontalAlignment="Left"><TextBlock Text="CC0" /></Border>
+              <TextBlock Style="{StaticResource PartHead}" Text="SAMPLE DICTIONARY" />
+              <TextBlock Style="{StaticResource Body}" Text="WordNet 3.0, © 2006 Princeton University" Margin="0,4,0,4" /><Border Style="{StaticResource Lic}" HorizontalAlignment="Left"><TextBlock Text="WordNet licence" /></Border>
+              <TextBlock Style="{StaticResource PartHead}" Text="DEVICE FRAMES AND THIS APP" />
+              <TextBlock Style="{StaticResource Body}" Text="Reader Simulator contributors" Margin="0,4,0,4" /><Border Style="{StaticResource Lic}" HorizontalAlignment="Left"><TextBlock Text="MIT" /></Border>
+            </StackPanel>
+          </Border>
+        </Grid>
       </StackPanel>
     </ScrollViewer>
   </Grid>

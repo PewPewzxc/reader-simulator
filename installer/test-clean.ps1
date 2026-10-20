@@ -50,6 +50,9 @@ try {
   $png = Join-Path $app 'renders\installed-controls.png'
   $p = Start-Process "$dir\ReaderSimulator.exe" -ArgumentList '--render-ui', "`"$png`"", '--page', 'controls', '--feed', "`"$feed`"" -Wait -PassThru
   Step 'render-ui controls page' ($p.ExitCode -eq 0 -and (Test-Path $png))
+  $png = Join-Path $app 'renders\installed-about.png'
+  $p = Start-Process "$dir\ReaderSimulator.exe" -ArgumentList '--render-ui', "`"$png`"", '--page', 'about', '--feed', "`"$feed`"" -Wait -PassThru
+  Step 'render-ui about page' ($p.ExitCode -eq 0 -and (Test-Path $png))
   $bmp = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'ReaderSimulator\cards') -Recurse -Filter selftest.bmp | Select-Object -First 1
   if ($bmp) { Add-Type -AssemblyName System.Drawing; $i = [Drawing.Image]::FromFile($bmp.FullName); $i.Save((Join-Path $app 'renders\selftest-simulator-screen.png'), [Drawing.Imaging.ImageFormat]::Png); $i.Dispose() }
 } finally { $env:PATH = $oldPath; $env:LOCALAPPDATA = $oldLad }
