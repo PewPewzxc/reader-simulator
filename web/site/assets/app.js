@@ -17,6 +17,10 @@ let samplesNote = '';  // shown once the simulator has started
 const status = t => { $('status').textContent = t || ''; };
 const cardDir = b => '/cards/' + b.id;          // working directory; the simulator's SD card is ./fs_
 const cardDb = b => cardDir(b) + '/fs_';        // IDBFS names the IndexedDB database after the mount point
+// The order every firmware list on this page uses: VARAGH, CrossPoint Reader, CrossInk, then the rest (as listed).
+const FIRST = ['PewPewzxc/VARAGH', 'crosspoint-reader/crosspoint-reader', 'uxjulia/crossink'];
+const firstRank = repo => { const i = FIRST.indexOf(repo); return i < 0 ? FIRST.length : i; };
+const firmwareList = () => [...new Map(builds.map(x => [x.repo, x])).values()].sort((a, b) => firstRank(a.repo) - firstRank(b.repo));
 const current = () => builds.find(b => b.repo === sel.repo && b.model === sel.model && b.ref === sel.ref);
 const settings = () => $('battery').value + '/' + ($('usb').checked ? 1 : 0);
 const mb = n => (n / 1e6).toFixed(1) + ' MB';
@@ -26,7 +30,7 @@ function normalise() {
   if (!builds.some(b => b.model === sel.model)) sel.model = 'X4 Pro';
   if (!builds.some(b => b.model === sel.model)) sel.model = builds[0].model;
   if (!builds.some(b => b.repo === sel.repo && b.model === sel.model)) {
-    const pick = builds.find(b => b.repo === 'PewPewzxc/VARAGH' && b.model === sel.model) || builds.find(b => b.model === sel.model);
+    const pick = firmwareList().find(r => builds.some(b => b.repo === r.repo && b.model === sel.model));
     sel.repo = pick.repo;
   }
   if (!current()) sel.ref = builds.find(b => b.repo === sel.repo && b.model === sel.model).ref;
@@ -48,7 +52,7 @@ function render() {
     el.onclick = () => { sel.model = m; render(); };
     return el;
   }));
-  const repos = [...new Map(builds.map(x => [x.repo, x])).values()];
+  const repos = firmwareList();
   $('firmwares').replaceChildren(...repos.map(r => {
     const mine = builds.filter(x => x.repo === r.repo);
     const forModel = mine.filter(x => x.model === sel.model);
@@ -338,7 +342,7 @@ for (const type of ['keydown', 'keyup']) {
 
 // ---- about ----
 function credits() {
-  const repos = [...new Map(builds.map(x => [x.repo, x])).values()];
+  const repos = firmwareList();
   $('fwCredits').replaceChildren(...repos.map(r => {
     const li = document.createElement('li');
     const a = document.createElement('a');
