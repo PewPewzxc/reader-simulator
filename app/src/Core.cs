@@ -60,6 +60,11 @@ namespace ReaderSimulator
             finally { try { File.Delete(tmp); } catch (IOException) { } } // also after a failed (offline) read
         }
 
+        /// <summary>A version is named by its release (v1.8.1-yacp.9 -> 1.8.1-yacp.9): the number inside the source is often
+        /// not updated between releases. A build from a branch (main) keeps that number.</summary>
+        public static string VersionLabel(string gitRef, string version) =>
+            gitRef != null && Regex.IsMatch(gitRef, @"\Av?\d") ? Regex.Replace(gitRef, @"\Av(?=\d)", "") : version ?? gitRef;
+
         /// <summary>Valid builds of a feed; anything malformed or not allowed is skipped.</summary>
         public static List<Build> Parse(string json, Uri feed)
         {
@@ -74,7 +79,7 @@ namespace ReaderSimulator
                     string S(string k) => d.TryGetValue(k, out var v) && v != null ? Convert.ToString(v) : null;
                     var b = new Build
                     {
-                        Id = S("id"), Name = S("name"), Repo = S("repo"), Ref = S("ref"), Version = S("version") ?? S("ref"),
+                        Id = S("id"), Name = S("name"), Repo = S("repo"), Ref = S("ref"), Version = VersionLabel(S("ref"), S("version")),
                         Model = S("model"), Frame = S("frame"), Sha256 = (S("sha256") ?? "").ToLowerInvariant(),
                         Size = d.TryGetValue("size", out var sz) ? Convert.ToInt64(sz) : 0, Url = new Uri(feed, S("url")),
                     };

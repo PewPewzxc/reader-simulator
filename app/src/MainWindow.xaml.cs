@@ -249,40 +249,56 @@ namespace ReaderSimulator
 
         static readonly System.Text.RegularExpressions.Regex RepoRe = new System.Text.RegularExpressions.Regex(@"\A[A-Za-z0-9-]{1,39}/[A-Za-z0-9_.-]{1,100}\z");
 
-        /// <summary>About: every firmware in the list, in the app's order, with its GitHub project and versions.</summary>
+        /// <summary>About: every firmware in the list, in the app's order: its name (a link to its GitHub project),
+        /// its authors and its versions as chips.</summary>
         void FillCredits()
         {
             FirmwareCredits.Children.Clear();
+            bool firstRow = true;
             foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name).OrderBy(g => FirstRank(g.Key)))
             {
                 var first = g.First();
-                var line = new TextBlock { Style = (Style)FindResource("Body"), Margin = new Thickness(0, 0, 0, 6) };
-                line.Inlines.Add(new System.Windows.Documents.Run("•  "));
+                var row = new StackPanel();
+                var name = new TextBlock { FontSize = 15, FontWeight = FontWeights.SemiBold };
                 if (first.Repo != null && RepoRe.IsMatch(first.Repo))
                 {
                     var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(first.Name))
                     {
-                        NavigateUri = new Uri("https://github.com/" + first.Repo), Foreground = (Brush)FindResource("Accent"),
+                        NavigateUri = new Uri("https://github.com/" + first.Repo), Foreground = (Brush)FindResource("Text"), TextDecorations = null,
                     };
                     link.RequestNavigate += (s, e) =>
                     {
                         try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); } catch (Exception) { }
                     };
-                    line.Inlines.Add(link);
-                    line.Inlines.Add(new System.Windows.Documents.Run($" by {first.Repo.Split('/')[0]} and contributors ({first.Repo})"));
+                    name.Inlines.Add(link);
+                    row.Children.Add(name);
+                    row.Children.Add(new TextBlock { Style = (Style)FindResource("Caption"), FontSize = 12.5, Margin = new Thickness(0, 1, 0, 6),
+                        Text = $"by {first.Repo.Split('/')[0]} and contributors" });
                 }
-                else line.Inlines.Add(new System.Windows.Documents.Run(first.Name));
-                var versions = g.Select(b => b.Version).Distinct().ToList();
-                line.Inlines.Add(new System.Windows.Documents.Run($", {Plural(versions.Count, "version")}: {string.Join(", ", versions)}")
-                    { Foreground = (Brush)FindResource("Text2") });
-                FirmwareCredits.Children.Add(line);
+                else { name.Text = first.Name; name.Margin = new Thickness(0, 0, 0, 6); row.Children.Add(name); }
+                var chips = new WrapPanel();
+                foreach (var v in g.Select(b => b.Version).Distinct())
+                    chips.Children.Add(new Border
+                    {
+                        Background = (Brush)FindResource("AccentSoft"), CornerRadius = new CornerRadius(9), Padding = new Thickness(8, 1, 8, 2),
+                        Margin = new Thickness(0, 0, 6, 4), Child = new TextBlock { Text = v, FontSize = 12 },
+                    });
+                row.Children.Add(chips);
+                FirmwareCredits.Children.Add(new Border
+                {
+                    BorderBrush = (Brush)FindResource("CardStroke"), BorderThickness = new Thickness(0, firstRow ? 0 : 1, 0, 0),
+                    Padding = new Thickness(0, 12, 0, 8), Child = row,
+                });
+                firstRow = false;
             }
             if (builds.Count == 0)
-                FirmwareCredits.Children.Add(new TextBlock { Style = (Style)FindResource("Caption"), Text = "The firmware list could not be read, so no firmware is shown." });
+                FirmwareCredits.Children.Add(new TextBlock { Style = (Style)FindResource("Caption"), Margin = new Thickness(0, 10, 0, 0),
+                    Text = "The firmware list could not be read, so no firmware is shown." });
         }
 
-        // Only these two pages open: the links are fixed, not read from the feed.
-        static readonly string[] Links = { "https://github.com/PewPewzxc", "https://www.linkedin.com/in/alireza-pakseresht-koubijari/" };
+        // Only these pages open: the links are fixed, not read from the feed.
+        static readonly string[] Links = { "https://github.com/PewPewzxc", "https://www.linkedin.com/in/alireza-pakseresht-koubijari/",
+            "https://github.com/PewPewzxc/reader-simulator" };
 
         void Link_Click(object sender, RoutedEventArgs e)
         {
