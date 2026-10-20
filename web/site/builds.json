@@ -1,0 +1,483 @@
+{
+ "schema": 1,
+ "release": "web-builds-2026-10-20",
+ "repo": "PewPewzxc/reader-simulator",
+ "generated": "2026-10-20T20:11:12Z",
+ "builds": [
+  {
+   "id": "ashokslsk-pocketdeck-os-main-x3",
+   "name": "PocketDeck OS",
+   "repo": "ashokslsk/PocketDeck-OS",
+   "ref": "main",
+   "version": "1.6.0",
+   "model": "X3",
+   "frame": "x3",
+   "source_commit": "cb6aeb425783d8f9f76f0b29631a49020bf033bf",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "ashokslsk-pocketdeck-os-main-x3.js",
+     "size": 238316,
+     "sha256": "3bfde115ac9f1711ba18d8f3a6e150a5cf9194b5c57ac39db3df280f1be59c51"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "ashokslsk-pocketdeck-os-main-x3.wasm",
+     "size": 10219083,
+     "sha256": "55e4ad938832f0b439b9ea4eb734e834f20843041c74b9c17531200ccc42c79a"
+    }
+   ]
+  },
+  {
+   "id": "ashokslsk-pocketdeck-os-main-x4-classic",
+   "name": "PocketDeck OS",
+   "repo": "ashokslsk/PocketDeck-OS",
+   "ref": "main",
+   "version": "1.6.0",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "cb6aeb425783d8f9f76f0b29631a49020bf033bf",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "ashokslsk-pocketdeck-os-main-x4-classic.js",
+     "size": 238316,
+     "sha256": "decaf3b3a555637992dcab9db74765fab7e217ef696f83a9324ae377110e577c"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "ashokslsk-pocketdeck-os-main-x4-classic.wasm",
+     "size": 10225213,
+     "sha256": "759da2e818403e3ec829bae9b2ef96655696e5d570c11b1fd5b6ec15c5846d00"
+    }
+   ]
+  },
+  {
+   "id": "ashokslsk-pocketdeck-os-main-x4-pro",
+   "name": "PocketDeck OS",
+   "repo": "ashokslsk/PocketDeck-OS",
+   "ref": "main",
+   "version": "1.6.0",
+   "model": "X4 Pro",
+   "frame": "x4-pro",
+   "source_commit": "cb6aeb425783d8f9f76f0b29631a49020bf033bf",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "ashokslsk-pocketdeck-os-main-x4-pro.js",
+     "size": 238316,
+     "sha256": "8ac8f24dcba588eb15ae7f66a36b9c227440da765771a92b902a734c24367889"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "ashokslsk-pocketdeck-os-main-x4-pro.wasm",
+     "size": 10709769,
+     "sha256": "c5d7a9f00601fc617f87eeb197de4f7a566486e9da504b7203e97e52d4e64cee"
+    }
+   ]
+  },
+  {
+   "id": "dito94-crossdito-v1.5.1-x4-pro",
+   "name": "CrossDiTo",
+   "repo": "dito94/CrossDiTo",
+   "ref": "v1.5.1",
+   "version": "1.5.1",
+   "model": "X4 Pro",
+   "frame": "x4-pro",
+   "source_commit": "f730debe20a13bb49d4d500b9cc77313282a860c",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "dito94-crossdito-v1.5.1-x4-pro.js",
+     "size": 237280,
+     "sha256": "a7fcfa534279d2b38bffb5d7b15dbb5dd06da833aba5d2e71943a72311f08fed"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "dito94-crossdito-v1.5.1-x4-pro.wasm",
+     "size": 9122649,
+     "sha256": "5d6c06ed7497b4c8ca7d0993a0c25ed6cb57af74232b9188b9451ce5f5fe78ca"
+    }
+   ]
+  },
+  {
+   "id": "hilbergk-crossnotes-v1.2.1-x3",
+   "name": "CrossNotes",
+   "repo": "HilbergK/CrossNotes",
+   "ref": "v1.2.1",
+   "version": "1.2.1",
+   "model": "X3",
+   "frame": "x3",
+   "source_commit": "1d5bb78daad55d30c3576c5b873793cad94d3af3",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "hilbergk-crossnotes-v1.2.1-x3.js",
+     "size": 237276,
+     "sha256": "fbad6c607a06200910fbbd710840b2dde139256d1f72d7449451e51be255eff8"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "hilbergk-crossnotes-v1.2.1-x3.wasm",
+     "size": 8994873,
+     "sha256": "1e9bee7cba3d977c9b0313d64baed6170af128b17cbc795c9bd9face439fdf2c"
+    }
+   ]
+  },
+  {
+   "id": "hilbergk-crossnotes-v1.2.1-x4-classic",
+   "name": "CrossNotes",
+   "repo": "HilbergK/CrossNotes",
+   "ref": "v1.2.1",
+   "version": "1.2.1",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "1d5bb78daad55d30c3576c5b873793cad94d3af3",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "hilbergk-crossnotes-v1.2.1-x4-classic.js",
+     "size": 237276,
+     "sha256": "fbad6c607a06200910fbbd710840b2dde139256d1f72d7449451e51be255eff8"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "hilbergk-crossnotes-v1.2.1-x4-classic.wasm",
+     "size": 8994873,
+     "sha256": "72200ae0fc4636ef82fe0de162ca7a9c303c4f64e3804c4987228b512d7994ec"
+    }
+   ]
+  },
+  {
+   "id": "hilbergk-crossnotes-v1.2.1-x4-pro",
+   "name": "CrossNotes",
+   "repo": "HilbergK/CrossNotes",
+   "ref": "v1.2.1",
+   "version": "1.2.1",
+   "model": "X4 Pro",
+   "frame": "x4-pro",
+   "source_commit": "1d5bb78daad55d30c3576c5b873793cad94d3af3",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "hilbergk-crossnotes-v1.2.1-x4-pro.js",
+     "size": 237276,
+     "sha256": "8c5db52a36c0ccf5131241c23f9cea5cc0382d2d5fb962879d8f0f4cf2342d2a"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "hilbergk-crossnotes-v1.2.1-x4-pro.wasm",
+     "size": 9137144,
+     "sha256": "b06618b32e65d0563c893bce849dc82c742cdb628dfd80bd5955ea894125d273"
+    }
+   ]
+  },
+  {
+   "id": "lauren-alexandra-duet-xteink-v0.1.0-alpha.9-x4-classic",
+   "name": "duet",
+   "repo": "lauren-alexandra/duet-xteink",
+   "ref": "v0.1.0-alpha.9",
+   "version": "1.3.0",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "cd7c3d9475374157975073c2fbe5e19926fdb7e2",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "lauren-alexandra-duet-xteink-v0.1.0-alpha.9-x4-classic.js",
+     "size": 238827,
+     "sha256": "610370f92e307b7496efd0c64340cac551d4d8e6fd7601fed5a2f66d50ca8d81"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "lauren-alexandra-duet-xteink-v0.1.0-alpha.9-x4-classic.wasm",
+     "size": 10983678,
+     "sha256": "8de357c323aea6dbc8e2760558b86dd43cd8cfdb39ff17eb65c849d0d681a0ba"
+    }
+   ]
+  },
+  {
+   "id": "padge01-xteink-pokemon-game-v0.1.1-x3",
+   "name": "Xteink Pokemon game",
+   "repo": "padge01/xteink-pokemon-game",
+   "ref": "v0.1.1",
+   "version": "1.5.0",
+   "model": "X3",
+   "frame": "x3",
+   "source_commit": "0fb4ff011890e72a3373ce4db18b45ce79f8a485",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "padge01-xteink-pokemon-game-v0.1.1-x3.js",
+     "size": 237276,
+     "sha256": "054a165c0880e66a547c537cd1253c2f4d66ee78f930ec24e738eab7812e9034"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "padge01-xteink-pokemon-game-v0.1.1-x3.wasm",
+     "size": 8865959,
+     "sha256": "e38974b86ab3caab7c43516994e309e0f5bee379d41587341958f247ddbafcec"
+    }
+   ]
+  },
+  {
+   "id": "padge01-xteink-pokemon-game-v0.1.1-x4-classic",
+   "name": "Xteink Pokemon game",
+   "repo": "padge01/xteink-pokemon-game",
+   "ref": "v0.1.1",
+   "version": "1.5.0",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "0fb4ff011890e72a3373ce4db18b45ce79f8a485",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "padge01-xteink-pokemon-game-v0.1.1-x4-classic.js",
+     "size": 237276,
+     "sha256": "054a165c0880e66a547c537cd1253c2f4d66ee78f930ec24e738eab7812e9034"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "padge01-xteink-pokemon-game-v0.1.1-x4-classic.wasm",
+     "size": 8865959,
+     "sha256": "b8b763e3318d2e1543e0d1f00b47e6c1b7e016f515c1adad4e2bea938286dd0e"
+    }
+   ]
+  },
+  {
+   "id": "padge01-xteink-pokemon-game-v0.1.1-x4-pro",
+   "name": "Xteink Pokemon game",
+   "repo": "padge01/xteink-pokemon-game",
+   "ref": "v0.1.1",
+   "version": "1.5.0",
+   "model": "X4 Pro",
+   "frame": "x4-pro",
+   "source_commit": "0fb4ff011890e72a3373ce4db18b45ce79f8a485",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "padge01-xteink-pokemon-game-v0.1.1-x4-pro.js",
+     "size": 237276,
+     "sha256": "f56469866cae624ebb40a66cc36afc47807b6d89369e5635467498954307a224"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "padge01-xteink-pokemon-game-v0.1.1-x4-pro.wasm",
+     "size": 9007892,
+     "sha256": "8364bbd3f16975346b2d20473a29528ad063ee03ff8e594e95aaa30b6a5c274a"
+    }
+   ]
+  },
+  {
+   "id": "pewpewzxc-varagh-1.2.1-x3",
+   "name": "VARAGH",
+   "repo": "PewPewzxc/VARAGH",
+   "ref": "1.2.1",
+   "version": "1.2.1",
+   "model": "X3",
+   "frame": "x3",
+   "source_commit": "7654cadee7fd1385578c960533b3b05a09fb024f",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "pewpewzxc-varagh-1.2.1-x3.js",
+     "size": 238745,
+     "sha256": "e3e4639f4040b3d0a1e7262621f41b13711bed2e44f717ac9211fafa2a7a3e5c"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "pewpewzxc-varagh-1.2.1-x3.wasm",
+     "size": 10517529,
+     "sha256": "be55f9cb5e1be748fb44db7e7aa38791738cea3ebd9db20201df03f7606f96ff"
+    }
+   ]
+  },
+  {
+   "id": "pewpewzxc-varagh-1.2.1-x4-classic",
+   "name": "VARAGH",
+   "repo": "PewPewzxc/VARAGH",
+   "ref": "1.2.1",
+   "version": "1.2.1",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "7654cadee7fd1385578c960533b3b05a09fb024f",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "pewpewzxc-varagh-1.2.1-x4-classic.js",
+     "size": 238745,
+     "sha256": "b7a042b854287f6da45e4a1a4650f2809ae94996a2f1697534469d47d6ccec4f"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "pewpewzxc-varagh-1.2.1-x4-classic.wasm",
+     "size": 10528053,
+     "sha256": "18c14926422568a062aa93492adb1699f3997b49a643a0b96d9a540a24e8ef3d"
+    }
+   ]
+  },
+  {
+   "id": "pewpewzxc-varagh-1.2.1-x4-pro",
+   "name": "VARAGH",
+   "repo": "PewPewzxc/VARAGH",
+   "ref": "1.2.1",
+   "version": "1.2.1",
+   "model": "X4 Pro",
+   "frame": "x4-pro",
+   "source_commit": "7654cadee7fd1385578c960533b3b05a09fb024f",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "pewpewzxc-varagh-1.2.1-x4-pro.js",
+     "size": 243751,
+     "sha256": "c000f0cab8c2ecddb0235e927e36385f03ec345cdd34687deb9dfbc8a9feae1c"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "pewpewzxc-varagh-1.2.1-x4-pro.wasm",
+     "size": 10984432,
+     "sha256": "77a530543b9994defe1fe569134fe8ea1f3aa04a828b44070e4497a9358a35d7"
+    }
+   ]
+  },
+  {
+   "id": "sichroteph-yacp-v1.8.1-yacp.9-x3",
+   "name": "YACP",
+   "repo": "Sichroteph/YACP",
+   "ref": "v1.8.1-yacp.9",
+   "version": "1.3.0",
+   "model": "X3",
+   "frame": "x3",
+   "source_commit": "4bfcfb4b46421114231cb49a508fe909d72d910a",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "sichroteph-yacp-v1.8.1-yacp.9-x3.js",
+     "size": 240199,
+     "sha256": "1c12c1bc229854a5ee41adae82d7ab389e5c244bf63b966aff437d93a0126b35"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "sichroteph-yacp-v1.8.1-yacp.9-x3.wasm",
+     "size": 9730675,
+     "sha256": "10cdcac7ab675777a55f99b09d37e1ca5ffa43606b07af91eb3f7ded01170c0f"
+    }
+   ]
+  },
+  {
+   "id": "sichroteph-yacp-v1.8.1-yacp.9-x4-classic",
+   "name": "YACP",
+   "repo": "Sichroteph/YACP",
+   "ref": "v1.8.1-yacp.9",
+   "version": "1.3.0",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "4bfcfb4b46421114231cb49a508fe909d72d910a",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "sichroteph-yacp-v1.8.1-yacp.9-x4-classic.js",
+     "size": 240199,
+     "sha256": "1c12c1bc229854a5ee41adae82d7ab389e5c244bf63b966aff437d93a0126b35"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "sichroteph-yacp-v1.8.1-yacp.9-x4-classic.wasm",
+     "size": 9730675,
+     "sha256": "58cacb0367bd8cbafa7b74c5223082e1d8638fbf1a73361e867f8a9afcee7d5e"
+    }
+   ]
+  },
+  {
+   "id": "uxjulia-crossink-v1.6.1-x3",
+   "name": "CrossInk",
+   "repo": "uxjulia/crossink",
+   "ref": "v1.6.1",
+   "version": "1.6.1",
+   "model": "X3",
+   "frame": "x3",
+   "source_commit": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "uxjulia-crossink-v1.6.1-x3.js",
+     "size": 239908,
+     "sha256": "d42de2896f670734227e678713c595eede8267bbacd5507698c1420fb40b5f26"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "uxjulia-crossink-v1.6.1-x3.wasm",
+     "size": 10052057,
+     "sha256": "3f962314ab84bf3f00a9fa08d8b958f3ccdd79324c0311d446b601dd1d17c594"
+    }
+   ]
+  },
+  {
+   "id": "uxjulia-crossink-v1.6.1-x4-classic",
+   "name": "CrossInk",
+   "repo": "uxjulia/crossink",
+   "ref": "v1.6.1",
+   "version": "1.6.1",
+   "model": "X4 Classic",
+   "frame": "x4-classic",
+   "source_commit": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "uxjulia-crossink-v1.6.1-x4-classic.js",
+     "size": 239908,
+     "sha256": "cfea47ae2624cd47d54dfe0521c5bff5ba63380424c9d4f867d8e3de7f1ce328"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "uxjulia-crossink-v1.6.1-x4-classic.wasm",
+     "size": 10062440,
+     "sha256": "30acf33a9a0ab2b04b5a6b32fa8bd5fe774846e7589d20abe55b2b48e0e79a7f"
+    }
+   ]
+  },
+  {
+   "id": "uxjulia-crossink-v1.6.1-x4-pro",
+   "name": "CrossInk",
+   "repo": "uxjulia/crossink",
+   "ref": "v1.6.1",
+   "version": "1.6.1",
+   "model": "X4 Pro",
+   "frame": "x4-pro",
+   "source_commit": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+   "licence": "MIT",
+   "files": [
+    {
+     "name": "sim.js",
+     "asset": "uxjulia-crossink-v1.6.1-x4-pro.js",
+     "size": 244522,
+     "sha256": "f1b77fb4830d8291407af61f66443f7386e938d509bbc3a9d480f94bf1353bc8"
+    },
+    {
+     "name": "sim.wasm",
+     "asset": "uxjulia-crossink-v1.6.1-x4-pro.wasm",
+     "size": 10167834,
+     "sha256": "51bf66b0840fa5169d2681aa3709167d2d7281a97059f691cb2921c06aabf4b8"
+    }
+   ]
+  }
+ ]
+}

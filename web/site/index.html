@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Reader Simulator</title>
+<meta name="description" content="Try e-reader firmwares for the Xteink X4 Pro, X4 Classic and X3 in your browser. Unofficial.">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/app.css">
+<script>
+// WebAssembly threads need a cross-origin isolated page. GitHub Pages cannot send the two headers,
+// so coi-sw.js (a tiny service worker in this folder) adds them; the page reloads once after installing it.
+if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('coi-sw.js').then(() => {
+    if (sessionStorage.getItem('coiReloaded')) return;
+    sessionStorage.setItem('coiReloaded', '1');
+    navigator.serviceWorker.ready.then(() => location.reload());
+  });
+}
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="./">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M10 18.5h4"/></svg>
+    Reader Simulator
+  </a>
+  <nav>
+    <a href="#" data-view="sim" class="on">Simulator</a>
+    <a href="#about" data-view="about">About</a>
+  </nav>
+</header>
+
+<main id="sim" class="view">
+  <section class="controls">
+    <div class="card">
+      <h2>Device</h2>
+      <div class="devices" id="devices"></div>
+    </div>
+    <div class="card">
+      <h2>Firmware</h2>
+      <div id="firmwares" class="firmwares"></div>
+      <h3>Version</h3>
+      <div id="versions" class="chips"></div>
+      <p id="buildinfo" class="hint"></p>
+    </div>
+    <div class="card rows">
+      <div class="row">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7.5" width="17" height="9" rx="1.5"/><path d="M21.5 10.5v3"/><rect x="4.5" y="9.5" width="10" height="5" class="fill"/></svg>
+        <label for="battery"><b>Battery</b><span>What the reader shows</span></label>
+        <input type="range" id="battery" min="0" max="100" step="5" value="80">
+        <output id="batteryOut" for="battery">80 %</output>
+      </div>
+      <div class="row">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2.5h6v6H9zM7.5 8.5h9v7a3 3 0 0 1-3 3h-3a3 3 0 0 1-3-3zM12 18.5v3"/></svg>
+        <label for="usb"><b>USB cable</b><span>Pretend the reader is plugged in and charging</span></label>
+        <input type="checkbox" id="usb" class="switch" role="switch">
+      </div>
+    </div>
+    <div class="card">
+      <h2>SD card</h2>
+      <p class="hint">Each firmware version and device has its own simulated SD card, kept in this browser only.
+        Books go in the books folder.</p>
+      <div class="buttons">
+        <label class="btn" id="addBooks" aria-disabled="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add books
+          <input type="file" id="bookFiles" multiple accept=".epub,.txt,.md,.xtc,.xtch,.bmp,.jpg,.png" hidden disabled>
+        </label>
+        <button class="btn" id="download" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download SD card</button>
+        <button class="btn" id="fresh">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4h-4"/></svg>Fresh SD card</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="stagecol">
+    <div class="stage" id="stage">
+      <img id="framePreview" alt="">
+      <canvas id="canvas" tabindex="0" hidden oncontextmenu="event.preventDefault()"></canvas>
+      <div id="loading" class="loading" hidden><span class="spinner"></span><span id="loadingText">Loading</span></div>
+    </div>
+    <div class="startbar">
+      <div>
+        <div class="title" id="devTitle">X4 Pro</div>
+        <div class="hint" id="fwTitle"></div>
+      </div>
+      <button class="primary" id="start">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" class="fill"/></svg><span>Start</span></button>
+    </div>
+    <details class="keys">
+      <summary>Keys</summary>
+      <p>Click the drawn keys, or touch the screen (X4 Pro). Keyboard (click the reader first):</p>
+      <dl>
+        <dt>Esc</dt><dd>Back</dd><dt>Enter</dt><dd>Confirm</dd>
+        <dt>&larr; &rarr; &uarr; &darr;</dt><dd>Left, right, up, down</dd>
+        <dt>P</dt><dd>Power (hold to sleep)</dd><dt>H</dt><dd>Home (X4 Pro)</dd>
+      </dl>
+    </details>
+    <p id="status" class="hint" role="status"></p>
+  </section>
+</main>
+
+<main id="about" class="view" hidden>
+  <div class="card prose">
+    <h2>About</h2>
+    <p>Reader Simulator runs e-reader firmwares made for the Xteink X4 Pro, X4 Classic and X3 in your browser.
+      Each firmware is compiled from its public source code together with a desktop simulator library, then
+      to WebAssembly. Nothing is installed and nothing leaves your browser: books you add and the simulated SD
+      card stay in this browser's storage.</p>
+    <h3>Disclaimer</h3>
+    <p><b>Unofficial.</b> Not made by, affiliated with or endorsed by Xteink. The simulator is an approximation:
+      speed, screen refresh, battery, Wi-Fi and some hardware features differ from a real reader. Official
+      Xteink firmware cannot run here. Provided as is, without warranty (see the licences).</p>
+    <h3>Firmwares</h3>
+    <ul id="fwCredits"></ul>
+    <h3>Also inside</h3>
+    <ul>
+      <li>Simulator library: <a href="https://github.com/uxjulia/crossink-simulator">uxjulia/crossink-simulator</a>
+        and <a href="https://github.com/uxjulia/crosspoint-simulator">uxjulia/crosspoint-simulator</a>, MIT</li>
+      <li><a href="https://www.libsdl.org/">SDL2</a>, zlib licence</li>
+      <li><a href="https://emscripten.org/">Emscripten</a> runtime (MIT), musl libc (MIT), LLVM libc++ (Apache 2.0 with LLVM exception)</li>
+      <li>Device frames and this page: Reader Simulator, MIT, &copy; 2026 VARAGH contributors</li>
+    </ul>
+    <p>Source of this site: <a href="https://github.com/PewPewzxc/reader-simulator">PewPewzxc/reader-simulator</a>.
+      There is also a Windows app with the same firmwares.</p>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>

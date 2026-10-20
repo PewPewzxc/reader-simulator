@@ -1,5 +1,6 @@
 """Browser-build fixes for the copied simulator library (work/.pio/libdeps/<env>).
 Run after dev/sim-windows/patch_libdeps.py (frame, DRAG, battery env vars). Safe to run again."""
+import os
 import sys
 
 L = sys.argv[1]
@@ -55,3 +56,21 @@ patch(L + "/simulator/src/HalGPIO.cpp",
 # Files live in memory until the page saves the SD card (every 5 s, and before a reload), so skip it.
 patch(L + "/simulator/src/HalStorage.cpp", "#include <vector>\n",
       "#include <vector>\n#ifdef __EMSCRIPTEN__\n#define fsync(fd) 0\n#endif\n")
+# Older simulator library (crosspoint-simulator): no reexec(); rebootAsPowerWake() calls execvp itself.
+LC = L + "/simulator/src/SimulatorLifecycle.cpp"
+if os.path.isfile(LC) and "void reexec()" not in open(LC, encoding="utf-8").read():
+    patch(LC, "  execvp(gArgv[0], gArgv);\n",
+          "#ifdef __EMSCRIPTEN__\n"
+          "  {\n"
+          "    std::string vars;\n"
+          "    for (char **e = environ; *e; ++e)\n"
+          "      if (!std::strncmp(*e, \"CROSSPOINT_SIM_\", 15) || !std::strncmp(*e, \"VARAGH_SIM_\", 11))\n"
+          "        vars += std::string(*e) + \"\\n\";\n"
+          "    MAIN_THREAD_EM_ASM({\n"
+          "      sessionStorage.setItem('simRestartEnv', UTF8ToString($0));\n"
+          "      FS.syncfs(false, () => location.reload());\n"
+          "    }, vars.c_str());\n"
+          "    for (;;) emscripten_is_main_browser_thread() ? emscripten_sleep(1000) : (void)sleep(1);  // until reload\n"
+          "  }\n"
+          "#endif\n"
+          "  execvp(gArgv[0], gArgv);\n")
