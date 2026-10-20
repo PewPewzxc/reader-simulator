@@ -239,6 +239,7 @@ namespace ReaderSimulator
             if (SimPage == null) return;
             SimPage.Visibility = NavSim.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             AboutPage.Visibility = NavAbout.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            ControlsPage.Visibility = NavControls.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
         void Battery_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)

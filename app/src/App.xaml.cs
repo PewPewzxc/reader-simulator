@@ -57,6 +57,7 @@ namespace ReaderSimulator
                 RenderOnly = true;
                 ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 if (Arg(a, "--page") == "about") w.NavAbout.IsChecked = true;
+                if (Arg(a, "--page") == "controls") w.NavControls.IsChecked = true;
                 await w.LoadFeed(feed);
                 Shutdown(RenderUi(w, Path.GetFullPath(render)) ? 0 : 1);
                 return;
