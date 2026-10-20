@@ -6,7 +6,8 @@
 
 <id> is a build from ../release-staging/index.local.json (it passed on Windows). Its source is the download in
 %USERPROFILE%/rsim/fw/<folder> whose .rsim-name is "<repo>@<ref>"; the env comes from that build's zip
-(build.json). RSIM_FIRMWARE_SRC / RSIM_ENV / RSIM_MODEL override them. Needs emsdk in ../tools/emsdk.
+(build.json). RSIM_FIRMWARE_SRC / RSIM_ENV / RSIM_MODEL override them. Needs emsdk in ../tools/emsdk
+(RSIM_EMSDK: another folder). On Linux (GitHub Actions) ci_build.py drives prep() and build() instead.
 The owner's unreleased working copies (Crossink/github/*) are refused.
 shortcut: a .o is rebuilt only when its source is newer; after header or flag changes delete build/<id>/obj.
 """
@@ -22,11 +23,17 @@ from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RSIM = os.path.dirname(HERE)
-EMSDK = os.path.join(RSIM, "tools", "emsdk")
+WINDOWS = os.name == "nt"
+EXE = ".exe" if WINDOWS else ""
+EMSDK = os.environ.get("RSIM_EMSDK") or os.path.join(RSIM, "tools", "emsdk")
 EMDIR = os.path.join(EMSDK, "upstream", "emscripten")
 FW_DOWNLOADS = os.path.join(os.path.expanduser("~"), "rsim", "fw")
 STAGING = os.path.join(RSIM, "release-staging")
-PIO = os.path.join(os.path.expanduser("~"), ".platformio", "penv", "Scripts")
+# sim-windows sits next to web/ in the repo, and next to the rsim folder on the PC this was first built on
+SIM_WINDOWS = next(p for p in (os.path.join(RSIM, "sim-windows"), os.path.join(RSIM, "..", "sim-windows"))
+                   if os.path.isdir(p))
+# PlatformIO's own Python environment (Scripts on Windows, bin elsewhere)
+PIO = os.path.join(os.path.expanduser("~"), ".platformio", "penv", "Scripts" if WINDOWS else "bin")
 os.environ["EM_CONFIG"] = os.path.join(EMSDK, ".emscripten")
 HOME = os.path.expanduser("~")
 JOBS = int(os.environ.get("RSIM_JOBS", os.cpu_count()))
@@ -39,7 +46,9 @@ COMMON = ["-DtskNO_AFFINITY=0x7FFFFFFF", "-DportNUM_PROCESSORS=1", "-sUSE_SDL=2"
           "-I" + os.path.join(HERE, "compat"), "-include", os.path.join(HERE, "compat", "web_prelude.h")] + PREFIX_MAPS
 LINK = ["-Wl,--allow-multiple-definition",  # uzlib checksums: simulator stubs = same code
         "-sUSE_SDL=2", "-pthread", "-O2", "-sASYNCIFY", "-sASYNCIFY_STACK_SIZE=131072",
-        "-sALLOW_MEMORY_GROWTH", "-sINITIAL_MEMORY=64MB", "-sSTACK_SIZE=1MB", "-sDEFAULT_PTHREAD_STACK_SIZE=1MB",
+        "-sALLOW_MEMORY_GROWTH", "-sINITIAL_MEMORY=64MB",
+        "-sMAXIMUM_MEMORY=512MB",  # shared memory is reserved up front: iPad/iPhone Safari refuse the default 2 GB
+        "-sSTACK_SIZE=1MB", "-sDEFAULT_PTHREAD_STACK_SIZE=1MB",
         "-sPTHREAD_POOL_SIZE=8", "-sEXIT_RUNTIME=0", "-sFORCE_FILESYSTEM", "-lidbfs.js",
         "-sEXPORTED_RUNTIME_METHODS=FS,ENV,IDBFS,callMain", "-sENVIRONMENT=web,worker"] + PREFIX_MAPS
 # Words that must never end up in published files: this PC's user name and folder, plus RSIM_PRIVATE_WORDS
@@ -82,17 +91,17 @@ def prep(b):
         ignore = shutil.ignore_patterns(".git", ".rsim-out")
         shutil.copytree(b["orig"], work, ignore=lambda d, names: ignore(d, names) | (
             {"build"} if os.path.basename(d) == ".pio" else set()), symlinks=True)
-    py = os.path.join(EMSDK, "python", "3.13.3_64bit", "python.exe")
+    py = os.path.join(EMSDK, "python", "3.13.3_64bit", "python.exe") if WINDOWS else sys.executable
     libdeps = os.path.join(work, ".pio", "libdeps", env)
     envvars = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8",
                    PATH=os.path.join(HERE, "bin") + os.pathsep + os.environ["PATH"])
     log = open(os.path.join(HERE, "logs", "%s-compiledb.log" % b["id"]), "w", encoding="utf-8")
     # PlatformIO reinstalls the (pinned) libraries in a moved project; patch only after that.
-    subprocess.run([os.path.join(PIO, "pio.exe"), "pkg", "install", "-e", env], cwd=work, env=envvars,
+    subprocess.run([os.path.join(PIO, "pio" + EXE), "pkg", "install", "-e", env], cwd=work, env=envvars,
                    stdout=log, stderr=subprocess.STDOUT, check=True)
-    subprocess.run([py, "-I", os.path.join(RSIM, "..", "sim-windows", "patch_libdeps.py"), libdeps], check=True)
+    subprocess.run([py, "-I", os.path.join(SIM_WINDOWS, "patch_libdeps.py"), libdeps], check=True)
     subprocess.run([py, "-I", os.path.join(HERE, "patch_work.py"), libdeps], check=True)
-    subprocess.run([os.path.join(PIO, "pio.exe"), "run", "-e", env, "-t", "compiledb"], cwd=work, env=envvars,
+    subprocess.run([os.path.join(PIO, "pio" + EXE), "run", "-e", env, "-t", "compiledb"], cwd=work, env=envvars,
                    stdout=log, stderr=subprocess.STDOUT, check=True)
     os.replace(os.path.join(work, "compile_commands.json"), os.path.join(work, "compile_commands.%s.json" % env))
 
@@ -109,7 +118,7 @@ def jobs(b, obj_dir):
         cmd = e["command"].replace(b["orig"], work)
         cmd = cmd.replace('\\"', "\0").replace("\\", "/").replace("\0", '\\"')
         argv = shlex.split(cmd)
-        cc = os.path.join(EMDIR, "em++.exe" if "g++" in argv[0] else "emcc.exe")
+        cc = os.path.join(EMDIR, ("em++" if "g++" in argv[0] or "c++" in argv[0] else "emcc") + EXE)
         args, skip = [], False
         for a in argv[1:-1]:  # last word is the source file
             if skip:
@@ -154,7 +163,7 @@ def build(b):
     names = ["--profiling-funcs"] if os.environ.get("NAMES") else []  # NAMES=1: readable stacks (probe.mjs)
     rsp = os.path.join(out, "objects.rsp")  # 300+ object paths are too long for one Windows command line
     open(rsp, "w", encoding="utf-8").write("\n".join('"%s"' % o.replace("\\", "/") for o, _ in results))
-    cmd = [os.path.join(EMDIR, "em++.exe"), "@" + rsp] + LINK + names + ["-o", os.path.join(out, "sim.js")]
+    cmd = [os.path.join(EMDIR, "em++" + EXE), "@" + rsp] + LINK + names + ["-o", os.path.join(out, "sim.js")]
     r = subprocess.run(cmd, cwd=b["work"], capture_output=True, text=True, encoding="utf-8", errors="replace")
     open(os.path.join(HERE, "logs", "%s-link.log" % b["id"]), "w", encoding="utf-8").write(r.stdout + r.stderr)
     if r.returncode:

@@ -12,6 +12,7 @@ let builds = [];
 let sel = store.get('sel', {});
 let running = null;   // the build running in this page, if any
 let runningSettings = '';
+let samplesNote = '';  // shown once the simulator has started
 
 const status = t => { $('status').textContent = t || ''; };
 const cardDir = b => '/cards/' + b.id;          // working directory; the simulator's SD card is ./fs_
@@ -102,7 +103,9 @@ function deleteDb(name) {
 
 async function boot(b) {
   if (!self.crossOriginIsolated) {
-    status(sessionStorage.getItem('coiReloaded') ? 'This browser cannot run the simulator here (no cross-origin isolation). Try a current Chrome, Edge, Firefox or Safari.' : 'Preparing the page...');
+    status(window.coiError ? 'This browser blocked the page\'s helper (' + window.coiError + '). Private browsing does that: open the page in a normal tab.'
+      : sessionStorage.getItem('coiReloaded') ? 'This browser cannot run the simulator here (no cross-origin isolation). Try a current Chrome, Edge, Firefox or Safari.'
+      : 'Preparing the page...');
     return;
   }
   sessionStorage.removeItem('coiReloaded');
@@ -128,8 +131,9 @@ async function boot(b) {
     print: t => console.log(t),
     printErr: t => console.warn(t),
     setStatus: t => { $('loadingText').textContent = t.replace(/\(.*\)/, '') || 'Starting'; },
-    onRuntimeInitialized: () => { $('loading').hidden = true; status(''); },
+    onRuntimeInitialized: () => { $('loading').hidden = true; status(samplesNote); },
     onExit: () => status('The reader turned off. Press Restart to turn it on again.'),
+    onAbort: what => startFailed(what),
     preRun: [() => {
       const FS = Module.FS, ENV = Module.ENV;
       ENV.VARAGH_SIM_BATTERY = String($('battery').value);
@@ -146,8 +150,9 @@ async function boot(b) {
       FS.mount(Module.IDBFS, {}, cardDb(b));
       FS.chdir(cardDir(b));
       Module.addRunDependency('sd');
-      FS.syncfs(true, () => {
+      FS.syncfs(true, async () => {
         try { FS.mkdir(cardDb(b) + '/books'); } catch (e) { /* exists */ }
+        try { await addSamples(cardDb(b)); } catch (e) { console.warn('sample books:', e); }
         Module.removeRunDependency('sd');
       });
       if (b.frame) {
@@ -168,6 +173,36 @@ async function boot(b) {
   s.onerror = () => status('Could not load this build.');
   document.body.appendChild(s);
 }
+
+// Free books and an English dictionary (samples/manifest.json), copied once onto each SD card. Files already
+// on the card are kept, so a reader's own dictionary choice (.crosspoint/dictionary.bin) stays.
+async function addSamples(root) {
+  const FS = Module.FS, mark = root + '/.rsim-samples';
+  if (FS.analyzePath(mark).exists) return;
+  const list = await (await fetch('samples/manifest.json')).json();
+  for (const f of list.files) {
+    const dest = root + '/' + f.path;
+    if (FS.analyzePath(dest).exists) continue;
+    const r = await fetch('samples/' + f.path.split('/').map(encodeURIComponent).join('/'));
+    if (!r.ok) throw new Error(f.path + ': ' + r.status);
+    FS.mkdirTree(dest.slice(0, dest.lastIndexOf('/')));
+    FS.writeFile(dest, new Uint8Array(await r.arrayBuffer()));
+  }
+  FS.writeFile(mark, 'sample books and dictionary added\n');
+  samplesNote = 'Sample books and an English dictionary are on the SD card: open the books folder on the reader.';
+}
+
+// A start that fails (no memory for the simulator, a broken download) must not leave the spinner turning.
+function startFailed(what) {
+  if (!running) return;
+  $('loading').hidden = true;
+  const text = String(what && what.message || what || 'unknown error');
+  status(/memory|RangeError/i.test(text)
+    ? 'This device did not give the simulator enough memory (' + text + '). Close other tabs and press Restart.'
+    : 'The simulator stopped: ' + text);
+}
+addEventListener('error', e => { if (running && !$('loading').hidden) startFailed(e.error || e.message); });
+addEventListener('unhandledrejection', e => { if (running && !$('loading').hidden) startFailed(e.reason); });
 
 function saveCard() {
   return new Promise(resolve => window.Module && Module.FS ? Module.FS.syncfs(false, resolve) : resolve());
@@ -245,6 +280,60 @@ async function freshCard() {
   }
   await deleteDb(cardDb(b));
   status('The SD card of ' + b.name + ' ' + b.version + ' on ' + b.model + ' is empty now.');
+}
+
+// ---- gestures (X4 Pro touchscreen): real mouse events on the canvas, as a hand-made drag ----
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const frameKeys = {};
+async function screenRect() {
+  const b = running;
+  if (!b || !b.frame) return null;
+  if (!frameKeys[b.frame]) frameKeys[b.frame] = await (await fetch('frames/' + b.frame + '.keys')).text();
+  const t = frameKeys[b.frame], num = re => (t.match(re) || []).slice(1).map(Number);
+  const [W, H] = num(/^size (\d+) (\d+)/m), [x, y, w, h] = num(/^screen (\d+) (\d+) (\d+) (\d+)/m);
+  const c = $('canvas').getBoundingClientRect();
+  if (!W || !w) return null;
+  // the window turns with the reader (landscape): then the screen hole is turned a quarter to the right
+  const turned = (c.width > c.height) !== (W > H);
+  const r = turned ? { x: H - y - h, y: x, w: h, h: w, W: H, H: W } : { x, y, w, h, W, H };
+  const sx = c.width / r.W, sy = c.height / r.H;
+  return { left: c.left + r.x * sx, top: c.top + r.y * sy, width: r.w * sx, height: r.h * sy };
+}
+function mouse(type, x, y) {
+  const opts = { clientX: x, clientY: y, screenX: x, screenY: y, button: 0, buttons: type === 'mouseup' ? 0 : 1, bubbles: true, cancelable: true, view: window };
+  $('canvas').dispatchEvent(new MouseEvent(type, opts));
+}
+async function drag(x1, y1, x2, y2, ms) {
+  mouse('mousemove', x1, y1);
+  mouse('mousedown', x1, y1);
+  const steps = Math.max(1, Math.round(ms / 16));
+  for (let i = 1; i <= steps; i++) {
+    await sleep(ms / steps);
+    mouse('mousemove', x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps);
+  }
+  mouse('mouseup', x2, y2);
+}
+async function gesture(g) {
+  const r = await screenRect();
+  if (!r || running.model !== 'X4 Pro') return status('Gestures need a running X4 Pro (the only reader with a touchscreen).');
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2, dx = r.width * 0.3, dy = r.height * 0.3;
+  if (g === 'left') await drag(cx + dx, cy, cx - dx, cy, 250);
+  else if (g === 'right') await drag(cx - dx, cy, cx + dx, cy, 250);
+  else if (g === 'up') await drag(cx, cy + dy, cx, cy - dy, 250);
+  else if (g === 'down') await drag(cx, r.top + 4, cx, r.top + r.height * 0.45, 300);
+  else if (g === 'hold') await drag(cx, cy, cx, cy, 900);
+  $('canvas').focus();
+}
+for (const el of document.querySelectorAll('#gestures button')) el.onclick = () => gesture(el.dataset.g);
+// Shift + arrows / Enter make gestures; caught before the simulator so it does not also see the key
+const GESTURE_KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Enter: 'hold' };
+for (const type of ['keydown', 'keyup']) {
+  addEventListener(type, e => {
+    if (!e.shiftKey || !GESTURE_KEYS[e.key] || e.target !== $('canvas') || !running) return;
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    if (type === 'keydown' && !e.repeat) gesture(GESTURE_KEYS[e.key]);
+  }, true);
 }
 
 // ---- about ----

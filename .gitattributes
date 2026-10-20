@@ -3,3 +3,5 @@
 *.png binary
 *.a binary
 *.zip binary
+# exact bytes: the dictionary index points at byte offsets in wordnet.dict
+samples/sd-card/** binary

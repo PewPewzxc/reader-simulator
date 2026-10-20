@@ -7,7 +7,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+CHROME = os.environ.get("CHROME") or r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
 frames = sys.argv[1]
 for name in ("x3", "x4-classic", "x4-pro"):

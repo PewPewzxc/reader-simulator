@@ -28,8 +28,8 @@ namespace ReaderSimulator
 
     public static class Feed
     {
-        // Set at publish time to the https://github.com/<owner>/<repo>/releases/download/<tag>/index.json of the feed.
-        public const string FEED_URL = "";
+        // The download list the Build firmwares workflow keeps up to date: every version offered, newest first.
+        public const string FEED_URL = "https://github.com/PewPewzxc/reader-simulator/releases/download/feed/index.json";
         public static readonly string[] Models = { "X4 Pro", "X4 Classic", "X3" };
         public static readonly string[] Frames = { "x4-pro", "x4-classic", "x3" };
         // No trailing dot/dash (Windows strips trailing dots) and no reserved device names (con, nul, com1...).
