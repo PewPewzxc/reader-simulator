@@ -91,49 +91,65 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
       <button class="primary" id="start">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" class="fill"/></svg><span>Start</span></button>
     </div>
-    <section class="card keys" aria-labelledby="keysTitle">
-      <h2 id="keysTitle">How to use the reader</h2>
-      <h3>Drawn keys</h3>
-      <dl>
-        <dt>Click a key</dt><dd>Press it (Back, Confirm, Left, Right, Up, Down, Power, Home on the X4 Pro)</dd>
-        <dt>Hold a key</dt><dd>Long press: keep the mouse button down. Power: sleep. Back in a book: home or another
-          action set in the firmware. Confirm: quick menu, where the firmware has one</dd>
-        <dt>Click a key while asleep</dt><dd>Wake the reader</dd>
-      </dl>
-      <h3>Touchscreen (X4 Pro)</h3>
-      <dl>
-        <dt>Tap</dt><dd>Click the screen: buttons, list items, links, tap-to-look-up a word</dd>
-        <dt>Hold</dt><dd>Keep the mouse button down on the screen for half a second: in a book this selects the
-          word (look it up, or select a sentence, as the firmware allows; the sample SD card has a dictionary)</dd>
-        <dt>Swipe left / right</dt><dd>Drag quickly (under 0.7 s): next / previous page</dd>
-        <dt>Swipe up</dt><dd>Drag quickly upwards: reader menu (X4 Pro firmwares that have one)</dd>
-        <dt>Swipe down from the top</dt><dd>Start at the top edge of the screen: light panel, or close a menu</dd>
-        <dt>Slow drag</dt><dd>Move sliders, scroll lists</dd>
-      </dl>
-      <div class="gestures" id="gestures">
-        <button class="btn" data-g="left" title="Shift + Left arrow">Swipe left</button>
-        <button class="btn" data-g="right" title="Shift + Right arrow">Swipe right</button>
-        <button class="btn" data-g="up" title="Shift + Up arrow">Swipe up</button>
-        <button class="btn" data-g="down" title="Shift + Down arrow">Swipe down from the top</button>
-        <button class="btn" data-g="hold" title="Shift + Enter">Hold the middle</button>
-      </div>
-      <p class="hint">Two-finger gestures cannot be made with a mouse.</p>
-      <h3>Keyboard (click the reader first)</h3>
-      <dl>
-        <dt>Esc</dt><dd>Back</dd>
-        <dt>Enter</dt><dd>Confirm</dd>
-        <dt>&larr; &rarr; &uarr; &darr;</dt><dd>Left, right, up, down keys</dd>
-        <dt>P</dt><dd>Power (hold to sleep)</dd>
-        <dt>H</dt><dd>Home key (X4 Pro; hold for its long press)</dd>
-        <dt>S</dt><dd>Sleep now</dd>
-        <dt>Page Up / Page Down</dt><dd>Cover buttons (firmwares on the older simulator library)</dd>
-        <dt>T</dt><dd>Slide switch (older simulator library)</dd>
-        <dt>Shift + &larr; &rarr; &uarr;</dt><dd>Swipe left, right, up (X4 Pro)</dd>
-        <dt>Shift + &darr;</dt><dd>Swipe down from the top (X4 Pro)</dd>
-        <dt>Shift + Enter</dt><dd>Hold the middle of the screen (X4 Pro)</dd>
-      </dl>
-    </section>
     <p id="status" class="hint" role="status"></p>
+  </section>
+  <section class="card guide" aria-labelledby="guideTitle">
+    <div class="guide-head">
+      <h2 id="guideTitle">Controls</h2>
+      <p class="hint">Use the drawn reader like the real one: press its keys, and on the X4 Pro touch its screen.</p>
+    </div>
+    <div class="guide-grid">
+      <div class="panel">
+        <h3><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="18" rx="2"/></svg>Keys on the reader</h3>
+        <ul class="ctl">
+          <li><span class="how">Click</span><span>Press the key</span></li>
+          <li><span class="how">Hold</span><span>Long press, e.g. Power to sleep</span></li>
+          <li><span class="how">Click while asleep</span><span>Wake up</span></li>
+        </ul>
+        <h4>Keys each reader has</h4>
+        <dl class="models">
+          <dt>X4 Pro</dt><dd><kbd>Up</kbd><kbd>Down</kbd><kbd>Power</kbd><kbd>Home</kbd></dd>
+          <dt>X4 Classic, X3</dt><dd><kbd>Up</kbd><kbd>Down</kbd><kbd>Power</kbd><kbd>Back</kbd><kbd>Confirm</kbd><kbd>Left</kbd><kbd>Right</kbd></dd>
+        </dl>
+      </div>
+      <div class="panel">
+        <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5a2 2 0 0 1 4 0v5m0 0V9a2 2 0 0 1 4 0v4m0-2a2 2 0 0 1 4 0v3a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3l-3-5a2 2 0 0 1 3-2l2 2"/></svg>Touchscreen <span class="badge">X4 Pro</span></h3>
+        <ul class="ctl touchrows">
+          <li><span class="how"><span class="g">&#9679;</span>Tap</span><span>Open, choose</span></li>
+          <li><span class="how"><span class="g">&#9673;</span>Hold &frac12; s</span><span>Select a word</span></li>
+          <li><span class="how"><span class="g">&larr;&rarr;</span>Swipe</span><span>Turn the page</span></li>
+          <li><span class="how"><span class="g">&uarr;</span>Swipe up</span><span>Reader menu</span></li>
+          <li><span class="how"><span class="g">&darr;</span>Swipe down from top</span><span>Light, close menu</span></li>
+          <li><span class="how"><span class="g">&harr;</span>Slow drag</span><span>Sliders, lists</span></li>
+        </ul>
+        <div class="gestures" id="gestures" role="group" aria-label="Make a gesture on the screen">
+          <button class="chipbtn" data-g="left" title="Swipe left (Shift + Left)">&larr;</button>
+          <button class="chipbtn" data-g="right" title="Swipe right (Shift + Right)">&rarr;</button>
+          <button class="chipbtn" data-g="up" title="Swipe up (Shift + Up)">&uarr;</button>
+          <button class="chipbtn" data-g="down" title="Swipe down from the top (Shift + Down)">&darr;</button>
+          <button class="chipbtn wide" data-g="hold" title="Hold the middle of the screen (Shift + Enter)">Hold</button>
+        </div>
+      </div>
+      <div class="panel kbd-panel">
+        <h3><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h1M10 10h1M14 10h1M18 10h0M7 14h10"/></svg>Keyboard</h3>
+        <ul class="ctl keyrows">
+          <li><span class="how"><kbd>Esc</kbd></span><span>Back</span></li>
+          <li><span class="how"><kbd>Enter</kbd></span><span>Confirm</span></li>
+          <li><span class="how"><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd></span><span>Arrow keys</span></li>
+          <li><span class="how"><kbd>P</kbd></span><span>Power (hold to sleep)</span></li>
+          <li><span class="how"><kbd>H</kbd></span><span>Home key</span></li>
+          <li><span class="how"><kbd>S</kbd></span><span>Sleep now</span></li>
+          <li><span class="how"><kbd>Shift</kbd>+<kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd></span><span>Swipe</span></li>
+          <li><span class="how"><kbd>Shift</kbd>+<kbd>Enter</kbd></span><span>Hold</span></li>
+          <li class="older"><span class="how"><kbd>PgUp</kbd><kbd>PgDn</kbd></span><span>Cover buttons*</span></li>
+          <li class="older"><span class="how"><kbd>T</kbd></span><span>Slide switch*</span></li>
+        </ul>
+        <p class="hint">Click the reader first so it gets the keys. *Older simulator library only.</p>
+      </div>
+    </div>
+    <p class="tip"><b>Try it:</b> every new SD card has two free books and an English dictionary. Hold a word in a
+      book to look it up. Tap to look up works too after turning on <i>Settings &rsaquo; Reader &rsaquo; Tap to Look Up</i>
+      (VARAGH, CrossInk). Two-finger gestures cannot be made with one pointer.</p>
   </section>
 </main>
 
