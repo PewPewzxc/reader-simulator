@@ -9,6 +9,7 @@ L="import sys; sys.path.insert(0, r'$(cygpath -w "$O")'); import launcher"
 [ -n "$ref" ] || ref=$("$PY" -I -c "$L; print(launcher.versions('$repo')[0])" | tr -d '\r')
 folder=$("$PY" -I "$O/tools/fetch.py" "$repo" "$ref" 2>&1 | tail -1)
 [ -f "$folder/platformio.ini" ] || { echo "$repo $ref: DOWNLOAD FAILED: $folder"; exit 1; }
+"$PY" -I "$O/adapter.py" "$folder" > /dev/null 2>&1 || true  # simulator envs for CrossPoint-family firmwares without any
 if [ -z "$env" ]; then  # first simulator env this firmware has, X4 Pro first
   env=$("$PY" -I -c "$L; e=launcher.envs_for(r'$folder'); print((e.get('X4 Pro') or e.get('X4 Classic') or e.get('X3') or ''))")
 fi

@@ -51,6 +51,10 @@ def envs_for(folder):
         ini = open(os.path.join(folder, "platformio.ini"), encoding="utf-8").read()
     except OSError:
         return {}
+    try:  # simulator envs adapter.py added for a firmware without its own (CrossPoint)
+        ini += open(os.path.join(folder, "platformio.local.ini"), encoding="utf-8").read()
+    except OSError:
+        pass
     have = set(re.findall(r"^\[env:([^\]]+)\]", ini, re.M))
     return {m: next(e for e in names if e in have) for m, names in ENV_NAMES.items() if have & set(names)}
 
@@ -135,6 +139,11 @@ def download(repo, ref, on_line=lambda s: None):
         rmtree(dest)
         raise RuntimeError(f"Could not download {repo} {ref}.")
     open(os.path.join(dest, NAME_FILE), "w", encoding="utf-8", newline="\n").write(repo + "@" + ref + "\n")
+    try:  # a CrossPoint-family firmware without a simulator setup gets one (platformio.local.ini)
+        import adapter
+        on_line(adapter.build(dest))
+    except Exception as e:  # noqa: BLE001  offline or an unusual platformio.ini: the build shows what is missing
+        on_line(f"adapter: {e}")
     return dest
 
 

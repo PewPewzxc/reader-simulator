@@ -74,3 +74,20 @@ inline void *aligned_alloc(size_t alignment, size_t bytes) {
 }
 }  // namespace std
 #endif
+
+#ifdef RSIM_CROSSPOINT_COMPAT  // only in builds whose simulator setup adapter.py wrote (CrossPoint)
+#include <sys/time.h>
+// MinGW has gettimeofday but no settimeofday (CrossPoint 2.0's TrustedTime sets the clock from the
+// network); the simulator keeps the PC's clock, so accept and ignore.
+static inline int settimeofday(const struct timeval *tv, const void *tz) { (void)tv; (void)tz; return 0; }
+
+#include <ctype.h>
+#include <string.h>
+// MinGW lacks the GNU strcasestr (AvesO3 uses it).
+static inline char *strcasestr(const char *h, const char *n) {
+  size_t len = strlen(n);
+  for (; *h; h++)
+    if (_strnicmp(h, n, len) == 0) return (char *)h;
+  return len ? NULL : (char *)h;
+}
+#endif

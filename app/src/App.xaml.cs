@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -21,6 +22,7 @@ namespace ReaderSimulator
     {
         public static bool? ForcedTheme; // --theme light|dark
         public static bool RenderOnly;
+        static Mutex instance; // held for the app's lifetime
 
         [DllImport("kernel32.dll")] static extern bool AttachConsole(int pid);
 
@@ -57,6 +59,16 @@ namespace ReaderSimulator
                 if (Arg(a, "--page") == "about") w.NavAbout.IsChecked = true;
                 await w.LoadFeed(feed);
                 Shutdown(RenderUi(w, Path.GetFullPath(render)) ? 0 : 1);
+                return;
+            }
+            // One window per data folder: a second start brings the first window forward (they would share settings and cards).
+            instance = new Mutex(true, @"Local\ReaderSimulator:" + Store.Root.ToLowerInvariant().Replace('\\', '/'), out bool first);
+            if (!first)
+            {
+                var me = System.Diagnostics.Process.GetCurrentProcess();
+                foreach (var other in System.Diagnostics.Process.GetProcessesByName(me.ProcessName).Where(o => o.Id != me.Id && o.MainWindowHandle != IntPtr.Zero))
+                    ReaderSimulator.MainWindow.BringToFront(other.MainWindowHandle);
+                Shutdown(0);
                 return;
             }
             MainWindow = w;
@@ -101,11 +113,29 @@ namespace ReaderSimulator
                 throw new Exception("address allow-list check failed");
             var badId = Feed.Parse("{\"schema\":1,\"builds\":[{\"id\":\"..\\\\x\",\"name\":\"a\",\"ref\":\"1\",\"model\":\"X3\",\"sha256\":\"" + new string('0', 64) + "\",\"url\":\"https://github.com/x\"}]}", new Uri("https://github.com/f/index.json"));
             if (badId.Count != 0) throw new Exception("feed validation let a bad id through");
-            foreach (var id in new[] { "abc.", "abc-", ".abc", "con", "nul.zip", "com1", "lpt9.x", "aux", "a/b", "A" })
-                if (Feed.ValidId(id)) throw new Exception("id check accepted " + id);
+            foreach (var id in new[] { "abc.", "abc-", ".abc", "con", "nul.zip", "com1", "lpt9.x", "aux", "a/b", "A", "abc\n", "a~old" })
+                if (Feed.ValidId(id)) throw new Exception("id check accepted " + id.Replace("\n", "\\n"));
             foreach (var id in new[] { "a", "pewpewzxc-varagh-1.3.0-x4-pro", "console", "com1-x" })
                 if (!Feed.ValidId(id)) throw new Exception("id check refused " + id);
+            var nlSha = Feed.Parse("{\"schema\":1,\"builds\":[{\"id\":\"a\",\"name\":\"a\",\"ref\":\"1\",\"model\":\"X3\",\"sha256\":\"" + new string('0', 64) + "\\n\",\"url\":\"https://github.com/x\"}]}", new Uri("https://github.com/f/index.json"));
+            if (nlSha.Count != 0) throw new Exception("feed validation let a sha256 ending in a newline through");
+            if (Store.Installed(new Build { Id = "a\0b", Sha256 = new string('0', 64) })) throw new Exception("bad path counted as installed");
             Log("allow-list and feed validation: ok");
+
+            // a damaged settings.json must not stop the window from opening (I-002)
+            var settingsFile = Path.Combine(Store.Root, "settings.json");
+            Directory.CreateDirectory(Store.Root);
+            foreach (var s in new[] { "", "{\"battery\":\"high\"}", "{\"battery\":[1]}", "{\"battery\":\"Infinity\"}", "[1,2]" })
+            {
+                File.WriteAllText(settingsFile, s);
+                new MainWindow().Close();
+            }
+            File.Delete(settingsFile);
+            Store.SaveSettings(new Dictionary<string, object> { ["battery"] = 42 });
+            Store.SaveSettings(new Dictionary<string, object> { ["battery"] = 43 }); // the second save replaces an existing file
+            if (Convert.ToInt32(Store.LoadSettings()["battery"]) != 43 || File.Exists(settingsFile + ".tmp")) throw new Exception("settings save/replace failed");
+            File.Delete(settingsFile);
+            Log("damaged settings.json: ok");
 
             // a download into a folder that does not exist yet (first run with an https feed used to fail here)
             var fresh = Path.Combine(Store.Root, "selftest-" + Guid.NewGuid().ToString("N"), "sub");
@@ -141,6 +171,10 @@ namespace ReaderSimulator
             if (feed == null) throw new Exception("no feed (use --feed)");
             var builds = Feed.Parse(await Feed.FetchText(feed), feed);
             Log($"feed {feed}: {builds.Count} builds");
+            // two windows reading the feed at the same moment (I-007), and no temp file left behind
+            await Task.WhenAll(Feed.FetchText(feed), Feed.FetchText(feed), Feed.FetchText(feed));
+            if (Directory.GetFiles(Store.Root, "feed*.download").Any()) throw new Exception("feed temp file left behind");
+            Log("parallel feed reads: ok");
             var b = builds.FirstOrDefault() ?? throw new Exception("feed has no builds");
 
             var wrong = new Build { Id = b.Id + "-shacheck", Url = b.Url, Size = b.Size, Sha256 = new string('0', 64) };
@@ -165,8 +199,51 @@ namespace ReaderSimulator
                 ["SDL_VIDEODRIVER"] = "dummy", ["SDL_RENDER_DRIVER"] = "software", ["SDL_AUDIODRIVER"] = "dummy",
                 ["CROSSPOINT_SIM_INPUT_SCRIPT"] = "6000:QUIT", ["CROSSPOINT_SIM_SCREENSHOTS"] = "4000:selftest.bmp", // relative: the simulator splits on ':'
             });
+            // the simulators read paths with the ANSI code page: what they get must be plain ASCII (I-004, I-005)
+            if (p.StartInfo.WorkingDirectory.Any(c => c > 127) || (b.Frame != null && p.StartInfo.EnvironmentVariables["CROSSPOINT_SIM_FRAME"].Any(c => c > 127)))
+                throw new Exception("the simulator was given a non-ASCII path (no 8.3 short names on this drive?)");
+            // updating a build while its simulator runs must replace it cleanly (I-003)
+            await Task.Delay(1500);
+            if (p.HasExited) throw new Exception("simulator quit too early for the running-update check");
+            await Store.Install(b, null, CancellationToken.None);
+            if (!Store.Installed(b)) throw new Exception("update while running broke the build");
+            Log("update while the simulator runs: ok");
             if (!await Task.Run(() => p.WaitForExit(90000))) { p.Kill(); throw new Exception("simulator did not quit within 90 s"); }
             Log($"simulator exit code {p.ExitCode}; screenshot {(File.Exists(shot) ? new FileInfo(shot).Length + " bytes at " + shot : "MISSING")}");
+            if (b.Frame != null && File.Exists(shot))
+            {
+                var hdr = new byte[22];
+                using (var f = File.OpenRead(shot)) f.Read(hdr, 0, hdr.Length);
+                var size = File.ReadAllLines(Path.Combine(Store.FramesDir, b.Frame + ".keys")).First(l => l.StartsWith("size ")).Split(' ');
+                if (BitConverter.ToInt32(hdr, 18) != int.Parse(size[1])) throw new Exception($"screenshot is {BitConverter.ToInt32(hdr, 18)} px wide, the {b.Frame} frame {size[1]}: the frame was not drawn");
+                Log("device frame drawn: ok");
+            }
+
+            // Sleep and wake: the simulator restarts as a new process (I-011); the app must still see it running.
+            p = Store.Start(b, 55, true, new Dictionary<string, string>
+            {
+                ["SDL_VIDEODRIVER"] = "dummy", ["SDL_RENDER_DRIVER"] = "software", ["SDL_AUDIODRIVER"] = "dummy",
+                ["CROSSPOINT_SIM_INPUT_SCRIPT"] = "1500:SLEEP;3000:POWER;12000:QUIT", ["CROSSPOINT_SIM_INPUT_SCRIPT_AFTER_WAKE"] = "2500:QUIT",
+            });
+            // (WaitForExit on the first process can wait for the pipes the woken one inherited, so poll instead)
+            Process woke = null;
+            for (int i = 0, gone = 0; i < 300 && woke == null && gone < 30; i++) // gone: 3 s after the first process ended
+            {
+                await Task.Delay(100);
+                var r = Store.Running(b);
+                if (r != null && r.Id != p.Id) woke = r;
+                else { r?.Dispose(); if (p.HasExited) gone++; }
+            }
+            if (woke == null && !p.HasExited) { p.Kill(); throw new Exception("simulator did not quit within 30 s"); }
+            if (woke == null) Log("sleep/wake: no restart seen (this simulator has no SLEEP script key?), skipped");
+            else
+            {
+                if (!p.HasExited) await Task.Delay(2000);
+                if (!p.HasExited) throw new Exception("old process still running after the wake");
+                if (Store.Running(b) == null && !woke.HasExited) throw new Exception("woken simulator not seen as running");
+                if (!await Task.Run(() => woke.WaitForExit(30000))) { woke.Kill(); throw new Exception("woken simulator did not quit"); }
+                Log("sleep/wake restart seen as still running: ok");
+            }
             return File.Exists(shot) ? 0 : 1;
         }
     }

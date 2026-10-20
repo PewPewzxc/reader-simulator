@@ -25,6 +25,10 @@ Script steps: `TAP:x,y[,ms]`, `SWIPE:x1,y1,x2,y2[,ms]` (finger down + up only),
 `DRAG:x1,y1,x2,y2[,ms]` (moves every 40 ms, for sliders), `BACK ENTER LEFT RIGHT UP DOWN HOME POWER SLEEP QUIT`.
 Each firmware gets its own SD card: `cards/<folder>/fs_/` (books in `fs_/books/`).
 Pictures: `cards/<folder>/shots/` or `SIM_SHOTS=<dir>`.
+Sleep/wake: waking (POWER after SLEEP) restarts `program.exe`. The new run drops the script and pictures on purpose
+(no endless sleep loop) and uses `CROSSPOINT_SIM_INPUT_SCRIPT_AFTER_WAKE` / `CROSSPOINT_SIM_SCREENSHOTS_AFTER_WAKE`
+instead, e.g. `...;3000:POWER` + `AFTER_WAKE='2500:QUIT'`. On Windows the restart is a new process (MinGW `execvp`
+starts a new process and the old one exits), so wait for every `program.exe` from that folder, not only the one you started.
 
 ## Many firmwares at once (release builds)
 ```bash
@@ -45,6 +49,7 @@ bash tools/make_release.sh                                 # zips + index.json +
 | `compat/openssl/md5.h` | the only OpenSSL use (KOReader document ids); self-check `tests/md5_check.cpp` |
 | `compat/esp_random.h`, `-DtskNO_AFFINITY`, `-DportNUM_PROCESSORS` | games use them; the simulator library lacks them (Linux needs these too) |
 | `patch_libdeps.py` | QRCode C23 `bool`; VARAGH no-ops `setWifiIdleLowPowerAllowed`, `setDaylightSavingRuleSource`, `fullRefreshNext`; `VARAGH_SIM_BATTERY` / `VARAGH_SIM_USB`; MD5Builder on Windows; new `DRAG` script step. A fix whose text is missing is skipped |
+| `adapter.py` (build.sh, launcher download, try_firmware.sh) | CrossPoint-family downloads without a simulator setup get one in `platformio.local.ini` (crosspoint-simulator's sample envs at the library commit from the firmware's date; `--newest` / `platformio.local.ini.dated` after a failed build); `-DRSIM_CROSSPOINT_COMPAT` turns on `settimeofday`/`strcasestr` in `compat/win_sim_prelude.h`, `compat/openssl/sha.h` gives SHA1/SHA256 (checks: `tests/sha_check.cpp`, `tests/crosspoint_prelude_check.cpp`). CrossPoint 1.6.5 and 2.0.0rc build for all three models |
 | `win_sim_prelude.h`: `fopen(const wchar_t*)` | CrossInk 1.6.1's smoke test passes `std::filesystem::path::c_str()` (wchar_t on Windows) to `fopen`; self-check `tests/wfopen_check.cpp` |
 | `patch_libdeps.py`: `HalClock::canDisplayTime`, `String::toLowerCase` | stand-ins the simulator libraries lack (CrossInk-Bookorbit, CrossNotes) |
 | frame on the older `crosspoint-simulator` library | `patch_libdeps.py` picks its anchors (`OLD_LIB`) and crops the same 2 px edge the newer library hides, so one set of frames fits both |

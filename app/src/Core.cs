@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,12 +33,13 @@ namespace ReaderSimulator
         public static readonly string[] Models = { "X4 Pro", "X4 Classic", "X3" };
         public static readonly string[] Frames = { "x4-pro", "x4-classic", "x3" };
         // No trailing dot/dash (Windows strips trailing dots) and no reserved device names (con, nul, com1...).
-        static readonly Regex IdRe = new Regex("^[a-z0-9](?:[a-z0-9._-]{0,98}[a-z0-9])?$");
+        // \A..\z, not ^..$: in .NET $ also matches before a final "\n"
+        static readonly Regex IdRe = new Regex(@"\A[a-z0-9](?:[a-z0-9._-]{0,98}[a-z0-9])?\z");
         static readonly Regex ReservedRe = new Regex(@"^(con|prn|aux|nul|com\d|lpt\d)(\.|$)");
         public static bool ValidId(string id) => id != null && IdRe.IsMatch(id) && !ReservedRe.IsMatch(id);
         public const int MaxFeedBytes = 4 << 20;
         public static TimeSpan StallTimeout = TimeSpan.FromSeconds(30);
-        static readonly Regex HexRe = new Regex("^[0-9a-f]{64}$");
+        static readonly Regex HexRe = new Regex(@"\A[0-9a-f]{64}\z");
         // release-assets.githubusercontent.com: where github.com release downloads redirect to since 2025.
         static readonly string[] Hosts = { "github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com" };
 
@@ -52,9 +54,10 @@ namespace ReaderSimulator
         public static async Task<string> FetchText(Uri feed)
         {
             if (!Allowed(feed, true)) throw new InvalidOperationException("The feed address is not allowed: " + feed);
-            var tmp = Path.Combine(Store.Root, "feed.download"); // one path for file: and https feeds, same 4 MB cap
-            await Download(feed, tmp, MaxFeedBytes, null, CancellationToken.None);
-            try { return File.ReadAllText(tmp); } finally { File.Delete(tmp); }
+            // one path for file: and https feeds, same 4 MB cap; a unique name so two app windows starting together do not collide
+            var tmp = Path.Combine(Store.Root, "feed-" + Path.GetRandomFileName() + ".download");
+            try { await Download(feed, tmp, MaxFeedBytes, null, CancellationToken.None); return File.ReadAllText(tmp); }
+            finally { try { File.Delete(tmp); } catch (IOException) { } } // also after a failed (offline) read
         }
 
         /// <summary>Valid builds of a feed; anything malformed or not allowed is skipped.</summary>
@@ -163,7 +166,7 @@ namespace ReaderSimulator
         public static bool Installed(Build b)
         {
             try { return File.Exists(Path.Combine(BuildDir(b), "program.exe")) && File.ReadAllText(Path.Combine(BuildDir(b), ShaFile)).Trim() == b.Sha256; }
-            catch (IOException) { return false; }
+            catch (Exception) { return false; } // never let a bad path crash Refresh()
         }
 
         /// <summary>Download, refuse a SHA-256 mismatch, unpack only the listed files.</summary>
@@ -171,8 +174,11 @@ namespace ReaderSimulator
         {
             var builds = Path.Combine(Root, "builds");
             Directory.CreateDirectory(builds);
-            var zip = Path.Combine(builds, b.Id + ".zip.part");
-            var tmp = Path.Combine(builds, b.Id + ".unpacking");
+            // '~' is not allowed in ids, so these names can never be another build's folder
+            var zip = Path.Combine(builds, b.Id + "~zip");
+            var tmp = Path.Combine(builds, b.Id + "~unpacking");
+            foreach (var d in Directory.GetDirectories(builds, b.Id + "~old-*")) // left by an update while that build was running
+                try { Directory.Delete(d, true); } catch (Exception) { }
             try
             {
                 var hash = await Feed.Download(b.Url, zip, b.Size > 0 ? b.Size : 1L << 30, progress, ct);
@@ -202,8 +208,13 @@ namespace ReaderSimulator
                 });
                 if (!File.Exists(Path.Combine(tmp, "program.exe"))) throw new InvalidDataException("The package has no program.exe.");
                 File.WriteAllText(Path.Combine(tmp, ShaFile), b.Sha256);
-                if (Directory.Exists(BuildDir(b))) Directory.Delete(BuildDir(b), true);
-                Directory.Move(tmp, BuildDir(b));
+                // Move the old build aside instead of deleting it: a running simulator locks its DLLs against
+                // deletion but not against renaming, so a delete would stop half-way and break the old build.
+                var old = BuildDir(b) + "~old-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                if (Directory.Exists(BuildDir(b))) Directory.Move(BuildDir(b), old);
+                try { Directory.Move(tmp, BuildDir(b)); }
+                catch (Exception) { if (Directory.Exists(old)) Directory.Move(old, BuildDir(b)); throw; }
+                try { if (Directory.Exists(old)) Directory.Delete(old, true); } catch (Exception) { } // still running: removed next time
             }
             finally
             {
@@ -211,15 +222,46 @@ namespace ReaderSimulator
             }
         }
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern uint GetShortPathNameW(string longPath, StringBuilder shortPath, uint size);
+
+        /// <summary>The simulators read paths with the ANSI code page, so a non-ASCII folder (a Persian or "ü" user name)
+        /// turns into "?" for them: hand them the 8.3 short name of an existing folder instead.</summary>
+        public static string AnsiSafe(string dir)
+        {
+            if (dir.All(c => c < 128)) return dir;
+            var sb = new StringBuilder(1024);
+            uint n = GetShortPathNameW(dir, sb, (uint)sb.Capacity);
+            // shortcut: a volume without 8.3 names keeps the long path (simulator still breaks there; real fix routed in I-004)
+            return n > 0 && n < sb.Capacity ? sb.ToString() : dir;
+        }
+
+        /// <summary>The running simulator of this build, found by its exe folder: waking from sleep restarts program.exe
+        /// as a new process (on Windows execvp starts a new process and ends the old one), so the started handle is not enough.</summary>
+        public static Process Running(Build b)
+        {
+            if (b == null) return null;
+            var dir = BuildDir(b);
+            Process found = null;
+            foreach (var p in Process.GetProcessesByName("program"))
+            {
+                string d = null;
+                try { d = Path.GetDirectoryName(p.MainModule.FileName); } catch (Exception) { } // exited or not ours
+                if (found == null && d != null && (string.Equals(d, dir, StringComparison.OrdinalIgnoreCase)
+                    || d.StartsWith(dir + "~old-", StringComparison.OrdinalIgnoreCase))) found = p; // ~old-: updated while it ran
+                else p.Dispose();
+            }
+            return found;
+        }
+
         public static Process Start(Build b, int battery, bool usb, IDictionary<string, string> extraEnv = null)
         {
             Directory.CreateDirectory(SdCard(b));
             var psi = new ProcessStartInfo(Path.Combine(BuildDir(b), "program.exe"))
             {
-                WorkingDirectory = CardDir(b), UseShellExecute = false, CreateNoWindow = true,
+                WorkingDirectory = AnsiSafe(CardDir(b)), UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardOutput = true, RedirectStandardError = true,
             };
-            if (b.Frame != null) psi.EnvironmentVariables["CROSSPOINT_SIM_FRAME"] = Path.Combine(FramesDir, b.Frame).Replace('\\', '/');
+            if (b.Frame != null) psi.EnvironmentVariables["CROSSPOINT_SIM_FRAME"] = Path.Combine(AnsiSafe(FramesDir), b.Frame).Replace('\\', '/');
             psi.EnvironmentVariables["VARAGH_SIM_BATTERY"] = battery.ToString();
             psi.EnvironmentVariables["VARAGH_SIM_USB"] = usb ? "1" : "0";
             if (extraEnv != null) foreach (var kv in extraEnv) psi.EnvironmentVariables[kv.Key] = kv.Value;
@@ -237,13 +279,20 @@ namespace ReaderSimulator
         // settings.json: device, firmware repo, ref, battery, usb
         public static Dictionary<string, object> LoadSettings()
         {
-            try { return (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(File.ReadAllText(Path.Combine(Root, "settings.json"))); }
+            try { return new JavaScriptSerializer().DeserializeObject(File.ReadAllText(Path.Combine(Root, "settings.json"))) as Dictionary<string, object> ?? new Dictionary<string, object>(); }
             catch (Exception) { return new Dictionary<string, object>(); }
         }
 
         public static void SaveSettings(Dictionary<string, object> s)
         {
-            try { Directory.CreateDirectory(Root); File.WriteAllText(Path.Combine(Root, "settings.json"), new JavaScriptSerializer().Serialize(s)); }
+            try
+            {
+                // write a temp file, then swap it in: a power cut never leaves a half-written settings.json
+                Directory.CreateDirectory(Root);
+                string path = Path.Combine(Root, "settings.json"), tmp = path + ".tmp";
+                File.WriteAllText(tmp, new JavaScriptSerializer().Serialize(s));
+                if (File.Exists(path)) File.Replace(tmp, path, null); else File.Move(tmp, path);
+            }
             catch (Exception) { }
         }
     }

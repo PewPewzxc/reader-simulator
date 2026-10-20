@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -16,8 +16,21 @@ namespace ReaderSimulator
     {
         List<Build> builds = new List<Build>();
         string device = "X4 Pro", repo, gitRef;
-        bool busy, loading;
+        bool busy, loading, copying;
         System.Threading.CancellationTokenSource cancel; // set while a download runs
+        bool shownRunning; // what the Start button shows; a timer refreshes when the simulator starts or ends (also after a wake)
+
+        static Process Running(Build b) => Store.Running(b);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr hwnd);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool ShowWindowAsync(IntPtr hwnd, int cmd);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool IsIconic(IntPtr hwnd);
+
+        public static void BringToFront(IntPtr hwnd)
+        {
+            if (IsIconic(hwnd)) ShowWindowAsync(hwnd, 9 /* SW_RESTORE */);
+            SetForegroundWindow(hwnd);
+        }
         readonly Dictionary<string, object> settings = Store.LoadSettings();
         readonly Dictionary<string, BitmapImage> frames = new Dictionary<string, BitmapImage>();
 
@@ -28,7 +41,9 @@ namespace ReaderSimulator
             repo = settings.TryGetValue("repo", out var r) ? r as string : null;
             gitRef = settings.TryGetValue("ref", out var g) ? g as string : null;
             loading = true;
-            Battery.Value = settings.TryGetValue("battery", out var b) ? Convert.ToDouble(b) : 80;
+            double bv = 80;
+            try { if (settings.TryGetValue("battery", out var b)) bv = Convert.ToDouble(b, System.Globalization.CultureInfo.InvariantCulture); } catch (Exception) { }
+            Battery.Value = double.IsNaN(bv) || double.IsInfinity(bv) ? 80 : bv; // the slider throws on NaN/Infinity
             Usb.IsChecked = settings.TryGetValue("usb", out var u) && u is bool ub && ub;
             loading = false;
             BatteryText.Text = (int)Battery.Value + " %";
@@ -46,6 +61,10 @@ namespace ReaderSimulator
             SourceInitialized += (s, e) => Theme.TitleBar(this);
             SystemEvents.UserPreferenceChanged += OnThemeChanged;
             Closed += (s, e) => SystemEvents.UserPreferenceChanged -= OnThemeChanged;
+            var poll = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            poll.Tick += (s, e) => { if (!busy && !App.RenderOnly) using (var p = Running(Current)) if ((p != null) != shownRunning) Refresh(); };
+            poll.Start();
+            Closed += (s, e) => poll.Stop();
         }
 
         void OnThemeChanged(object s, UserPreferenceChangedEventArgs e)
@@ -153,14 +172,17 @@ namespace ReaderSimulator
             PreviewTitle.Text = device;
             PreviewSub.Text = b != null ? b.Name + " " + b.Version : repo != null ? "This firmware version has no " + device + " build" : "Pick a firmware";
             bool ready = b != null && Store.Installed(b);
-            StartText.Text = busy ? "Cancel download" : ready ? "Start" : b != null ? "Download and start" : "Start";
+            using (var r = Running(b)) shownRunning = r != null;
+            StartText.Text = busy ? "Cancel download" : shownRunning ? "Show simulator" : ready ? "Start" : b != null ? "Download and start" : "Start";
             StartIcon.Text = busy ? "" : ready || b == null ? "" : "";
             BtnStart.IsEnabled = b != null || busy;
-            BtnBooks.IsEnabled = BtnFolder.IsEnabled = BtnFresh.IsEnabled = b != null && !busy;
+            BtnFolder.IsEnabled = BtnFresh.IsEnabled = b != null && !busy;
+            BtnBooks.IsEnabled = b != null && !busy && !copying;
             if (!busy)
             {
                 if (b == null) SetStatus("", repo == null ? "No firmware to show." : $"No {device} build of this version. Devices it has: " +
                     string.Join(", ", builds.Where(x => (x.Repo ?? x.Name) == repo && x.Ref == gitRef).Select(x => x.Model)) + ".");
+                else if (shownRunning) SetStatus("", $"{b.Name} {b.Version} is running on the {b.Model}. Close its window to stop it.");
                 else if (ready) SetStatus("", "Downloaded and checked. Ready to start.");
                 else SetStatus("", $"Not downloaded yet ({Mb(b.Size)}). It is downloaded and checked the first time you start it.");
                 if (b != null && b.Frame == null) StatusText.Text += " This build shows the screen without the device frame.";
@@ -233,6 +255,13 @@ namespace ReaderSimulator
             if (busy) { cancel?.Cancel(); return; }
             var b = Current;
             if (b == null) return;
+            if (Running(b) is Process r)
+            {
+                r.Refresh();
+                if (r.MainWindowHandle != IntPtr.Zero) BringToFront(r.MainWindowHandle);
+                SetStatus("\uE946", $"{b.Name} {b.Version} on the {b.Model} is already running. Close its window to start it again.");
+                return;
+            }
             if (!Store.Installed(b))
             {
                 busy = true; cancel = new System.Threading.CancellationTokenSource(); Refresh();
@@ -258,6 +287,7 @@ namespace ReaderSimulator
             try
             {
                 Store.Start(b, (int)Battery.Value, Usb.IsChecked == true);
+                Refresh();
                 SetStatus("", $"Started {b.Name} {b.Version} on the {b.Model}. Battery {(int)Battery.Value} %, USB {(Usb.IsChecked == true ? "on" : "off")}.");
             }
             catch (Exception ex) { SetStatus("", "Could not start: " + ex.Message); }
@@ -274,6 +304,8 @@ namespace ReaderSimulator
         {
             var b = Current; if (b == null) return;
             var card = Store.SdCard(b);
+            // it keeps its settings in memory and writes them back, so emptying under it would not stick
+            using (var r = Running(b)) if (r != null) { SetStatus("\uE946", "Close the simulator window first, then make a fresh SD card."); return; }
             if (MessageBox.Show(this, $"Delete everything on the simulated SD card of {b.Name} {b.Version} ({b.Model})?\n\nBooks, settings and reading progress on it are removed. Your own files elsewhere are not touched.",
                     "Fresh SD card", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
             try
@@ -285,7 +317,7 @@ namespace ReaderSimulator
             catch (Exception ex) { SetStatus("", "Could not empty the SD card (is the simulator still running?): " + ex.Message); }
         }
 
-        void AddBooks_Click(object sender, RoutedEventArgs e)
+        async void AddBooks_Click(object sender, RoutedEventArgs e)
         {
             var b = Current; if (b == null) return;
             var dlg = new OpenFileDialog { Title = "Add books to the simulated SD card", Multiselect = true,
@@ -293,13 +325,29 @@ namespace ReaderSimulator
             if (dlg.ShowDialog(this) != true) return;
             var books = Path.Combine(Store.SdCard(b), "books");
             Directory.CreateDirectory(books);
+            var files = dlg.FileNames.ToList();
+            int same = files.Count(f => File.Exists(Path.Combine(books, Path.GetFileName(f))));
+            if (same > 0)
+            {
+                var answer = MessageBox.Show(this, $"{Plural(same, "book")} with the same name {(same == 1 ? "is" : "are")} already on the SD card.\n\nReplace {(same == 1 ? "it" : "them")}? (No keeps the ones on the card.)",
+                    "Add books", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+                if (answer == MessageBoxResult.Cancel) return;
+                if (answer == MessageBoxResult.No) files.RemoveAll(f => File.Exists(Path.Combine(books, Path.GetFileName(f))));
+            }
             int n = 0;
+            copying = true; Refresh();
             try
             {
-                foreach (var f in dlg.FileNames) { File.Copy(f, Path.Combine(books, Path.GetFileName(f)), true); n++; }
+                foreach (var f in files)
+                {
+                    SetStatus("\uE896", $"Copying {Path.GetFileName(f)} ({n + 1} of {files.Count})…");
+                    await Task.Run(() => File.Copy(f, Path.Combine(books, Path.GetFileName(f)), true)); // off the UI thread: big files, slow drives
+                    n++;
+                }
+                copying = false; Refresh();
                 SetStatus("", $"Copied {Plural(n, "book")} to the SD card.");
             }
-            catch (Exception ex) { SetStatus("", $"Copied {n}, then failed: " + ex.Message); }
+            catch (Exception ex) { copying = false; Refresh(); SetStatus("", $"Copied {n}, then failed: " + ex.Message); }
         }
     }
 }

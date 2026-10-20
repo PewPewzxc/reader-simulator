@@ -1,5 +1,5 @@
 {
- "_about": "Firmware menu of the reader simulator. repo = GitHub owner/name. status: ready (built and run on Windows here), untested (has a simulator setup, not tried yet), broken (its own simulator setup does not build, also on Linux), adapter (no simulator setup; the launcher will add one, not done yet), unsupported (cannot run in this simulator). frame: the reader picture with clickable keys works (both simulator libraries since 2026-10-20). Sources: readme.club/firmware and GitHub, checked and built on Windows 2026-10-20 (tools/try_all.sh). Versions are read live from each repo's releases.",
+ "_about": "Firmware menu of the reader simulator. repo = GitHub owner/name. status: ready (built and run on Windows here), untested (has a simulator setup, not tried yet), broken (its own simulator setup does not build, also on Linux), adapter (no simulator setup; the reader simulator adds one), unsupported (cannot run in this simulator). frame: the reader picture with clickable keys works (both simulator libraries since 2026-10-20). Sources: readme.club/firmware and GitHub, checked and built on Windows 2026-10-20 (tools/try_all.sh). Versions are read live from each repo's releases.",
  "firmwares": [
   {
    "name": "VARAGH",
@@ -144,9 +144,9 @@
   {
    "name": "CrossPoint Reader",
    "repo": "crosspoint-reader/crosspoint-reader",
-   "status": "adapter",
-   "frame": false,
-   "about": "The original open-source firmware. No simulator setup of its own (also true for 29 other firmwares on readme.club)."
+   "status": "ready",
+   "frame": true,
+   "about": "The original open-source firmware. No simulator setup of its own; the reader simulator adds one (crosspoint-simulator library from the firmware's date). Built and tested 1.6.5 and 2.0.0rc for X4 Pro, X4 Classic and X3."
   },
   {
    "name": "Xteink factory firmware",
