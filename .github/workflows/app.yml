@@ -72,6 +72,24 @@ jobs:
             installer/Output/
           if-no-files-found: ignore
           retention-days: 30
+      - name: Make sure the download list exists
+        # the app reads releases/download/feed/index.json; "Build firmwares" keeps it up to date, but before its first
+        # run finishes there is none and the app shows an empty list: start one from the newest builds-* release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release view feed --repo $env:REPO *> $null
+          if ($LASTEXITCODE -eq 0) { "the download list exists"; exit 0 }
+          $tag = gh release list --repo $env:REPO --limit 100 --json tagName --jq '[.[].tagName | select(startswith("builds-"))] | first'
+          if (-not $tag) { "no builds yet"; exit 0 }
+          gh release download $tag --repo $env:REPO --pattern index.json --dir feed-src
+          New-Item -ItemType File empty.tsv -Force | Out-Null
+          python -I sim-windows/tools/feed.py merge NUL feed-src/index.json empty.tsv index.json
+          gh release create feed index.json --repo $env:REPO --prerelease --latest=false `
+            --title "Download list of the Reader Simulator app" `
+            --notes "index.json: every firmware version the app offers, with the release each zip is in. Updated by the Build firmwares workflow."
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}

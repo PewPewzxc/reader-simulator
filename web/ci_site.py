@@ -22,6 +22,8 @@ SITE = os.path.join(HERE, "site")
 SAMPLES = os.path.join(os.path.dirname(HERE), "samples", "sd-card")
 FILES = [("sim.js", ".js"), ("sim.wasm", ".wasm"), ("LICENSE-firmware.txt", ".LICENSE-firmware.txt")]
 SAMPLES_ALLOWANCE = 20e6  # page, frames and sample card, for fit
+ID_RE = re.compile(r"[a-z0-9](?:[a-z0-9._-]{0,98}[a-z0-9])?")  # the app's rule for build ids (Feed.ValidId)
+MODELS = {"X4 Pro": "x4-pro", "X4 Classic": "x4-classic", "X3": "x3"}
 
 
 def sha256(path):  # as make_site.py (which only runs on the PC it was written on)
@@ -62,6 +64,10 @@ def entries(builds_dir, tag, assets, out):
         if not os.path.isfile(os.path.join(d, "build.json")):
             continue
         meta = json.load(open(os.path.join(d, "build.json"), encoding="utf-8"))
+        # the build jobs run the firmwares' own code: trust nothing from them that ends up in paths or the page
+        if not ID_RE.fullmatch(bid) or meta.get("id") != bid or meta.get("model") not in MODELS:
+            print(f"ci_site: {bid!r}: not a well-formed build, left out")
+            continue
         meta.pop("env", None)
         lic = open(os.path.join(d, "LICENSE-firmware.txt"), encoding="utf-8", errors="replace").read()
         files = []
