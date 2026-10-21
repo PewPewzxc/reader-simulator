@@ -51,6 +51,13 @@
    "about": "CrossPoint fork by alpzoloto-sudo (MIT), for the X3, X4 Classic and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Added 2026-10-21, not built yet."
   },
   {
+   "name": "crosslink",
+   "repo": "DaisonChun/crosslink",
+   "status": "untested",
+   "frame": false,
+   "about": "CrossPoint fork by DaisonChun (MIT). No simulator setup of its own; the reader simulator adds one (adapter.py). Added 2026-10-21, not built yet."
+  },
+  {
    "name": "InkPointX",
    "repo": "yokki-vans/InkPointX",
    "status": "untested",
