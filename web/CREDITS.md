@@ -3,10 +3,10 @@
 Unofficial. Not made by, affiliated with or endorsed by Xteink. The simulator is an approximation of a real reader.
 
 ## Firmwares (each build includes its licence as `builds/<id>/LICENSE-firmware.txt`)
-Every firmware is built from its public source at the tag listed in the page's `builds.json`, unchanged.
+Every firmware is built from its public source at the release tag (or branch) listed in the page's `builds.json`, unchanged.
 All of them are MIT licensed, based on CrossPoint Reader (c) 2025 Dave Allie, with their own authors:
 PewPewzxc/VARAGH, crosspoint-reader/crosspoint-reader, uxjulia/crossink, Sichroteph/YACP, HilbergK/CrossNotes, dito94/CrossDiTo,
-ashokslsk/PocketDeck-OS, padge01/xteink-pokemon-game, lauren-alexandra/duet-xteink.
+ashokslsk/PocketDeck-OS, padge01/xteink-pokemon-game, lauren-alexandra/duet-xteink, Mumfee/CrossSmudge, 0xKnowles/CrossPlant, 0x1abin/crossmux.
 
 ## Inside every build
 - Simulator library: uxjulia/crossink-simulator and uxjulia/crosspoint-simulator (MIT), with small patches

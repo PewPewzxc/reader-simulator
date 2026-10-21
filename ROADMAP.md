@@ -30,25 +30,10 @@ in the simulator; their request fails with the reason until then.
 **Work:** the issue form, the two buttons, a workflow that builds one requested repo and comments on the issue, and
 adding a passing firmware to the list. About a day.
 
-## Official Xteink firmware (closed `.bin` files)
-Research only. Everything here builds a firmware from its source code with a simulator library; Xteink does not
-publish the source of its own firmware, so it cannot be built that way.
-
-**What a firmware file from Xteink showed** (an X4 Pro build, shared privately with the owner; it is not in this
-repository and is never published): a plain, unencrypted ESP32-S3 flash image built with ESP-IDF, with its own
-e-paper (SPI), touch and sensor (I2C), SD card (SDMMC), USB, Wi-Fi and Bluetooth drivers. So it could run in an
-emulator, but only in one that models the whole reader.
-
-**The route:** emulate the reader's hardware instead of building the firmware: the ESP32-S3 chip (Espressif's fork
-of QEMU emulates it) plus models of the board around it, which nobody has written yet: the e-paper controller on
-SPI, the buttons, the touch controller on I2C, the SD card, the battery gauge. The picture the firmware sends to the
-e-paper controller would be drawn in the device frame, as today.
-
-**Limits:**
-- weeks of work, mostly the board models, which need Xteink's pin and chip details (or the firmware's own tracing);
-- Xteink's firmware is copyrighted: the simulator could only run a copy the person loads themselves, kept in their
-  browser or PC, unless Xteink allows it to be published;
-- other files (other models, other builds) may be encrypted; those cannot run without Xteink's keys.
+## Official Xteink firmware: closed
+The owner asked Xteink for its official firmware, and Xteink said they cannot provide it. The firmware is closed
+source, and this simulator only builds firmwares from public source code, so the official firmware is not supported.
+This item is closed.
 
 ## Microsoft Store for the Windows app
 Unsigned programs make Windows show "Windows protected your PC" (SmartScreen). Apps installed from the Microsoft

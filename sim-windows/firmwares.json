@@ -48,21 +48,21 @@
    "repo": "alpzoloto-sudo/inkmod",
    "status": "untested",
    "frame": false,
-   "about": "CrossPoint fork by alpzoloto-sudo (MIT), for the X3, X4 Classic and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Added 2026-10-21, not built yet."
+   "about": "CrossPoint fork by alpzoloto-sudo (MIT), for the X3, X4 Classic and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Does not build yet (v1.1.7 to v1.1.9): its device code goes past the simulator library (FreeRTOS stream buffers in Fb2, its own JPEG decoder, boot log, reset reasons, OTA partition, charge times, INKMOD_VERSION set only in its own environments); kept untested so new releases are tried."
   },
   {
    "name": "crosslink",
    "repo": "DaisonChun/crosslink",
    "status": "untested",
    "frame": false,
-   "about": "CrossPoint fork by DaisonChun (MIT). No simulator setup of its own; the reader simulator adds one (adapter.py). Added 2026-10-21, not built yet."
+   "about": "CrossPoint fork by DaisonChun (MIT). No simulator setup of its own; the reader simulator adds one (adapter.py). Does not build yet (v20260524): it is written against the May 2026 simulator interface (HalDisplay::setSimulatorOrientation), which newer libraries removed, and the May library has no scripted input or screenshots; kept untested so new releases are tried."
   },
   {
    "name": "crossmux",
    "repo": "0x1abin/crossmux",
-   "status": "untested",
-   "frame": false,
-   "about": "CrossPoint fork by 0x1abin (MIT), with its own simulator setup (X4 and X3, plus other readers the simulator does not have). Added 2026-10-21, not built yet."
+   "status": "ready",
+   "frame": true,
+   "about": "CrossPoint fork by 0x1abin (MIT), tuned for Chinese, Japanese and Korean reading, with its own simulator setup (X4 and X3, plus other readers the simulator does not have). 1.6.0 builds and passes in the browser for X4 Classic and X3 (2026-10-21). Its nightly builds fail in its own code under clang (ReadingStatsActivity.h: explicit constructor)."
   },
   {
    "name": "InkPointX",
