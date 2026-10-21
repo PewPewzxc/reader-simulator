@@ -113,6 +113,7 @@ Reader Simulator has no accounts, no analytics, no cookies, no advertising and n
 - **Network requests** go only to GitHub: the page is served by GitHub Pages and firmware builds are downloaded from
   this repository's GitHub Releases. GitHub may log those requests as described in the
   [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+  The only other request is the Buy me a coffee button's picture on the About page, loaded from Buy Me a Coffee.
 - **Preferences** of the page (such as your last choices) are kept in your browser's local storage.
 - The Windows app sends no data anywhere; it only downloads the firmware list and builds over HTTPS.
 
@@ -180,5 +181,9 @@ behaviour on a real device may differ. Flash firmware to your reader at your own
 
 Created and maintained by **PewPewzxc** — [GitHub](https://github.com/PewPewzxc) ·
 [LinkedIn](https://www.linkedin.com/in/alireza-pakseresht-koubijari/).
+
+If Reader Simulator is useful to you, you can support its development:
+
+<a href="https://buymeacoffee.com/pewpewzxc"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="41" width="174"></a>
 
 Thanks to the authors of every firmware and simulator library listed in [CREDITS.md](CREDITS.md).
