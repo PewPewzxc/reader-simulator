@@ -224,8 +224,8 @@ patch(G, "    case SyntheticAction::HomeUp:\n      endHomeKey();\n      break;\n
 patch(G, "  homeKeyDown = true;\n  homeKeyPressedThisFrame = true;\n",
       "  homeKeyDown = true;\n  homeKeyPressedThisFrame = true;\n"
       "  const_cast<Uint8 *>(SDL_GetKeyboardState(nullptr))[HOME_KEY_SCANCODE] = 1;\n")
-patch(G, "    homeKeyTappedThisFrame = true;\n  }\n  homeKeyDown = false;\n",
-      "    homeKeyTappedThisFrame = true;\n  }\n  homeKeyDown = false;\n"
+patch(G, "  }\n  homeKeyDown = false;\n",  # crossmux 1.6.0's library has two more lines before the "}"
+      "  }\n  homeKeyDown = false;\n"
       "  const_cast<Uint8 *>(SDL_GetKeyboardState(nullptr))[HOME_KEY_SCANCODE] = 0;\n")
 # Scripts: MOUSE:x,y[,holdMs] clicks the window at x,y (frame pixels), like a real mouse.
 patch(G, '      } else if ((key == "TAP" || key == "SWIPE" || key == "DRAG") &&',
@@ -256,6 +256,18 @@ if group_end("device frame"):
     # woken by clicking its keys, and its window was never repainted. Same loop in both libraries.
     patch(G, '      if (e.type == SDL_KEYDOWN && !e.key.repeat &&\n          scancodeToButton(e.key.keysym.scancode) >= 0) {\n        clearButtonState();\n        SimulatorLifecycle::rebootAsPowerWake();\n      }\n',
           '      if (e.type == SDL_KEYDOWN && !e.key.repeat &&\n          scancodeToButton(e.key.keysym.scancode) >= 0) {\n        clearButtonState();\n        SimulatorLifecycle::rebootAsPowerWake();\n      }\n      // Device frame while asleep: a click on a drawn key wakes the reader like the real key, and the\n      // window is drawn again when Windows asks (otherwise the sleep screen looks frozen).\n      if (simFrameActive() && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {\n        float nx = 0.0f, ny = 0.0f;\n        const std::string key = simFrameHit(e.button.x, e.button.y, &nx, &ny);\n        if (!key.empty() && key != "SCREEN") {\n          clearButtonState();\n          SimulatorLifecycle::rebootAsPowerWake();\n        }\n      }\n      if (simFrameActive() && e.type == SDL_WINDOWEVENT) {\n        extern HalDisplay display;\n        simFrameRequestRedraw();\n        display.presentIfNeeded();\n      }\n')
+    # crossmux's sleep loop wakes only on the keys canWakeFromButton allows (power); frame clicks follow the same rule.
+    if "bool canWakeFromButton(" in open(G, encoding="utf-8").read():
+        loop = ("    SDL_Event e;\n    while (SDL_PollEvent(&e) != 0) {\n      if (e.type == SDL_QUIT) {\n"
+                "        quitRequested.store(true);\n        return;\n      }\n")
+        patch(G, loop, loop +
+          "      if (simFrameActive() && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {\n"
+          "        float nx = 0.0f, ny = 0.0f;\n"
+          "        const int button = namedButton(simFrameHit(e.button.x, e.button.y, &nx, &ny));\n"
+          "        if (button >= 0 && canWakeFromButton(button)) {\n          clearButtonState();\n"
+          "          SimulatorLifecycle::rebootAsPowerWake();\n        }\n      }\n"
+          "      if (simFrameActive() && e.type == SDL_WINDOWEVENT) {\n        extern HalDisplay display;\n"
+          "        simFrameRequestRedraw();\n        display.presentIfNeeded();\n      }\n")
 
 
 # ---- API compatibility -----------------------------------------------------------------------------------
@@ -445,3 +457,11 @@ if os.path.isfile(ER):
     t = open(ER, encoding="utf-8").read()
     if "Unsupported host OS" in t and "__EMSCRIPTEN__" not in t:
         open(ER, "w", encoding="utf-8").write(t.replace("defined(__linux__)", "(defined(__linux__) || defined(__EMSCRIPTEN__))"))
+# SHA-256 (same library): mbedtls/sha256.h uses OpenSSL's streaming SHA256_Init/Update/Final on Linux; the
+# Windows and browser builds get them from compat/openssl/sha.h.
+SH = SRC + "mbedtls/sha256.h"
+if os.path.isfile(SH):
+    t = open(SH, encoding="utf-8").read()
+    if "Unsupported host OS" in t and "__EMSCRIPTEN__" not in t:
+        open(SH, "w", encoding="utf-8").write(
+            t.replace("#elif defined(__linux__)", "#elif defined(__linux__) || defined(_WIN32) || defined(__EMSCRIPTEN__)"))

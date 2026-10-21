@@ -10,6 +10,13 @@ int main() {
     && hex(SHA256((const unsigned char *)a.data(), 3, m), 32) == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     && hex(SHA256((const unsigned char *)e.data(), 0, m), 32) == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     && hex(SHA1((const unsigned char *)l.data(), 1000, m), 20) == "291e9a6c66994949b57ba5e650361e98fc36b1ba";
+  SHA256_CTX c;  // streaming, in uneven pieces: must match the one-shot result
+  SHA256_Init(&c);
+  for (size_t i = 0; i < 1000; i += 37) SHA256_Update(&c, l.data() + i, i + 37 > 1000 ? 1000 - i : 37);
+  unsigned char s[32];
+  SHA256_Final(s, &c);
+  ok = ok && hex(s, 32) == hex(SHA256((const unsigned char *)l.data(), 1000, m), 32)
+    && hex(s, 32) == "41edece42d63e8d9bf515a9ba6932e1c20cbc9f5a5d134645adb5db1b9737ea3";
   puts(ok ? "OK" : "FAIL");
   return !ok;
 }
