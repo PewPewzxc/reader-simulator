@@ -311,10 +311,11 @@ add_member(SRC + "HalGPIO.h", "  bool verifyPowerButtonWakeup();\n", r"verifyPow
 add_to_class(SRC + "HalStorage.h", "class HalStorage {", r"installDateTimeCallback\s*\(",
              "  void installDateTimeCallback(const uint8_t *utcOffsetQuarterHoursBiased) { (void)utcOffsetQuarterHoursBiased; }\n")
 # FreeRTOS: deleting a semaphore (a no-op: this library's static semaphores must not be freed).
-if os.path.isfile(SRC + "freertos/semphr.h") and "vSemaphoreDelete" not in open(SRC + "freertos/semphr.h", encoding="utf-8").read():
+if os.path.isfile(SRC + "freertos/semphr.h") and not re.search(r"#\s*define\s+vSemaphoreDelete\b|\bvoid\s+vSemaphoreDelete\s*\(",
+                                                             open(SRC + "freertos/semphr.h", encoding="utf-8").read()):
     with open(SRC + "freertos/semphr.h", "a", encoding="utf-8") as f:
         f.write("\n// reader simulator: firmwares delete semaphores they no longer need; a no-op here\n"
-                "inline void vSemaphoreDelete(SemaphoreHandle_t) {}\n")
+                "#ifndef vSemaphoreDelete\ninline void vSemaphoreDelete(SemaphoreHandle_t) {}\n#endif\n")
 # struct timeval: on the reader Arduino.h brings in sys/time.h, and firmwares rely on it (CrossPlant).
 A = SRC + "Arduino.h"
 if os.path.isfile(A) and "sys/time.h" not in open(A, encoding="utf-8").read():
