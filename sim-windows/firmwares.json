@@ -30,6 +30,13 @@
    "about": "CrossPoint fork (from Dave Allie's CrossPoint, MIT) by jpirnay, for the X4, X3 and X4 Pro (and the LilyGo T5 S3, which the simulator does not have). No simulator setup of its own; the reader simulator adds one (adapter.py, crosspoint-simulator library). Its freeink-sdk submodule is jpirnay's public fork. Does not build yet (2.38 to 2.40): it uses a newer display, clock and font interface (HalDisplay::finishDisplayAsync, HalClock::formatLogTime, FlashFontPartition.h) than either public simulator library has; kept untested so new releases are tried."
   },
   {
+   "name": "xpoint",
+   "repo": "belphemur/xpoint",
+   "status": "untested",
+   "frame": false,
+   "about": "CrossPoint fork by belphemur (MIT), for the X4, X3 and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Its freeink-sdk submodule is belphemur's public fork. Added 2026-10-21, not built yet."
+  },
+  {
    "name": "InkPointX",
    "repo": "yokki-vans/InkPointX",
    "status": "untested",
