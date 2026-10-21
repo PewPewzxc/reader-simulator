@@ -6,6 +6,7 @@
 
 [![Web simulator](https://github.com/PewPewzxc/reader-simulator/actions/workflows/pages.yml/badge.svg)](https://github.com/PewPewzxc/reader-simulator/actions/workflows/pages.yml)
 [![Latest Windows app](https://img.shields.io/github/v/release/PewPewzxc/reader-simulator?label=windows%20app&sort=semver)](https://github.com/PewPewzxc/reader-simulator/releases/latest)
+[![Visitors](https://hits.sh/github.com/PewPewzxc/reader-simulator.svg?label=visitors)](https://hits.sh/github.com/PewPewzxc/reader-simulator/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [**Launch the simulator**](https://pewpewzxc.github.io/reader-simulator/) · [Windows app](#windows-app) · [Supported firmwares](#supported-firmwares) · [Privacy](#privacy) · [Legal](#legal)
@@ -108,7 +109,11 @@ Technical details: [`web/README.md`](web/README.md) (browser build and publishin
 
 ## Privacy
 
-Reader Simulator has no accounts, no analytics, no cookies, no advertising and no tracking.
+Reader Simulator has no accounts, no cookies, no advertising and no tracking.
+
+- **Visit counter.** The web page counts each visit and each firmware run on
+  [GoatCounter](https://www.goatcounter.com) (page, referring site and screen size). No cookies and no personal
+  data; GoatCounter does not track you across sites. The Windows app counts nothing.
 
 - **Your files stay on your device.** Books and other files you put on a simulated SD card are stored in your
   browser's local storage (IndexedDB) or, in the Windows app, in your user folder. They are never uploaded.
