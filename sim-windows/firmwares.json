@@ -41,7 +41,7 @@
    "repo": "Mumfee/CrossSmudge",
    "status": "untested",
    "frame": false,
-   "about": "CrossPoint fork by Mumfee (MIT), with its own simulator setup for the X4 Pro, X4 Classic and X3. Added 2026-10-21, not built yet."
+   "about": "CrossPoint fork by Mumfee (MIT), with its own simulator setup for the X4 Pro, X4 Classic and X3. Browser builds of 1.6.5.1 to 1.6.5.3 pass for all three readers (2026-10-21)."
   },
   {
    "name": "InkPointX",

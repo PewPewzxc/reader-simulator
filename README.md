@@ -77,7 +77,7 @@ list.
 | [VARAGH](https://github.com/PewPewzxc/VARAGH) | CrossInk |
 | [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) (including release candidates) | — |
 | [CrossInk](https://github.com/uxjulia/crossink) | CrossPoint |
-| [YACP](https://github.com/Sichroteph/YACP), [inx](https://github.com/obijuankenobiii/inx), [CrossPlant](https://github.com/0xKnowles/CrossPlant), [CrossNotes](https://github.com/HilbergK/CrossNotes), [CrossDiTo](https://github.com/dito94/CrossDiTo), [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS), [duet](https://github.com/lauren-alexandra/duet-xteink), [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | CrossPoint |
+| [YACP](https://github.com/Sichroteph/YACP), [inx](https://github.com/obijuankenobiii/inx), [CrossPlant](https://github.com/0xKnowles/CrossPlant), [CrossSmudge](https://github.com/Mumfee/CrossSmudge), [CrossNotes](https://github.com/HilbergK/CrossNotes), [CrossDiTo](https://github.com/dito94/CrossDiTo), [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS), [duet](https://github.com/lauren-alexandra/duet-xteink), [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | CrossPoint |
 
 **Requirements for a firmware:** public source code on GitHub, a PlatformIO project, and a CrossPoint, CrossInk or
 FreeInk base. The simulator adds its own setup to firmwares that do not ship one, without changing their code.
