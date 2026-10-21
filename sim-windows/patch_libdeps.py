@@ -305,11 +305,12 @@ add_member(SRC + "WiFi.h", "  void disconnect(bool wifioff = false, bool eraseap
            "    (void)timeoutMs;\n    disconnect(wifioff, eraseap);\n    return true;\n  }\n", before=True)
 # Power button: the wake check with the firmware's settings (crossink-simulator's form).
 # (not when HalGPIO.cpp defines its own, whatever its return type: YACP 1.8's library does)
-# nor when the firmware's own lib/hal declares it (YACP 1.8: there it returns void)
+# nor when the firmware's own lib/hal declares it returning void (YACP 1.8)
 _gpio_cpp = open(SRC + "HalGPIO.cpp", encoding="utf-8").read() if os.path.isfile(SRC + "HalGPIO.cpp") else ""
 _fw_gpio = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(L)))), "lib", "hal", "HalGPIO.h")
 _fw_gpio = open(_fw_gpio, encoding="utf-8", errors="replace").read() if os.path.isfile(_fw_gpio) else ""
-if not re.search(r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t", _gpio_cpp + _fw_gpio):
+if not (re.search(r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t", _gpio_cpp)
+        or re.search(r"\bvoid\s+verifyPowerButtonWakeup\s*\(", _fw_gpio)):
     add_member(SRC + "HalGPIO.h", "  bool verifyPowerButtonWakeup();\n", r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t",
                "  bool verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed) {\n"
                "    (void)requiredDurationMs;\n    (void)shortPressAllowed;\n    return verifyPowerButtonWakeup();\n  }\n")
@@ -428,7 +429,8 @@ FWO = os.path.join(FW, "src", "network", "OtaUpdater.h")
 if os.path.isfile(OU) and os.path.isfile(FWO):
     hdr = open(FWO, encoding="utf-8", errors="replace").read()
     t = open(OU, encoding="utf-8").read()
-    if re.search(r"installUpdate\(\s*\)\s*;", hdr) and "installUpdate(ProgressCallback" in t and "RSIM_OTA_NOARGS" not in t:
+    if re.search(r"installUpdate\(\s*\)\s*;", hdr) and "installUpdate(ProgressCallback" in t and "RSIM_OTA_NOARGS" not in t \
+            and not re.search(r"OtaUpdater::installUpdate\(\s*\)", t):
         a = t.find("#ifdef CROSSINK_VERSION\nOtaUpdater::OtaUpdaterError\nOtaUpdater::installUpdate(")
         if a < 0:
             a = t.find("OtaUpdater::OtaUpdaterError\nOtaUpdater::installUpdate(ProgressCallback")
@@ -436,3 +438,10 @@ if os.path.isfile(OU) and os.path.isfile(FWO):
             t = (t[:a] + "#if 0  // RSIM_OTA_NOARGS: this firmware's installUpdate() takes no arguments (patch_libdeps.py)\n"
                  + t[a:] + "\n#endif\nOtaUpdater::OtaUpdaterError OtaUpdater::installUpdate() { return INTERNAL_UPDATE_ERROR; }\n")
             open(OU, "w", encoding="utf-8").write(t)
+# Random numbers (crossmux's library): the host check knows Linux, macOS and Windows; the browser build is
+# Linux-like here (getentropy and /dev/urandom work).
+ER = SRC + "esp_random.h"
+if os.path.isfile(ER):
+    t = open(ER, encoding="utf-8").read()
+    if "Unsupported host OS" in t and "__EMSCRIPTEN__" not in t:
+        open(ER, "w", encoding="utf-8").write(t.replace("defined(__linux__)", "(defined(__linux__) || defined(__EMSCRIPTEN__))"))
