@@ -17,7 +17,7 @@ import build  # noqa: E402
 
 SIM = build.SIM_WINDOWS
 SRC = os.path.join(HERE, "ci", "src")
-MODELS = {"X4 Pro": "x4-pro", "X4 Classic": "x4-classic", "X3": "x3"}  # as launcher.py (Windows only)
+MODELS = {"X4 Pro": "x4-pro", "X4 Classic": "x4-classic", "X3": "x3"}  # model -> device frame
 ENV_NAMES = {"X4 Pro": ["x4-pro-simulator"], "X4 Classic": ["x4-classic-simulator", "simulator"],
              "X3": ["simulator-X3", "simulator_x3"]}
 LICENCES = ("LICENSE", "LICENSE.md", "LICENSE.txt", "LICENCE", "COPYING")

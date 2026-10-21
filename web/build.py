@@ -160,7 +160,7 @@ def build(b):
     print("%s: compiled %d files, %d failed" % (b["id"], len(results), bad))
     if bad:
         return 1
-    names = ["--profiling-funcs"] if os.environ.get("NAMES") else []  # NAMES=1: readable stacks (probe.mjs)
+    names = ["--profiling-funcs"] if os.environ.get("NAMES") else []  # NAMES=1: readable stacks
     rsp = os.path.join(out, "objects.rsp")  # 300+ object paths are too long for one Windows command line
     open(rsp, "w", encoding="utf-8").write("\n".join('"%s"' % o.replace("\\", "/") for o, _ in results))
     cmd = [os.path.join(EMDIR, "em++" + EXE), "@" + rsp] + LINK + names + ["-o", os.path.join(out, "sim.js")]

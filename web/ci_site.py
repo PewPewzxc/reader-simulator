@@ -26,7 +26,7 @@ ID_RE = re.compile(r"[a-z0-9](?:[a-z0-9._-]{0,98}[a-z0-9])?")  # the app's rule 
 MODELS = {"X4 Pro": "x4-pro", "X4 Classic": "x4-classic", "X3": "x3"}
 
 
-def sha256(path):  # as make_site.py (which only runs on the PC it was written on)
+def sha256(path):
     import hashlib
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -35,7 +35,7 @@ def sha256(path):  # as make_site.py (which only runs on the PC it was written o
     return h.hexdigest()
 
 
-def licence_name(text):  # as make_site.py
+def licence_name(text):
     first = text.strip().splitlines()[0].strip() if text.strip() else ""
     for key, name in (("MIT", "MIT"), ("GNU GENERAL PUBLIC LICENSE", "GPL"), ("Apache", "Apache-2.0"), ("BSD", "BSD")):
         if key.lower() in first.lower():
