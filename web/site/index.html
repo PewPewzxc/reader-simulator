@@ -20,6 +20,13 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
 } else if (!self.crossOriginIsolated && !('serviceWorker' in navigator)) {
   window.coiError = 'no service workers';
 }
+// Visitor count on GoatCounter (no cookies; the page's strict headers block its script, so a beacon instead).
+// A visit counts as "/", a firmware run as "/run/<build>". Skipped on the one-time helper reload above.
+if (location.hostname.endsWith('github.io') && (self.crossOriginIsolated || sessionStorage.getItem('coiReloaded') || !('serviceWorker' in navigator))) {
+  const run = new URLSearchParams(location.search).get('b');
+  navigator.sendBeacon('https://reader-simulator.goatcounter.com/count?' + new URLSearchParams({
+    p: run ? '/run/' + run : '/', t: 'Reader Simulator', r: document.referrer, s: screen.width + ',' + screen.height }));
+}
 </script>
 </head>
 <body>
