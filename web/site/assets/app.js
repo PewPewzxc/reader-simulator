@@ -131,6 +131,12 @@ async function boot(b) {
   $('shotReader').disabled = $('shotScreen').disabled = false;
   const restart = sessionStorage.getItem('simRestartEnv');  // set by the simulator on sleep/wake or reboot
   sessionStorage.removeItem('simRestartEnv');
+  // Keep the last drawn frame in the canvas, or screenshots taken between frames come out black.
+  const getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+    if (this === $('canvas') && /webgl/.test(type)) attrs = { ...attrs, preserveDrawingBuffer: true };
+    return getContext.call(this, type, attrs);
+  };
   window.Module = {
     canvas: $('canvas'),
     locateFile: p => 'builds/' + b.id + '/' + p,
