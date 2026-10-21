@@ -305,8 +305,11 @@ add_member(SRC + "WiFi.h", "  void disconnect(bool wifioff = false, bool eraseap
            "    (void)timeoutMs;\n    disconnect(wifioff, eraseap);\n    return true;\n  }\n", before=True)
 # Power button: the wake check with the firmware's settings (crossink-simulator's form).
 # (not when HalGPIO.cpp defines its own, whatever its return type: YACP 1.8's library does)
+# nor when the firmware's own lib/hal declares it (YACP 1.8: there it returns void)
 _gpio_cpp = open(SRC + "HalGPIO.cpp", encoding="utf-8").read() if os.path.isfile(SRC + "HalGPIO.cpp") else ""
-if not re.search(r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t", _gpio_cpp):
+_fw_gpio = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(L)))), "lib", "hal", "HalGPIO.h")
+_fw_gpio = open(_fw_gpio, encoding="utf-8", errors="replace").read() if os.path.isfile(_fw_gpio) else ""
+if not re.search(r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t", _gpio_cpp + _fw_gpio):
     add_member(SRC + "HalGPIO.h", "  bool verifyPowerButtonWakeup();\n", r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t",
                "  bool verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed) {\n"
                "    (void)requiredDurationMs;\n    (void)shortPressAllowed;\n    return verifyPowerButtonWakeup();\n  }\n")
@@ -409,3 +412,27 @@ inline bool fetchWithBrowser(const std::string &url, const char *method,
         open(F, "w", encoding="utf-8").write(t)
     else:
         print("patch_libdeps: browser internet skipped, this library's fetch differs")
+# Firmware update stand-ins written for newer firmwares (crosslink, inkmod): the newest library implements
+# OtaUpdater::installUpdate with a progress callback and a firmware flasher that older firmwares do not have.
+# The firmware's own header decides: no FirmwareFlasher.h, no flasher stand-in; installUpdate() without
+# arguments, a stand-in without arguments (the simulator never installs updates either way).
+FW = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(L))))
+FF = SRC + "simulator_firmware.cpp"
+if os.path.isfile(FF):
+    t = open(FF, encoding="utf-8").read()
+    if '#include "network/FirmwareFlasher.h"' in t and "RSIM_HAS_FLASHER" not in t:
+        open(FF, "w", encoding="utf-8").write(
+            '#if __has_include("network/FirmwareFlasher.h")  // RSIM_HAS_FLASHER (patch_libdeps.py)\n' + t + "\n#endif\n")
+OU = SRC + "simulator_ota.cpp"
+FWO = os.path.join(FW, "src", "network", "OtaUpdater.h")
+if os.path.isfile(OU) and os.path.isfile(FWO):
+    hdr = open(FWO, encoding="utf-8", errors="replace").read()
+    t = open(OU, encoding="utf-8").read()
+    if re.search(r"installUpdate\(\s*\)\s*;", hdr) and "installUpdate(ProgressCallback" in t and "RSIM_OTA_NOARGS" not in t:
+        a = t.find("#ifdef CROSSINK_VERSION\nOtaUpdater::OtaUpdaterError\nOtaUpdater::installUpdate(")
+        if a < 0:
+            a = t.find("OtaUpdater::OtaUpdaterError\nOtaUpdater::installUpdate(ProgressCallback")
+        if a >= 0:
+            t = (t[:a] + "#if 0  // RSIM_OTA_NOARGS: this firmware's installUpdate() takes no arguments (patch_libdeps.py)\n"
+                 + t[a:] + "\n#endif\nOtaUpdater::OtaUpdaterError OtaUpdater::installUpdate() { return INTERNAL_UPDATE_ERROR; }\n")
+            open(OU, "w", encoding="utf-8").write(t)

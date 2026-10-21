@@ -58,6 +58,13 @@
    "about": "CrossPoint fork by DaisonChun (MIT). No simulator setup of its own; the reader simulator adds one (adapter.py). Added 2026-10-21, not built yet."
   },
   {
+   "name": "crossmux",
+   "repo": "0x1abin/crossmux",
+   "status": "untested",
+   "frame": false,
+   "about": "CrossPoint fork by 0x1abin (MIT), with its own simulator setup (X4 and X3, plus other readers the simulator does not have). Added 2026-10-21, not built yet."
+  },
+  {
    "name": "InkPointX",
    "repo": "yokki-vans/InkPointX",
    "status": "untested",
