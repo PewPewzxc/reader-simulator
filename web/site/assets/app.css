@@ -29,6 +29,7 @@ svg .fill { fill: currentColor; stroke: none; }
 .top nav a.on { background: var(--control); box-shadow: inset 0 0 0 1px var(--card-stroke); }
 .top nav a.on::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--accent); }
 
+.notice { grid-column: 1 / -1; margin: 0; padding: 10px 16px; border-radius: 8px; background: var(--accent-soft); font-size: 14px; }
 .view { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 24px; padding: 8px 24px 32px; max-width: 1280px; margin: 0 auto; }
 #about { display: flex; flex-direction: column; gap: 16px; }
 .controls { display: flex; flex-direction: column; gap: 12px; }
@@ -205,6 +206,7 @@ dialog::backdrop { background: #0006; }
   .top { padding: 10px 16px; gap: 12px; }
   .view { grid-template-columns: minmax(0, 1fr); padding: 4px 16px 24px; gap: 16px; }
   .stagecol { order: -1; }
+  .notice { order: -2; }
   .stage { height: auto; min-height: 0; aspect-ratio: 3 / 4.6; max-height: 78vh; padding: 10px; margin: 0 auto; }
   .stage.real { aspect-ratio: auto; max-height: none; padding: 4px; }
   .devices button { padding: 8px 10px; }
