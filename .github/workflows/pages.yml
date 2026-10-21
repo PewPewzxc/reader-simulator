@@ -24,6 +24,10 @@ on:
         description: "Build every offered version again, also the ones already on the page"
         type: boolean
         default: false
+      deploy_only:
+        description: "Only redeploy the page with the builds already listed (no builds)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -71,8 +75,9 @@ jobs:
           RSIM_VERSIONS: ${{ inputs.versions || '3' }}
           REBUILD: ${{ inputs.rebuild || false }}
           EVENT: ${{ github.event_name }}
+          DEPLOY_ONLY: ${{ inputs.deploy_only || false }}
         run: |
-          if [ "$EVENT" = "push" ]; then
+          if [ "$EVENT" = "push" ] || [ "$DEPLOY_ONLY" = "true" ]; then
             : > refs.tsv  # only the page changed: redeploy the same builds
           else
             # shellcheck disable=SC2086  # STATUSES is a word list on purpose
