@@ -6,8 +6,7 @@
 name: Build firmwares
 
 on:
-  schedule:
-    - cron: "17 3 * * 1"  # Mondays
+  # manual only for now (the owner paused the Windows builds); the weekly run was: schedule: cron "17 3 * * 1"
   workflow_dispatch:
     inputs:
       statuses:
