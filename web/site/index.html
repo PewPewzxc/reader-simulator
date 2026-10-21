@@ -20,6 +20,13 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
 } else if (!self.crossOriginIsolated && !('serviceWorker' in navigator)) {
   window.coiError = 'no service workers';
 }
+// Visitor count on GoatCounter (no cookies; the page's strict headers block its script, so a beacon instead).
+// A visit counts as "/", a firmware run as "/run/<build>". Skipped on the one-time helper reload above.
+if (location.hostname.endsWith('github.io') && (self.crossOriginIsolated || sessionStorage.getItem('coiReloaded') || !('serviceWorker' in navigator))) {
+  const run = new URLSearchParams(location.search).get('b');
+  navigator.sendBeacon('https://reader-simulator.goatcounter.com/count?' + new URLSearchParams({
+    p: run ? '/run/' + run : '/', t: 'Reader Simulator', r: document.referrer, s: screen.width + ',' + screen.height }));
+}
 </script>
 </head>
 <body>
@@ -211,7 +218,8 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
       <section class="card info">
         <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z"/></svg>Privacy</h2>
         <p>Nothing leaves your browser. Books you add and the simulated SD cards stay in this browser's storage; no
-          account, no tracking. The Buy me a coffee button's picture comes from Buy Me a Coffee's server. A firmware's own
+          account, no cookies. A visit and each firmware run are counted anonymously on GoatCounter (page, referring
+          site, screen size; no cookies, no personal data). The Buy me a coffee button's picture comes from Buy Me a Coffee's server. A firmware's own
           online features (an online dictionary, an update check) contact their services from your browser.</p>
       </section>
       <section class="card info">
