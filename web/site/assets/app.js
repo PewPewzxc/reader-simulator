@@ -158,6 +158,7 @@ async function boot(b) {
         try { FS.mkdir(cardDb(b) + '/books'); } catch (e) { /* exists */ }
         try { await addSamples(cardDb(b)); } catch (e) { console.warn('sample books:', e); }
         Module.removeRunDependency('sd');
+        sdEnable();
       });
       if (b.frame) {
         FS.mkdirTree('/frame');
@@ -169,7 +170,7 @@ async function boot(b) {
           });
         }
       }
-      setInterval(saveCard, 5000);
+      setInterval(() => saveCard().then(() => { if (!document.hidden) sdRender(); }), 5000);
     }],
   };
   const s = document.createElement('script');
@@ -223,7 +224,128 @@ async function addBooks(files) {
     FS.writeFile(cardDb(running) + '/books/' + name, new Uint8Array(await f.arrayBuffer()));
   }
   await saveCard();
+  sdDir = 'books';
+  sdRender();
   status(files.length + ' book' + (files.length === 1 ? '' : 's') + ' added to the books folder. Open Browse Files on the reader.');
+}
+
+// The SD card browser: the card of the running build, as files and folders. What is put here is on the reader's
+// card straight away (same file system); it is saved to the browser with the rest of the card.
+let sdDir = '';   // folder shown, relative to the card root ('' = root)
+const ICON = {
+  dir: '<path d="M3 6h6l2 2h10v11H3z"/>',
+  file: '<path d="M6 3h8l4 4v14H6zM14 3v4h4"/>',
+  get: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  del: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',
+};
+const svg = d => '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>';
+const safeName = n => n.replace(/[\/\\:*?"<>|]/g, '_').replace(/^\.\.?$/, '_');
+const sdRoot = () => cardDb(running);
+const sdAbs = rel => sdRoot() + (rel ? '/' + rel : '');
+const fmtSize = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+
+function sdRender() {
+  if (!running || !window.Module || !Module.FS) return;
+  const FS = Module.FS;
+  if (!FS.analyzePath(sdAbs(sdDir)).exists) sdDir = '';
+  const parts = sdDir ? sdDir.split('/') : [];
+  const crumbs = [['SD card', '']].concat(parts.map((p, i) => [p, parts.slice(0, i + 1).join('/')]));
+  $('sdPath').replaceChildren(...crumbs.flatMap(([name, rel], i) => {
+    const b = document.createElement('button');
+    b.textContent = name; b.onclick = () => { sdDir = rel; sdRender(); };
+    if (i === 0) return [b];
+    const sep = document.createElement('span'); sep.textContent = '/';
+    return [sep, b];
+  }));
+  let names = [];
+  try { names = FS.readdir(sdAbs(sdDir)).filter(n => n !== '.' && n !== '..' && !(sdDir === '' && n === '.rsim-samples')); } catch (e) { /* gone */ }
+  const items = names.map(n => {
+    const st = FS.stat(sdAbs(sdDir) + '/' + n);
+    return { n, dir: FS.isDir(st.mode), size: st.size };
+  }).sort((a, b) => (b.dir - a.dir) || a.n.localeCompare(b.n));
+  const rows = [];
+  if (sdDir) {
+    const li = document.createElement('li'); li.className = 'dir';
+    li.innerHTML = '<span class="kind">' + svg(ICON.dir) + '</span><button class="name">..</button>';
+    li.querySelector('.name').onclick = () => { sdDir = parts.slice(0, -1).join('/'); sdRender(); };
+    rows.push(li);
+  }
+  for (const it of items) {
+    const rel = (sdDir ? sdDir + '/' : '') + it.n;
+    const li = document.createElement('li');
+    li.className = (it.dir ? 'dir' : 'file') + (it.n.startsWith('.') ? ' hidden' : '');
+    li.innerHTML = '<span class="kind">' + svg(it.dir ? ICON.dir : ICON.file) + '</span><button class="name"></button>' +
+      (it.dir ? '' : '<span class="size">' + fmtSize(it.size) + '</span>' +
+        '<button class="iconbtn get" title="Download">' + svg(ICON.get) + '</button>') +
+      '<button class="iconbtn del" title="Delete">' + svg(ICON.del) + '</button>';
+    const nb = li.querySelector('.name'); nb.textContent = it.n; nb.title = it.n;
+    if (it.dir) nb.onclick = () => { sdDir = rel; sdRender(); };
+    if (!it.dir) li.querySelector('.get').onclick = () => sdDownload(rel, it.n);
+    li.querySelector('.del').onclick = () => sdDelete(rel, it.dir);
+    rows.push(li);
+  }
+  if (!items.length) {
+    const li = document.createElement('li'); li.className = 'sd-empty';
+    li.textContent = 'This folder is empty. Drop files here or use the upload buttons.';
+    rows.push(li);
+  }
+  $('sdList').replaceChildren(...rows);
+}
+
+async function sdUpload(files) {
+  if (!running) return;
+  const FS = Module.FS;
+  let n = 0;
+  for (const f of files) {
+    // a folder upload keeps its own folders (webkitRelativePath); single files go in the folder shown
+    const rel = (f.webkitRelativePath || f.name).split('/').map(safeName).join('/');
+    const dest = sdAbs(sdDir) + '/' + rel;
+    try {
+      FS.mkdirTree(dest.slice(0, dest.lastIndexOf('/')));
+      FS.writeFile(dest, new Uint8Array(await f.arrayBuffer()));
+      n++;
+    } catch (e) { console.warn('upload ' + rel + ':', e); }
+  }
+  await saveCard();
+  sdRender();
+  status(n + ' file' + (n === 1 ? '' : 's') + ' put on the SD card in /' + sdDir +
+    (n < files.length ? ' (' + (files.length - n) + ' could not be written: the browser storage may be full)' : '') + '.');
+}
+
+function sdDownload(rel, name) {
+  const data = Module.FS.readFile(sdAbs(rel));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data]));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+async function sdDelete(rel, dir) {
+  if (!confirm('Delete ' + (dir ? 'the folder /' + rel + ' and everything in it' : '/' + rel) + ' from the SD card?')) return;
+  const FS = Module.FS;
+  (function rm(abs, isDir) {
+    if (isDir) {
+      for (const n of FS.readdir(abs)) if (n !== '.' && n !== '..') rm(abs + '/' + n, FS.isDir(FS.stat(abs + '/' + n).mode));
+      FS.rmdir(abs);
+    } else FS.unlink(abs);
+  })(sdAbs(rel), dir);
+  await saveCard();
+  sdRender();
+}
+
+async function sdNewDir() {
+  const name = prompt('Name of the new folder in /' + sdDir);
+  if (!name || !name.trim()) return;
+  try { Module.FS.mkdirTree(sdAbs(sdDir) + '/' + safeName(name.trim())); } catch (e) { status('Could not make that folder.'); return; }
+  await saveCard();
+  sdRender();
+}
+
+function sdEnable() {
+  for (const id of ['sdUpload', 'sdUploadDir']) $(id).setAttribute('aria-disabled', 'false');
+  for (const id of ['sdFiles', 'sdDir', 'sdNewDir']) $(id).disabled = false;
+  sdRender();
 }
 
 const CRC = (() => {
@@ -392,6 +514,18 @@ $('start').onclick = start;
 $('bookFiles').onchange = e => addBooks([...e.target.files]);
 $('download').onclick = downloadCard;
 $('fresh').onclick = freshCard;
+$('sdFiles').onchange = e => { sdUpload([...e.target.files]); e.target.value = ''; };
+$('sdDir').onchange = e => { sdUpload([...e.target.files]); e.target.value = ''; };
+$('sdNewDir').onclick = sdNewDir;
+for (const ev of ['dragenter', 'dragover']) $('sd').addEventListener(ev, e => {
+  if (!running) return;
+  e.preventDefault(); $('sd').classList.add('drop');
+});
+$('sd').addEventListener('dragleave', e => { if (!$('sd').contains(e.relatedTarget)) $('sd').classList.remove('drop'); });
+$('sd').addEventListener('drop', e => {
+  e.preventDefault(); $('sd').classList.remove('drop');
+  if (running && e.dataTransfer.files.length) sdUpload([...e.dataTransfer.files]);
+});
 addEventListener('hashchange', showView);
 addEventListener('pagehide', () => { saveCard(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveCard(); });

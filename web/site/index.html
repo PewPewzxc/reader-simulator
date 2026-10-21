@@ -63,7 +63,23 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
     <div class="card">
       <h2>SD card</h2>
       <p class="hint">Each firmware version and device has its own simulated SD card, kept in this browser only.
-        Books go in the books folder.</p>
+        Put anything on it: books, dictionaries, fonts, plugins. Drop files on the list to upload them here.</p>
+      <div class="sd" id="sd" aria-live="polite">
+        <div class="sd-bar">
+          <nav class="sd-path" id="sdPath" aria-label="Folder"></nav>
+          <span class="sd-tools">
+            <label class="iconbtn" id="sdUpload" title="Upload files to this folder" aria-disabled="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+              <input type="file" id="sdFiles" multiple hidden disabled></label>
+            <label class="iconbtn" id="sdUploadDir" title="Upload a folder into this folder" aria-disabled="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3zM12 17v-5M9.5 14.5 12 12l2.5 2.5"/></svg>
+              <input type="file" id="sdDir" webkitdirectory multiple hidden disabled></label>
+            <button class="iconbtn" id="sdNewDir" title="New folder" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3zM12 11v6M9 14h6"/></svg></button>
+          </span>
+        </div>
+        <ul class="sd-list" id="sdList"><li class="sd-empty">Start a firmware to see its SD card.</li></ul>
+      </div>
       <div class="buttons">
         <label class="btn" id="addBooks" aria-disabled="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add books

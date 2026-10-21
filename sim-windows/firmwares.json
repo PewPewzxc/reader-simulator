@@ -34,7 +34,7 @@
    "repo": "belphemur/xpoint",
    "status": "untested",
    "frame": false,
-   "about": "CrossPoint fork by belphemur (MIT), for the X4, X3 and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Its freeink-sdk submodule is belphemur's public fork. Added 2026-10-21, not built yet."
+   "about": "CrossPoint fork by belphemur (MIT), for the X4, X3 and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Its freeink-sdk submodule is belphemur's public fork. Does not build yet (2.7.2 to 2.8.1): it uses a newer hardware layer (HalDisplay::refreshBusy, PSRAM functions, image decoders' openRAM) than either public simulator library has; kept untested so new releases are tried."
   },
   {
    "name": "InkPointX",

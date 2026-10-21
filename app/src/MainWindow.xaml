@@ -130,13 +130,13 @@
             <StackPanel>
               <TextBlock Style="{StaticResource H2}" Text="SD card" />
               <TextBlock Style="{StaticResource Caption}" Margin="0,-4,0,12"
-                         Text="Each firmware version and device has its own simulated SD card. Books go in the books folder." />
+                         Text="Each firmware version and device has its own simulated SD card. Put anything on it (books, dictionaries, fonts, plugins): open its folder and copy files in." />
               <WrapPanel>
                 <Button x:Name="BtnBooks" Style="{StaticResource Btn}" Margin="0,0,8,0" Click="AddBooks_Click">
                   <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE710;" /><TextBlock Text="Add books" Margin="8,0,0,0" /></StackPanel>
                 </Button>
                 <Button x:Name="BtnFolder" Style="{StaticResource Btn}" Margin="0,0,8,0" Click="OpenCard_Click">
-                  <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE8B7;" /><TextBlock Text="Open folder" Margin="8,0,0,0" /></StackPanel>
+                  <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE8B7;" /><TextBlock Text="Open SD card folder" Margin="8,0,0,0" /></StackPanel>
                 </Button>
                 <Button x:Name="BtnFresh" Style="{StaticResource Btn}" Click="FreshCard_Click">
                   <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE72C;" /><TextBlock Text="Fresh SD card" Margin="8,0,0,0" /></StackPanel>
