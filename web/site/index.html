@@ -119,6 +119,12 @@ if (location.hostname.endsWith('github.io') && (self.crossOriginIsolated || sess
       <button class="primary" id="start">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" class="fill"/></svg><span>Start</span></button>
     </div>
+    <div class="buttons shots">
+      <button class="btn" id="shotReader" disabled title="Save a picture of the whole reader, frame included">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Screenshot: whole reader</button>
+      <button class="btn" id="shotScreen" disabled title="Save only what the screen shows">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><rect x="8.5" y="5" width="7" height="12" class="fill"/></svg>Screenshot: screen only</button>
+    </div>
     <p id="status" class="hint" role="status"></p>
   </section>
   <section class="card guide" aria-labelledby="guideTitle">

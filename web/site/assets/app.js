@@ -128,6 +128,7 @@ async function boot(b) {
   $('addBooks').setAttribute('aria-disabled', 'false');
   $('bookFiles').disabled = false;
   $('download').disabled = false;
+  $('shotReader').disabled = $('shotScreen').disabled = false;
   const restart = sessionStorage.getItem('simRestartEnv');  // set by the simulator on sleep/wake or reboot
   sessionStorage.removeItem('simRestartEnv');
   window.Module = {
@@ -415,20 +416,47 @@ async function freshCard() {
 // ---- gestures (X4 Pro touchscreen): real mouse events on the canvas, as a hand-made drag ----
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const frameKeys = {};
-async function screenRect() {
+// The screen hole inside a box of width x height showing the whole frame (page pixels or canvas pixels).
+async function screenHole(width, height) {
   const b = running;
   if (!b || !b.frame) return null;
   if (!frameKeys[b.frame]) frameKeys[b.frame] = await (await fetch('frames/' + b.frame + '.keys')).text();
   const t = frameKeys[b.frame], num = re => (t.match(re) || []).slice(1).map(Number);
   const [W, H] = num(/^size (\d+) (\d+)/m), [x, y, w, h] = num(/^screen (\d+) (\d+) (\d+) (\d+)/m);
-  const c = $('canvas').getBoundingClientRect();
   if (!W || !w) return null;
   // the window turns with the reader (landscape): then the screen hole is turned a quarter to the right
-  const turned = (c.width > c.height) !== (W > H);
+  const turned = (width > height) !== (W > H);
   const r = turned ? { x: H - y - h, y: x, w: h, h: w, W: H, H: W } : { x, y, w, h, W, H };
-  const sx = c.width / r.W, sy = c.height / r.H;
-  return { left: c.left + r.x * sx, top: c.top + r.y * sy, width: r.w * sx, height: r.h * sy };
+  const sx = width / r.W, sy = height / r.H;
+  return { left: r.x * sx, top: r.y * sy, width: r.w * sx, height: r.h * sy };
 }
+async function screenRect() {
+  const c = $('canvas').getBoundingClientRect(), r = await screenHole(c.width, c.height);
+  return r && { ...r, left: c.left + r.left, top: c.top + r.top };
+}
+// ---- screenshots: the canvas as a PNG, whole or cropped to the screen hole ----
+async function screenshot(screenOnly) {
+  const c = $('canvas');
+  let x = 0, y = 0, w = c.width, h = c.height;
+  if (screenOnly) {
+    const r = await screenHole(c.width, c.height);
+    if (!r) return status('This build has no frame, so the whole picture is the screen: use "whole reader".');
+    x = Math.round(r.left); y = Math.round(r.top); w = Math.round(r.width); h = Math.round(r.height);
+  }
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  out.getContext('2d').drawImage(c, x, y, w, h, 0, 0, w, h);
+  out.toBlob(blob => {
+    if (!blob) return status('Could not take the screenshot. Try again.');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = running.id + (screenOnly ? '-screen-' : '-reader-') + new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-') + '.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    status('Saved ' + a.download + '.');
+  }, 'image/png');
+}
+
 function mouse(type, x, y) {
   const opts = { clientX: x, clientY: y, screenX: x, screenY: y, button: 0, buttons: type === 'mouseup' ? 0 : 1, bubbles: true, cancelable: true, view: window };
   $('canvas').dispatchEvent(new MouseEvent(type, opts));
@@ -555,6 +583,8 @@ $('usb').onchange = () => { store.set('usb', $('usb').checked ? 1 : 0); render()
 $('start').onclick = start;
 $('bookFiles').onchange = e => addBooks([...e.target.files]);
 $('download').onclick = downloadCard;
+$('shotReader').onclick = () => screenshot(false);
+$('shotScreen').onclick = () => screenshot(true);
 $('fresh').onclick = freshCard;
 $('sdFiles').onchange = e => { sdUpload([...e.target.files]); e.target.value = ''; };
 $('sdDir').onchange = e => { sdUpload([...e.target.files]); e.target.value = ''; };
