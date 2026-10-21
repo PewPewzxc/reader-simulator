@@ -19,6 +19,8 @@ ENV="${2:-x4-pro-simulator}"
 # platformio.ini runs `sdl2-config --cflags --libs` through cmd.exe.
 m() { cygpath -m "$1"; }
 printf '@echo -I%s/include/SDL2 -DSDL_MAIN_HANDLED -L%s/lib -lSDL2 -lws2_32\r\n' "$(m "$SDL")" "$(m "$SDL")" > "$O/bin/sdl2-config.cmd"
+# Some platformio.ini files (crossmux) run `python3 -c ...`; Windows has no python3, use PlatformIO's.
+printf '@"%s" %%*\r\n' "$(cygpath -w "$HOME/.platformio/penv/Scripts/python.exe")" > "$O/bin/python3.cmd"
 export PATH="$O/bin:$SDL/bin:$PATH"
 
 # Extra flags for every file (project + libraries), Windows build only.
