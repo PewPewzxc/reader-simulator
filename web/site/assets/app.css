@@ -182,11 +182,31 @@ kbd { display: inline-block; min-width: 26px; padding: 2px 7px; border: 1px soli
 .prose ul { padding-left: 20px; }
 .prose li { margin: 4px 0; }
 
+.realrow { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.realrow label { flex: 1; display: flex; flex-direction: column; }
+.realrow label span { font-size: 12.5px; color: var(--text2); }
+.realrow b { font-weight: 400; }
+.linkbtn { font: inherit; font-size: 13px; color: var(--accent); background: none; border: none; padding: 4px; cursor: pointer; text-decoration: underline; }
+/* Real size: the picture gets its true width (set by app.js); a reader wider than the screen scrolls. */
+.stage.real { height: auto; min-height: 0; max-height: none; aspect-ratio: auto; overflow: auto; justify-content: safe center; }
+.stage.real img, .stage.real canvas { width: var(--real-w) !important; max-width: none; max-height: none; flex: none; }
+dialog { background: var(--card); color: var(--text); border: 1px solid var(--card-stroke); border-radius: 8px; padding: 18px 20px; max-width: min(460px, calc(100vw - 32px)); }
+dialog::backdrop { background: #0006; }
+.cardwrap { display: flex; justify-content: center; margin: 16px 0; padding: 0 0 22px 0; overflow: hidden; }
+/* a bank card drawn at the size being tried, with its fixed real size written on it */
+#cardBox { flex: none; position: relative; box-sizing: border-box; border: 2px solid var(--accent); background: var(--accent-soft); }
+#cardBox .chip { position: absolute; left: 22%; top: 14%; width: 22%; height: 11%; border-radius: 15%; border: 1px solid var(--accent); }
+#cardBox span { position: absolute; font-size: 12px; color: var(--text2); white-space: nowrap; }
+#cardBox .w { left: 0; right: 0; bottom: -20px; text-align: center; }
+#cardBox .h { top: 50%; right: 6px; transform: translateY(-50%) rotate(90deg); transform-origin: center; }
+.measurebar { display: flex; align-items: center; gap: 8px; }
+.measurebar input { flex: 1; width: auto; }
 @media (max-width: 900px) {
   .top { padding: 10px 16px; gap: 12px; }
   .view { grid-template-columns: minmax(0, 1fr); padding: 4px 16px 24px; gap: 16px; }
   .stagecol { order: -1; }
   .stage { height: auto; min-height: 0; aspect-ratio: 3 / 4.6; max-height: 78vh; padding: 10px; margin: 0 auto; }
+  .stage.real { aspect-ratio: auto; max-height: none; padding: 4px; }
   .devices button { padding: 8px 10px; }
   .devices button.on { padding: 7px 9px; }
   input[type=range] { width: 110px; }

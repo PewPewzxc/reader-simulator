@@ -39,6 +39,11 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
     <div class="card">
       <h2>Device</h2>
       <div class="devices" id="devices"></div>
+      <div class="realrow">
+        <input type="checkbox" id="realSize" class="switch" role="switch">
+        <label for="realSize"><b>Real size</b><span>Show the reader exactly as big as it is in your hand</span></label>
+        <button class="linkbtn" id="measure">Measure screen</button>
+      </div>
     </div>
     <div class="card">
       <h2>Firmware</h2>
@@ -241,6 +246,22 @@ if (!self.crossOriginIsolated && 'serviceWorker' in navigator && location.protoc
     </section>
   </div>
 </main>
+<dialog id="measureDlg">
+  <h2>Measure your screen</h2>
+  <p class="hint">Screens don't tell the browser how big they really are, so this is needed once per device.
+    Every bank card and ID card is the same size: 54 &times; 85.6 mm. Hold one upright against the card below
+    and press &minus; or + until they match. Then the readers are shown at their real size.</p>
+  <div class="cardwrap"><div id="cardBox"><i class="chip"></i><span class="w">54 mm</span><span class="h">85.6 mm</span></div></div>
+  <div class="measurebar">
+    <button class="btn" id="smaller" aria-label="Smaller">&minus;</button>
+    <input type="range" id="cardScale" min="2" max="9" step="0.01" aria-label="Box size">
+    <button class="btn" id="bigger" aria-label="Bigger">+</button>
+  </div>
+  <div class="buttons">
+    <button class="primary" id="measureDone">Done</button>
+    <button class="btn" id="measureCancel">Cancel</button>
+  </div>
+</dialog>
 <script src="assets/app.js"></script>
 </body>
 </html>

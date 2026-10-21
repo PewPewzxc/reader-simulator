@@ -89,6 +89,7 @@ function render() {
   const same = running && running.id === b.id;
   $('start').querySelector('span').textContent = !same ? 'Start' : runningSettings === settings() ? 'Restart' : 'Restart with changes';
   $('fresh').disabled = false;
+  applyRealSize();
 }
 
 // ---- running a build ----
@@ -465,6 +466,47 @@ for (const type of ['keydown', 'keyup']) {
   }, true);
 }
 
+// ---- real size ----
+// Real width and height of each frame in mm (size / px_per_mm in device-frames/frames/<model>.json).
+const FRAME_MM = { 'x3': [66.66, 100.63], 'x4-classic': [72.05, 116.99], 'x4-pro': [71.94, 113.95] };
+const CARD_MM = [53.98, 85.6];  // ID-1 card (bank card), held upright
+
+function applyRealSize() {
+  const b = running || current();
+  const pxPerMm = store.get('pxPerMm', 0);  // CSS pixels per real mm on this screen, from Measure screen
+  const mm = b && FRAME_MM[b.frame];
+  const on = $('realSize').checked && pxPerMm && mm;
+  $('stage').classList.toggle('real', !!on);
+  if (!on) return;
+  const c = $('canvas'), turned = running && c.width > c.height;  // the reader can be turned sideways
+  $('stage').style.setProperty('--real-w', mm[turned ? 1 : 0] * pxPerMm + 'px');
+}
+
+function showCardBox() {
+  const v = +$('cardScale').value;
+  $('cardBox').style.width = CARD_MM[0] * v + 'px';
+  $('cardBox').style.height = CARD_MM[1] * v + 'px';
+  $('cardBox').style.borderRadius = 3.18 * v + 'px';  // ID-1 corner radius
+}
+
+function measure() {
+  $('cardScale').value = store.get('pxPerMm', 96 / 25.4);  // start from the browser's own (often wrong) mm
+  showCardBox();
+  $('measureDlg').showModal();
+}
+
+function measureClosed(ok) {
+  if (ok) {
+    store.set('pxPerMm', +$('cardScale').value);
+    $('realSize').checked = true;
+    store.set('realSize', true);
+  } else if (!store.get('pxPerMm', 0)) {
+    $('realSize').checked = false;
+  }
+  $('measureDlg').close();
+  applyRealSize();
+}
+
 // ---- about ----
 function credits() {
   const repos = firmwareList();
@@ -526,6 +568,20 @@ $('sd').addEventListener('drop', e => {
   e.preventDefault(); $('sd').classList.remove('drop');
   if (running && e.dataTransfer.files.length) sdUpload([...e.dataTransfer.files]);
 });
+$('realSize').checked = !!store.get('realSize', false) && !!store.get('pxPerMm', 0);
+$('realSize').onchange = () => {
+  store.set('realSize', $('realSize').checked);
+  if ($('realSize').checked && !store.get('pxPerMm', 0)) measure();
+  applyRealSize();
+};
+$('measure').onclick = measure;
+$('cardScale').oninput = showCardBox;
+$('smaller').onclick = () => { $('cardScale').stepDown(10); showCardBox(); };
+$('bigger').onclick = () => { $('cardScale').stepUp(10); showCardBox(); };
+$('measureDone').onclick = () => measureClosed(true);
+$('measureCancel').onclick = () => measureClosed(false);
+$('measureDlg').oncancel = e => { e.preventDefault(); measureClosed(false); };  // Esc
+new MutationObserver(applyRealSize).observe($('canvas'), { attributes: true, attributeFilter: ['width', 'height'] });
 addEventListener('hashchange', showView);
 addEventListener('pagehide', () => { saveCard(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveCard(); });
