@@ -372,7 +372,9 @@ inline bool fetchWithBrowser(const std::string &url, const char *method,
   const int status = EM_ASM_INT({
     var x = new XMLHttpRequest();
     try {
-      x.open(UTF8ToString($1), UTF8ToString($0), false);
+      var u = UTF8ToString($0);
+      if (location.protocol === 'https:' && u.indexOf('http://') === 0) u = 'https://' + u.slice(7);  // a secure page may not load http
+      x.open(UTF8ToString($1), u, false);
       x.overrideMimeType('text/plain; charset=x-user-defined');
       var h = UTF8ToString($2).split('\n');
       for (var i = 0; i + 1 < h.length; i += 2) { try { x.setRequestHeader(h[i], h[i + 1]); } catch (e) {} }
