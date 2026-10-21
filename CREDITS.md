@@ -22,30 +22,21 @@ Our Windows changes to them are made at build time by `sim-windows/patch_libdeps
 
 ## Firmwares
 Each download contains the firmware's own licence as `LICENSE-firmware.txt` and its `build.json` names
-the exact source (repo, version, commit). All firmwares below are forks of
-[CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) (MIT, Copyright (c) 2025 Dave Allie)
-and keep its MIT licence.
+the exact source (repo, version, commit). [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader)
+is MIT licensed (Copyright (c) 2025 Dave Allie); the other firmwares are based on it and keep its MIT licence, with
+their own authors' additions.
 
 | Firmware | Authors | Licence |
 | --- | --- | --- |
-| [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS) | ashokslsk and contributors (licence: Copyright (c) 2025 Dave Allie
-) | MIT |
-| [CrossDiTo](https://github.com/dito94/CrossDiTo) | dito94 and contributors (licence: Copyright (c) 2025 Dave Allie
-) | MIT |
-| [CrossNotes](https://github.com/HilbergK/CrossNotes) | HilbergK and contributors (licence: Copyright (c) 2025 Dave Allie
-) | MIT |
-| [duet](https://github.com/lauren-alexandra/duet-xteink) | lauren-alexandra and contributors (licence: Copyright (c) 2025 Dave Allie
-; 2026 Lauren Landau, for Duet modifications and original additions
-) | MIT |
-| [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | padge01 and contributors (licence: Copyright (c) 2025 Dave Allie
-) | MIT |
-| [VARAGH](https://github.com/PewPewzxc/VARAGH) | PewPewzxc and contributors (licence: Copyright (c) 2025 Dave Allie
-; 2026 PewPewzxc (VARAGH changes)
-) | MIT |
-| [YACP](https://github.com/Sichroteph/YACP) | Sichroteph and contributors (licence: Copyright (c) 2025 Dave Allie
-) | MIT |
-| [CrossInk](https://github.com/uxjulia/crossink) | uxjulia and contributors (licence: Copyright (c) 2025 Dave Allie
-) | MIT |
+| [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) | Dave Allie and contributors | MIT |
+| [VARAGH](https://github.com/PewPewzxc/VARAGH) | PewPewzxc and contributors | MIT |
+| [CrossInk](https://github.com/uxjulia/crossink) | uxjulia and contributors | MIT |
+| [YACP](https://github.com/Sichroteph/YACP) | Sichroteph and contributors | MIT |
+| [CrossNotes](https://github.com/HilbergK/CrossNotes) | HilbergK and contributors | MIT |
+| [CrossDiTo](https://github.com/dito94/CrossDiTo) | dito94 and contributors | MIT |
+| [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS) | ashokslsk and contributors | MIT |
+| [duet](https://github.com/lauren-alexandra/duet-xteink) | Lauren Landau and contributors | MIT |
+| [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | padge01 and contributors | MIT |
 
 ## Device drawings
 `device-frames/` are our own drawings of the Xteink X3, X4 Classic and X4 Pro (MIT, this repo), made from the

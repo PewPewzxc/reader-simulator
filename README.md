@@ -21,8 +21,9 @@ Reader Simulator builds open-source e-reader firmwares from their own source cod
 and runs them inside an accurate drawing of the reader. You can try a firmware before you flash it, compare
 versions side by side, or develop and demo a firmware without a device on your desk.
 
-- **Runs in any modern browser** — Chrome, Edge, Firefox and Safari, on a computer, tablet or phone. Nothing to install.
-- **Several versions of every firmware** — the newest releases of each one, so you can compare them before updating.
+- **Runs in your browser** — on a computer, tablet or phone, nothing to install. Tested in Chrome; it is made to
+  work in other modern browsers too.
+- **Several versions** — up to three of each firmware's newest releases, so you can compare them before updating.
 - **Always current** — every week GitHub Actions checks each firmware for new releases, builds them for the browser,
   tests them in a headless browser and publishes the ones that pass. No manual step.
 - **The real controls** — click or tap the reader's keys, use the X4 Pro's touchscreen (tap, hold, swipe), or use
@@ -71,22 +72,51 @@ Windows builds are made on demand rather than weekly, so new firmware versions u
 
 ## Supported firmwares
 
-Firmwares are listed in [`sim-windows/firmwares.json`](sim-windows/firmwares.json). A version is offered only after
-its source code has built and started successfully in the simulator; the simulator itself always shows the current
-list.
+These firmwares run in the browser simulator today. Each one offers up to three of its newest versions; the
+simulator always shows the current list. The Windows app offers a smaller selection.
 
-| Firmware | Based on |
+| Firmware | X4 Pro | X4 Classic | X3 |
+| --- | :---: | :---: | :---: |
+| [VARAGH](https://github.com/PewPewzxc/VARAGH) | ✓ | ✓ | ✓ |
+| [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) | ✓ | ✓ | ✓ |
+| [CrossInk](https://github.com/uxjulia/crossink) | ✓ | ✓ | ✓ |
+| [CrossSmudge](https://github.com/Mumfee/CrossSmudge) | ✓ | ✓ | ✓ |
+| [CrossNotes](https://github.com/HilbergK/CrossNotes) | ✓ | ✓ | ✓ |
+| [YACP](https://github.com/Sichroteph/YACP) | — | ✓ | ✓ |
+| [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | ✓ | ✓ | ✓ |
+| [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS) | ✓ | ✓ | ✓ |
+| [CrossDiTo](https://github.com/dito94/CrossDiTo) | ✓ | — | — |
+| [duet](https://github.com/lauren-alexandra/duet-xteink) | — | ✓ | — |
+| [CrossMux](https://github.com/0x1abin/crossmux) | — | ✓ | ✓ |
+| [CrossPlant](https://github.com/0xKnowles/CrossPlant) | — | ✓ | — |
+
+### Not working yet
+
+These firmwares were tried but do not build or run in the simulator yet. Each needs a change from its author:
+
+| Firmware | What is needed from its author |
 | --- | --- |
-| [VARAGH](https://github.com/PewPewzxc/VARAGH) | CrossInk |
-| [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) (including release candidates) | — |
-| [CrossInk](https://github.com/uxjulia/crossink) | CrossPoint |
-| [YACP](https://github.com/Sichroteph/YACP), [inx](https://github.com/obijuankenobiii/inx), [CrossPlant](https://github.com/0xKnowles/CrossPlant), [CrossSmudge](https://github.com/Mumfee/CrossSmudge), [CrossNotes](https://github.com/HilbergK/CrossNotes), [CrossDiTo](https://github.com/dito94/CrossDiTo), [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS), [duet](https://github.com/lauren-alexandra/duet-xteink), [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | CrossPoint |
+| [inkMOD](https://github.com/alpzoloto-sudo/inkmod) | A simulator build setup (`[env:simulator]`) with stand-ins for its extra hardware functions (boot log, reset reason, OTA partition, charge times) and its version flags. |
+| [CrossLink](https://github.com/DaisonChun/crosslink) | An update to the current simulator interface (it uses the May 2026 `setSimulatorOrientation`), or a newer release. |
+| [Witchhunt Reader](https://github.com/jpirnay/witchhunt-reader) | A simulator library with its newer display, clock and font functions (second display buffer, `formatLogTime`, `FlashFontPartition.h`). |
+| [xpoint](https://github.com/belphemur/xpoint) | A simulator library with its newer hardware layer (`displayBufferAsync`, `refreshBusy`, PSRAM, `JPEGDEC::openRAM`). |
+| [InkPointX](https://github.com/yokki-vans/InkPointX) | Simulator support for its new display functions (dark mode, clean and full refresh) and `replaceFileFromTemp`, and a tagged release. |
+| [inx](https://github.com/obijuankenobiii/inx) | Simulator support for its clock (`readDateTime`) and its own file type, and an OTA interface that matches the simulator's. |
+| [cpr-vcodex](https://github.com/franssjz/cpr-vcodex) | Stand-ins for NVS storage, wolfSSL AES and `memcpy_P` in its simulator library branch. |
+| [vcodex on steroids](https://github.com/marcoand75/cpr-vcodex-steroids) | The `freeink-sdk` commit its submodule points to pushed to GitHub (it is missing, so the source cannot be downloaded). |
+| [CrossInk Bookorbit](https://github.com/agosez/CrossInk-Bookorbit) | `HalClock::syncSystemTimeFromNTP` and `canDisplayTime` in its simulator setup, or those calls skipped in the simulator build. |
+| [CrossPDF](https://github.com/davemessew/CrossPDF) | A simulator build that compiles: `epub_` and `icon_pointer_off_24` are not declared there. |
+| [Ink-boy](https://github.com/hellominecraft913-dev/Ink-boy) | `src/walnut_cgb_impl.c` built without the simulator's C++-only `esp_heap_caps.h` (for example compiled as C++). |
+| [aalu](https://github.com/dawsonfi/aalu) | A newer crosspoint-simulator pin: the pinned one (`efe37c6`) has no input scripts or screenshots, so it cannot be tested. |
+| [Foulad eInk](https://github.com/sfoulad/foulad-eink) | The FreeInk UI library (`FreeInkApp.h`) added to its simulator setup. |
+| [Folio Nooir](https://github.com/toshio2011/folio-nooir) | `<stdint.h>` instead of its own `uint32_t` in the `tjpgd.h` of its freeink-sdk (fails on Windows; the browser build has not been tried yet). |
+| [KatiePoint](https://github.com/InsiderPhD/crosspoint-reader) | The simulator library's GitHub address in its simulator setup (it expects a local `../crosspoint-simulator` folder). |
+| [CrumBLE](https://github.com/imshentastic/CrumBLE) | `readFileWithFallback` and `freertos/portmacro.h` in its simulator setup. |
 
-**Requirements for a firmware:** public source code on GitHub, a PlatformIO project, and a CrossPoint, CrossInk or
-FreeInk base. The simulator adds its own setup to firmwares that do not ship one, without changing their code.
+**Xteink's official firmware** is not supported: it is closed source, and Xteink said they cannot provide it.
 
-**Not supported:** closed-source firmwares, including Xteink's factory firmware, cannot be built from source. See
-the [roadmap](ROADMAP.md) for what running them would take.
+**Add a firmware:** it needs public source code on GitHub and a PlatformIO project in the CrossPoint, CrossInk or
+FreeInk family. The simulator adds its own setup to firmwares that do not ship one, without changing their code.
 
 ## How it works
 
@@ -100,8 +130,9 @@ firmware release on GitHub ──► GitHub Actions ──► simulator build �
 Each firmware is compiled against a desktop simulator library
 ([crossink-simulator](https://github.com/uxjulia/crossink-simulator) or
 [crosspoint-simulator](https://github.com/crosspoint-reader/crosspoint-simulator)) that stands in for the reader's
-hardware: display, keys, touchscreen, SD card, battery and clock. The library version is chosen from the firmware's
-release date, and small compatibility fixes are applied to the library at build time
+hardware: display, keys, touchscreen, SD card, battery and clock. A firmware that ships its own simulator setup uses
+its own library version; for the others, the version is chosen from the firmware's release date. Small
+compatibility fixes are applied to the library at build time
 ([`patch_libdeps.py`](sim-windows/patch_libdeps.py)). The firmware's own source is never modified.
 
 Technical details: [`web/README.md`](web/README.md) (browser build and publishing) and
@@ -109,16 +140,15 @@ Technical details: [`web/README.md`](web/README.md) (browser build and publishin
 
 ## Privacy
 
-Reader Simulator has no accounts, no cookies, no advertising and no tracking.
+Reader Simulator has no accounts, no cookies, no advertising and no cross-site tracking.
 
 - **Visit counter.** The web page counts each visit and each firmware run on
   [GoatCounter](https://www.goatcounter.com) (page, referring site and screen size). No cookies and no personal
   data; GoatCounter does not track you across sites. The Windows app counts nothing.
-
 - **Your files stay on your device.** Books and other files you put on a simulated SD card are stored in your
   browser's local storage (IndexedDB) or, in the Windows app, in your user folder. They are never uploaded.
-- **Network requests** go only to GitHub: the page is served by GitHub Pages and firmware builds are downloaded from
-  this repository's GitHub Releases. GitHub may log those requests as described in the
+- **Network requests** go to GitHub and to the visit counter: the page is served by GitHub Pages and firmware builds
+  are downloaded from this repository's GitHub Releases. GitHub may log those requests as described in the
   [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
   The Buy me a coffee button's picture on the About page is loaded from Buy Me a Coffee.
 - **Firmwares' online features** (an online dictionary, an update check, a book catalogue) contact their own
@@ -129,8 +159,8 @@ Reader Simulator has no accounts, no cookies, no advertising and no tracking.
 
 ## Security
 
-- Every firmware is built by GitHub Actions in this public repository, from the tagged source of its own release;
-  the exact source commit is recorded in each build's `build.json`.
+- Every firmware is built by GitHub Actions in this public repository, from the source of its own release (or of its
+  main branch, for a firmware without releases); the exact source commit is recorded in each build's `build.json`.
 - The Windows app downloads builds only over HTTPS from this repository and verifies each file's SHA-256 checksum
   before unpacking or running it.
 - In the browser, firmwares run inside the browser's WebAssembly sandbox with no access to your files beyond the
