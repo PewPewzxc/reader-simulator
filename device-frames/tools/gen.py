@@ -26,7 +26,10 @@ MODELS = {
         # matte mid-grey, lit from the top; a dark line just inside the edge, no light lip
         look=dict(face=("#545457", "#38383b"), face_dir=(.25, 1), edge=("#141415", 0.3), lip=None,
                   seam=("#1e1e1f", 0.7, 0.2), keys=("#262628", "#5c5c5e"),
-                  bar=("#3a3a3c", "#1e1e1f"), well="#2e2e30", hole_r=0.5)),
+                  bar=("#3a3a3c", "#1e1e1f"), well="#2e2e30", hole_r=0.5,
+                  # the same chin as the X3: the front plate's groove steps up around both bottom bars
+                  seam_path=dict(color="#19191a", width=0.2, top=1.1, side=1.45, bottom=1.2, r=2.6,
+                                 notch=(11.2, 58.1, 109.6, 1.0)))),
     "x4-pro": dict(
         body=(69.0, 111.0), radius=4.0, panel=(480, 800), screen=(6.6, 5.6, 62.3, 97.5), key_out=0.6,
         keys=[("UP", "left", 25.6, 40.6), ("POWER", "right", 10.1, 16.7), ("DOWN", "right", 25.6, 40.6)],
@@ -103,7 +106,7 @@ def build(name, m):
         seam, d, sw = look["seam"]
         parts.append(inset_rect(d, fill="none", stroke=seam, stroke_width=L(sw)))
     if look.get("seam_path"):
-        # X3 front plate: inset seam that steps up around both bottom bars (one recess)
+        # X3 and X4 Classic front plate: inset seam that steps up around both bottom bars (one recess)
         sp = look["seam_path"]
         lx, rx_, ty, by, rr = sp["side"], bw - sp["side"], sp["top"], bh - sp["bottom"], sp["r"]
         a, b, ys, f = sp["notch"]
