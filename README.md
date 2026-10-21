@@ -30,6 +30,8 @@ versions side by side, or develop and demo a firmware without a device on your d
 - **Your own SD card** — each firmware version and device has its own card. Browse its files and folders, upload
   files or whole folders (books, dictionaries, fonts, plugins), download or delete them. Everything stays in your
   browser.
+- **Online features** — firmwares see a simulated Wi-Fi network (no password) and reach the internet through your
+  browser, so features such as online dictionaries and update checks work where the service allows it.
 - **Faithful hardware** — the screen turns with the firmware's orientation, and the device drawings are made from
   the readers' official dimensions.
 
@@ -113,7 +115,10 @@ Reader Simulator has no accounts, no analytics, no cookies, no advertising and n
 - **Network requests** go only to GitHub: the page is served by GitHub Pages and firmware builds are downloaded from
   this repository's GitHub Releases. GitHub may log those requests as described in the
   [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
-  The only other request is the Buy me a coffee button's picture on the About page, loaded from Buy Me a Coffee.
+  The Buy me a coffee button's picture on the About page is loaded from Buy Me a Coffee.
+- **Firmwares' online features** (an online dictionary, an update check, a book catalogue) contact their own
+  services from your browser, as a web page would. The reader's Wi-Fi is simulated: no network password is ever
+  asked for or sent. Services that do not accept requests from web pages behave as if offline.
 - **Preferences** of the page (such as your last choices) are kept in your browser's local storage.
 - The Windows app sends no data anywhere; it only downloads the firmware list and builds over HTTPS.
 

@@ -345,3 +345,62 @@ if os.path.isfile(LS):
         b = t.index(end) + len(end)
         t = t[:a] + "#if RSIM_HAS_LCP\n" + t[a:b] + "#endif  // RSIM_HAS_LCP\n" + t[b:]
         open(LS, "w", encoding="utf-8").write(t)
+# Internet in the browser: the library fetches HTTP(S) with curl, which a web page cannot run. In the browser
+# build the same requests go through the page's own connection (synchronous XMLHttpRequest, on the simulator's
+# thread): servers that allow browser requests (CORS) answer, others fail as if offline. Nothing else changes:
+# the Wi-Fi the firmware sees is the library's fake one, no password is needed or sent anywhere.
+F = SRC + "SimHttpFetch.h"
+if os.path.isfile(F) and "fetchWithBrowser" not in open(F, encoding="utf-8").read():
+    t = open(F, encoding="utf-8").read()
+    m = re.search(r"\n(inline bool fetch\(const std::string ?&)", t)
+    r = re.search(r"\n(  return fetchWithCurl\([^;]*\);)\n", t[m.start():] if m else "")
+    if m and r:
+        browser = r'''
+#ifdef __EMSCRIPTEN__
+} // namespace sim_http_fetch
+#include <emscripten.h>
+namespace sim_http_fetch {
+// reader simulator: HTTP(S) through the web page's connection (see patch_libdeps.py)
+inline bool fetchWithBrowser(const std::string &url, const char *method,
+                             const std::map<std::string, std::string> &headers,
+                             const std::string &basicAuth, const char *body, Response &out) {
+  std::string hdr;
+  for (const auto &h : headers) hdr += h.first + "\n" + h.second + "\n";
+  const int status = EM_ASM_INT({
+    var x = new XMLHttpRequest();
+    try {
+      x.open(UTF8ToString($1), UTF8ToString($0), false);
+      x.overrideMimeType('text/plain; charset=x-user-defined');
+      var h = UTF8ToString($2).split('\n');
+      for (var i = 0; i + 1 < h.length; i += 2) { try { x.setRequestHeader(h[i], h[i + 1]); } catch (e) {} }
+      var a = UTF8ToString($3);
+      if (a) x.setRequestHeader('Authorization', 'Basic ' + btoa(a));
+      x.send($4 ? UTF8ToString($4) : null);
+      globalThis.rsimHttpBody = x.responseText ? x.responseText : String();
+      return x.status;
+    } catch (e) { globalThis.rsimHttpBody = String(); return 0; }
+  }, url.c_str(), method ? method : "GET", hdr.c_str(), basicAuth.c_str(), body);
+  const int len = EM_ASM_INT({ return globalThis.rsimHttpBody.length; });
+  out.body.assign(static_cast<size_t>(len), '\0');
+  if (len > 0)
+    EM_ASM({
+      var s = globalThis.rsimHttpBody;
+      for (var i = 0; i < s.length; i++) HEAPU8[$0 + i] = s.charCodeAt(i) & 255;
+    }, &out.body[0]);
+  EM_ASM({ globalThis.rsimHttpBody = String(); });
+  out.statusCode = status;
+  return status > 0;
+}
+#endif
+'''
+        a = m.start()
+        t = t[:a] + browser + t[a:]
+        m2 = re.search(r"\n(inline bool fetch\(const std::string ?&)", t)
+        r2 = re.search(r"\n(  return fetchWithCurl\([^;]*\);)\n", t[m2.start():])
+        at = m2.start() + r2.start(1)
+        call = r2.group(1)
+        t = (t[:at] + "#ifdef __EMSCRIPTEN__\n  return fetchWithBrowser(url, method, headers, basicAuth, body, out);\n#else\n"
+             + call + "\n#endif" + t[at + len(call):])
+        open(F, "w", encoding="utf-8").write(t)
+    else:
+        print("patch_libdeps: browser internet skipped, this library's fetch differs")
