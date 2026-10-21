@@ -456,6 +456,10 @@ ER = SRC + "esp_random.h"
 if os.path.isfile(ER):
     t = open(ER, encoding="utf-8").read()
     if "Unsupported host OS" in t and "__EMSCRIPTEN__" not in t:
+        # Emscripten has getentropy (at most 256 bytes a call) but no getrandom: the link failed (crossmux 1.6.0).
+        t = t.replace("#include <sys/random.h>\n", "#include <sys/random.h>\n#if defined(__EMSCRIPTEN__)\n#include <unistd.h>\n"
+                      "#define getrandom(b, l, f) (getentropy((b), (l) > 256 ? 256 : (l)) == 0 ? (ssize_t)((l) > 256 ? 256 : (l)) : -1)\n"
+                      "#endif\n", 1)
         open(ER, "w", encoding="utf-8").write(t.replace("defined(__linux__)", "(defined(__linux__) || defined(__EMSCRIPTEN__))"))
 # SHA-256 (same library): mbedtls/sha256.h uses OpenSSL's streaming SHA256_Init/Update/Final on Linux; the
 # Windows and browser builds get them from compat/openssl/sha.h.
