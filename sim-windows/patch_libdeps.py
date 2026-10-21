@@ -304,9 +304,12 @@ add_member(SRC + "WiFi.h", "  void disconnect(bool wifioff = false, bool eraseap
            "  bool disconnect(bool wifioff, bool eraseap, unsigned long timeoutMs) {\n"
            "    (void)timeoutMs;\n    disconnect(wifioff, eraseap);\n    return true;\n  }\n", before=True)
 # Power button: the wake check with the firmware's settings (crossink-simulator's form).
-add_member(SRC + "HalGPIO.h", "  bool verifyPowerButtonWakeup();\n", r"verifyPowerButtonWakeup\s*\(\s*uint16_t",
-           "  bool verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed) {\n"
-           "    (void)requiredDurationMs;\n    (void)shortPressAllowed;\n    return verifyPowerButtonWakeup();\n  }\n")
+# (not when HalGPIO.cpp defines its own, whatever its return type: YACP 1.8's library does)
+_gpio_cpp = open(SRC + "HalGPIO.cpp", encoding="utf-8").read() if os.path.isfile(SRC + "HalGPIO.cpp") else ""
+if not re.search(r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t", _gpio_cpp):
+    add_member(SRC + "HalGPIO.h", "  bool verifyPowerButtonWakeup();\n", r"verifyPowerButtonWakeup\s*\(\s*(const\s+)?uint16_t",
+               "  bool verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed) {\n"
+               "    (void)requiredDurationMs;\n    (void)shortPressAllowed;\n    return verifyPowerButtonWakeup();\n  }\n")
 # SD card file dates from the reader's clock offset: the simulator uses the PC's clock as it is.
 add_to_class(SRC + "HalStorage.h", "class HalStorage {", r"installDateTimeCallback\s*\(",
              "  void installDateTimeCallback(const uint8_t *utcOffsetQuarterHoursBiased) { (void)utcOffsetQuarterHoursBiased; }\n")
