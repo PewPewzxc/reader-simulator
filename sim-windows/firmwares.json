@@ -44,6 +44,13 @@
    "about": "CrossPoint fork by Mumfee (MIT), with its own simulator setup for the X4 Pro, X4 Classic and X3. Browser builds of 1.6.5.1 to 1.6.5.3 pass for all three readers (2026-10-21)."
   },
   {
+   "name": "inkmod",
+   "repo": "alpzoloto-sudo/inkmod",
+   "status": "untested",
+   "frame": false,
+   "about": "CrossPoint fork by alpzoloto-sudo (MIT), for the X3, X4 Classic and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Added 2026-10-21, not built yet."
+  },
+  {
    "name": "InkPointX",
    "repo": "yokki-vans/InkPointX",
    "status": "untested",
