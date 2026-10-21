@@ -44,21 +44,21 @@
    "about": "CrossPoint fork by Mumfee (MIT), with its own simulator setup for the X4 Pro, X4 Classic and X3. Browser builds of 1.6.5.1 to 1.6.5.3 pass for all three readers (2026-10-21)."
   },
   {
-   "name": "inkmod",
+   "name": "inkMOD",
    "repo": "alpzoloto-sudo/inkmod",
    "status": "untested",
    "frame": false,
    "about": "CrossPoint fork by alpzoloto-sudo (MIT), for the X3, X4 Classic and X4 Pro. No simulator setup of its own; the reader simulator adds one (adapter.py). Does not build yet (v1.1.7 to v1.1.9): its device code goes past the simulator library (FreeRTOS stream buffers in Fb2, its own JPEG decoder, boot log, reset reasons, OTA partition, charge times, INKMOD_VERSION set only in its own environments); kept untested so new releases are tried."
   },
   {
-   "name": "crosslink",
+   "name": "CrossLink",
    "repo": "DaisonChun/crosslink",
    "status": "untested",
    "frame": false,
    "about": "CrossPoint fork by DaisonChun (MIT). No simulator setup of its own; the reader simulator adds one (adapter.py). Does not build yet (v20260524): it is written against the May 2026 simulator interface (HalDisplay::setSimulatorOrientation), which newer libraries removed, and the May library has no scripted input or screenshots; kept untested so new releases are tried."
   },
   {
-   "name": "crossmux",
+   "name": "CrossMux",
    "repo": "0x1abin/crossmux",
    "status": "ready",
    "frame": true,
