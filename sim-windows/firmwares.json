@@ -6,7 +6,7 @@
    "repo": "PewPewzxc/VARAGH",
    "status": "ready",
    "frame": true,
-   "about": "CrossInk fork: dictionaries, Persian, games, Control Center. Built and tested 1.2.1 for X4 Pro, X4 Classic and X3. Its freeink-sdk submodule (PewPewzxc/freeink-sdk) is private; the build workflows fetch it with a read-only deploy key."
+   "about": "CrossInk fork: Persian and German reading, flashcards, games, online dictionary; Control Center on the X4 Pro. 1.3.0 runs on X4 Pro, X4 Classic and X3 (button readers: games and Look Up / Highlight / Add to with the buttons; X3 menus other than English and German come as downloads). Its freeink-sdk submodule (PewPewzxc/freeink-sdk) is private; the build workflows fetch it with a read-only deploy key."
   },
   {
    "name": "CrossPoint Reader",
