@@ -11,7 +11,7 @@
 
 [**Launch the simulator**](https://pewpewzxc.github.io/reader-simulator/) · [Windows app](#windows-app) · [Supported firmwares](#supported-firmwares) · [Privacy](#privacy) · [Legal](#legal)
 
-<img src="docs/web-simulator.png" alt="The web simulator running VARAGH 1.3.0 on an X4 Pro, with the Real size switch, the firmware list and the SD card browser" width="760">
+<img src="docs/web-simulator.png" alt="The web simulator running VARAGH 1.3.0 on an X4 Pro, with the eink-qemu banner, the Real size switch, the firmware list, the SD card browser and the screenshot buttons" width="760">
 
 </div>
 
