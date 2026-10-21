@@ -5,13 +5,12 @@
 **Run community firmwares for the Xteink X4 Pro, X4 Classic and X3 e-readers in your browser — no device needed.**
 
 [![Web simulator](https://github.com/PewPewzxc/reader-simulator/actions/workflows/pages.yml/badge.svg)](https://github.com/PewPewzxc/reader-simulator/actions/workflows/pages.yml)
-[![Firmware builds](https://github.com/PewPewzxc/reader-simulator/actions/workflows/build-firmwares.yml/badge.svg)](https://github.com/PewPewzxc/reader-simulator/actions/workflows/build-firmwares.yml)
 [![Latest Windows app](https://img.shields.io/github/v/release/PewPewzxc/reader-simulator?label=windows%20app&sort=semver)](https://github.com/PewPewzxc/reader-simulator/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [**Launch the simulator**](https://pewpewzxc.github.io/reader-simulator/) · [Windows app](#windows-app) · [Supported firmwares](#supported-firmwares) · [Privacy](#privacy) · [Legal](#legal)
 
-<img src="docs/web-simulator.png" alt="The web simulator running VARAGH on an X4 Pro" width="760">
+<img src="docs/web-simulator.png" alt="The web simulator running VARAGH 1.3.0 on an X4 Pro, with the firmware list and the SD card browser" width="760">
 
 </div>
 
@@ -23,13 +22,14 @@ versions side by side, or develop and demo a firmware without a device on your d
 
 - **Runs in any modern browser** — Chrome, Edge, Firefox and Safari, on a computer, tablet or phone. Nothing to install.
 - **Several versions of every firmware** — the newest releases of each one, so you can compare them before updating.
-- **Always current** — GitHub Actions checks every firmware for new releases each week, builds them, tests them in a
-  headless browser and publishes the ones that pass. No manual step.
+- **Always current** — every week GitHub Actions checks each firmware for new releases, builds them for the browser,
+  tests them in a headless browser and publishes the ones that pass. No manual step.
 - **The real controls** — click or tap the reader's keys, use the X4 Pro's touchscreen (tap, hold, swipe), or use
   the keyboard. A built-in guide lists every key and gesture.
 - **Ready to read** — every new simulated SD card comes with two public-domain books and an English dictionary.
-- **Your own SD card** — browse each card's files and folders, upload files or whole folders (books, dictionaries,
-  fonts, plugins), download or delete them. Everything stays in your browser.
+- **Your own SD card** — each firmware version and device has its own card. Browse its files and folders, upload
+  files or whole folders (books, dictionaries, fonts, plugins), download or delete them. Everything stays in your
+  browser.
 - **Faithful hardware** — the screen turns with the firmware's orientation, and the device drawings are made from
   the readers' official dimensions.
 
@@ -41,10 +41,12 @@ versions side by side, or develop and demo a firmware without a device on your d
 2. Pick a device, a firmware and a version, then press **Start**. The firmware (about 10 MB) is downloaded once
    and cached by your browser.
 3. Use the reader as you would the real one. The **Controls** card below it explains every key and gesture.
+4. To try your own files, use the **SD card** panel: upload into any folder, or drop files on it. They are on the
+   reader's card straight away.
 
-| X4 Pro (touch) | X4 Classic | X3 |
+| X4 Pro · VARAGH | X4 Classic · CrossInk | X3 · CrossPoint |
 | :---: | :---: | :---: |
-| <img src="docs/live-x4-pro-touch-down-key.png" alt="X4 Pro" width="230"> | <img src="docs/live-x4-classic-down-ok-back.png" alt="X4 Classic" width="230"> | <img src="docs/live-x3-down-ok-back.png" alt="X3" width="230"> |
+| <img src="docs/live-x4-pro-touch-down-key.png" alt="X4 Pro running VARAGH: home, Down, Confirm" width="230"> | <img src="docs/live-x4-classic-down-ok-back.png" alt="X4 Classic running CrossInk: home, Down, Confirm" width="230"> | <img src="docs/live-x3-down-ok-back.png" alt="X3 running CrossPoint: home, Down, Confirm" width="230"> |
 
 ### Windows app
 
@@ -55,10 +57,13 @@ do not need it.
    and run it. No administrator rights are needed; it installs for the current user only.
 2. Choose a device and a firmware and click **Start**. Each firmware is downloaded the first time it is used
    (about 7 MB) and checked against its SHA-256 checksum.
+3. **Open SD card folder** opens the simulated card in Explorer: copy any files onto it.
+
+Windows builds are made on demand rather than weekly, so new firmware versions usually reach the browser first.
 
 > [!NOTE]
 > The installer is not code-signed yet, so Windows SmartScreen may warn about it. If you prefer not to run unsigned
-> software, use the browser version, which offers the same firmwares. A Microsoft Store release is under
+> software, use the browser version. A Microsoft Store release is under
 > consideration ([roadmap](ROADMAP.md)).
 
 ## Supported firmwares
@@ -70,7 +75,7 @@ list.
 | Firmware | Based on |
 | --- | --- |
 | [VARAGH](https://github.com/PewPewzxc/VARAGH) | CrossInk |
-| [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) | — |
+| [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) (including release candidates) | — |
 | [CrossInk](https://github.com/uxjulia/crossink) | CrossPoint |
 | [YACP](https://github.com/Sichroteph/YACP), [inx](https://github.com/obijuankenobiii/inx), [CrossPlant](https://github.com/0xKnowles/CrossPlant), [CrossNotes](https://github.com/HilbergK/CrossNotes), [CrossDiTo](https://github.com/dito94/CrossDiTo), [PocketDeck OS](https://github.com/ashokslsk/PocketDeck-OS), [duet](https://github.com/lauren-alexandra/duet-xteink), [Xteink Pokemon game](https://github.com/padge01/xteink-pokemon-game) | CrossPoint |
 
@@ -84,9 +89,9 @@ the [roadmap](ROADMAP.md) for what running them would take.
 
 ```
 firmware release on GitHub ──► GitHub Actions ──► simulator build ──► test ──► GitHub Pages / Releases
-     (source code)             (weekly or on      (PlatformIO +        (headless      (browser and
-                                demand)            simulator library,   browser /      Windows app)
-                                                   Emscripten or g++)   smoke test)
+     (source code)             (browser: weekly; (PlatformIO +        (headless      (browser and
+                                Windows: on       simulator library,   browser /      Windows app)
+                                demand)           Emscripten or g++)   smoke test)
 ```
 
 Each firmware is compiled against a desktop simulator library
@@ -103,8 +108,8 @@ Technical details: [`web/README.md`](web/README.md) (browser build and publishin
 
 Reader Simulator has no accounts, no analytics, no cookies, no advertising and no tracking.
 
-- **Your books stay on your device.** Files you add are stored in your browser's local storage (IndexedDB) or, in
-  the Windows app, in your user folder. They are never uploaded.
+- **Your files stay on your device.** Books and other files you put on a simulated SD card are stored in your
+  browser's local storage (IndexedDB) or, in the Windows app, in your user folder. They are never uploaded.
 - **Network requests** go only to GitHub: the page is served by GitHub Pages and firmware builds are downloaded from
   this repository's GitHub Releases. GitHub may log those requests as described in the
   [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
@@ -144,7 +149,8 @@ The device drawings are original artwork made from the readers' official dimensi
 Contributions are welcome:
 
 - **Add a firmware:** open an issue with a link to its GitHub repository, or a pull request adding it to
-  [`sim-windows/firmwares.json`](sim-windows/firmwares.json). The next build run tries it.
+  [`sim-windows/firmwares.json`](sim-windows/firmwares.json). The next weekly build tries it, and a version that
+  builds and passes the test appears in the simulator by itself.
 - **Report a problem:** open an issue with the device, firmware and version shown in the simulator.
 - **Firmware bugs** belong in that firmware's own repository; the simulator runs its code unchanged.
 
