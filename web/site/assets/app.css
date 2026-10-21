@@ -191,3 +191,26 @@ kbd { display: inline-block; min-width: 26px; padding: 2px 7px; border: 1px soli
   .devices button.on { padding: 7px 9px; }
   input[type=range] { width: 110px; }
 }
+
+/* SD card browser */
+.sd { margin-top: 12px; border: 1px solid var(--control-stroke); border-radius: 8px; overflow: hidden; }
+.sd-bar { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: var(--control); border-bottom: 1px solid var(--control-stroke); }
+.sd-path { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sd-path button { background: none; border: none; padding: 2px 3px; color: var(--accent); font: inherit; cursor: pointer; }
+.sd-path span { color: var(--text2); }
+.sd-tools { display: flex; gap: 2px; flex: none; }
+.iconbtn { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 6px; border: none; background: none; color: var(--text); cursor: pointer; }
+.iconbtn:hover { background: var(--control-hover); }
+.iconbtn:disabled, .iconbtn[aria-disabled=true] { opacity: .4; pointer-events: none; }
+.iconbtn svg, .sd-list svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sd-list { list-style: none; margin: 0; padding: 4px 0; max-height: 260px; overflow-y: auto; }
+.sd-list li { display: flex; align-items: center; gap: 10px; padding: 3px 6px 3px 12px; font-size: 13.5px; }
+.sd-list li:hover { background: var(--control-hover); }
+.sd-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: none; border: none; padding: 4px 0; text-align: left; color: var(--text); font: inherit; cursor: default; }
+.sd-list .dir .name { cursor: pointer; font-weight: 600; }
+.sd-list .hidden .name { color: var(--text2); }
+.sd-list .size { color: var(--text2); font-size: 12px; flex: none; }
+.sd-list .kind { color: var(--text2); flex: none; display: grid; }
+.sd-list .iconbtn { width: 28px; height: 28px; }
+.sd-empty { color: var(--text2); padding: 14px 12px !important; }
+.sd.drop { outline: 2px dashed var(--accent); outline-offset: -2px; }
