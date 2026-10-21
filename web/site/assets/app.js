@@ -540,6 +540,9 @@ fetch('builds.json').then(r => r.json()).then(j => {
   for (const b of builds) b.version = versionLabel(b);
   const b = builds.find(x => x.id === params.get('b'));
   if (b) sel = { model: b.model, repo: b.repo, ref: b.ref };
+  // a fresh visit opens on VARAGH, newest version, on the device used last (normalise() falls back when the
+  // device has no VARAGH build); a running build keeps its own choice
+  else sel = { model: sel.model, repo: FIRST[0] };
   render();
   credits();
   if (b) boot(b);
