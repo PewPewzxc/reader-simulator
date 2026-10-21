@@ -85,10 +85,13 @@ def samples(out):
     for root, _, names in os.walk(SAMPLES):
         for n in sorted(names):
             rel = os.path.relpath(os.path.join(root, n), SAMPLES).replace(os.sep, "/")
-            dst = os.path.join(out, rel)
+            # GitHub Pages leaves out files and folders whose names start with a dot (.crosspoint/...):
+            # those are served as dot-<name>, and "path" says where they go on the SD card
+            src = "/".join("dot-" + part[1:] if part.startswith(".") else part for part in rel.split("/"))
+            dst = os.path.join(out, src)
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copy(os.path.join(root, n), dst)
-            files.append({"path": rel, "size": os.path.getsize(dst)})
+            files.append({"path": rel, "src": src, "size": os.path.getsize(dst)})
     write(os.path.join(out, "manifest.json"), {"files": sorted(files, key=lambda f: f["path"])})
     print(f"ci_site: {len(files)} sample files")
 
