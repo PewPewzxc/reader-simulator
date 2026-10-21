@@ -5,9 +5,8 @@
 name: Windows app
 
 on:
-  push:
-    branches: [main]
-    paths: ["app/**", "installer/**", "device-frames/frames/**", "samples/sd-card/**", ".github/workflows/app.yml"]
+  # manual only for now (the owner paused the Windows builds); it used to run on pushes to main that touch
+  # app/**, installer/**, device-frames/frames/**, samples/sd-card/** or this file
   workflow_dispatch:
 
 permissions:
