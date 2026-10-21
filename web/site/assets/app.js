@@ -184,15 +184,18 @@ async function addSamples(root) {
   const FS = Module.FS, mark = root + '/.rsim-samples';
   if (FS.analyzePath(mark).exists) return;
   const list = await (await fetch('samples/manifest.json')).json();
+  let missing = 0;
   for (const f of list.files) {
     const dest = root + '/' + f.path;
     if (FS.analyzePath(dest).exists) continue;
-    const r = await fetch('samples/' + f.path.split('/').map(encodeURIComponent).join('/'));
-    if (!r.ok) throw new Error(f.path + ': ' + r.status);
-    FS.mkdirTree(dest.slice(0, dest.lastIndexOf('/')));
-    FS.writeFile(dest, new Uint8Array(await r.arrayBuffer()));
+    try {  // one file that does not download must not keep the others off the card
+      const r = await fetch('samples/' + (f.src || f.path).split('/').map(encodeURIComponent).join('/'));
+      if (!r.ok) throw new Error(r.status);
+      FS.mkdirTree(dest.slice(0, dest.lastIndexOf('/')));
+      FS.writeFile(dest, new Uint8Array(await r.arrayBuffer()));
+    } catch (e) { missing++; console.warn('sample file ' + f.path + ':', e); }
   }
-  FS.writeFile(mark, 'sample books and dictionary added\n');
+  if (!missing) FS.writeFile(mark, 'sample books and dictionary added\n');  // otherwise tried again next start
   samplesNote = 'Sample books and an English dictionary are on the SD card: open the books folder on the reader.';
 }
 
