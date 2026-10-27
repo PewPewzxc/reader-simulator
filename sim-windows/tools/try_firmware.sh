@@ -27,11 +27,14 @@ m=[k for k,v in launcher.envs_for(r'$folder').items() if v=='$env'][0]; print(la
 export CROSSPOINT_SIM_FRAME=$(cygpath -m "$O/../device-frames/frames/$frame")
 shots="$O/logs/$name-$env"  # own folder per run, so several runs can go at once
 rm -f "$shots"/home.*
-SIM_SRC="$folder" SIM_ENV="$env" SIM_CARD="$O/cards/try-$name-$env" SIM_SHOTS="$shots" \
-  bash "$O/sim.sh" '6000:QUIT' "5000:home" > /dev/null
+ran=$(SIM_SRC="$folder" SIM_ENV="$env" SIM_CARD="$O/cards/try-$name-$env" SIM_SHOTS="$shots" \
+  bash "$O/sim.sh" '6000:QUIT' "5000:home" | grep -m1 '^exit=')
 pic=$(ls "$shots"/home.png "$shots"/home.bmp 2>/dev/null | head -1)  # .bmp where there is no ffmpeg (CI)
 if [ -n "$pic" ]; then
   echo "$name $env: OK ($(grep -c 'SIM FRAME\] using' "$shots/last-run.log") frame) picture: $pic"
+elif [ "$ran" = "exit=124" ] && grep -q 'Entering activity: Home' "$shots/last-run.log"; then
+  # Older simulator libraries (CrossPlant's) have no input script or screenshots: reached Home and ran until stopped.
+  echo "$name $env: OK ($(grep -c 'SIM FRAME\] using' "$shots/last-run.log") frame) no picture (older simulator library)"
 else
   echo "$name $env: RUN FAILED log: $shots/last-run.log"; exit 1
 fi
