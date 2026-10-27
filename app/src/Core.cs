@@ -303,6 +303,30 @@ namespace ReaderSimulator
             return p;
         }
 
+        /// <summary>A frame's size and screen hole from its .keys file: { W, H, x, y, w, h }, or null.</summary>
+        public static int[] FrameBox(string frame)
+        {
+            var box = new int[6];
+            try
+            {
+                foreach (var line in File.ReadAllLines(Path.Combine(FramesDir, frame + ".keys")))
+                {
+                    var f = line.Split(' ');
+                    if (f[0] == "size") { box[0] = int.Parse(f[1]); box[1] = int.Parse(f[2]); }
+                    if (f[0] == "screen") for (int i = 0; i < 4; i++) box[2 + i] = int.Parse(f[1 + i]);
+                }
+            }
+            catch (Exception) { return null; }
+            return box[0] > 0 && box[4] > 0 ? box : null;
+        }
+
+        /// <summary>The installed package's build.json (source_commit, built), or an empty map.</summary>
+        public static Dictionary<string, object> BuildInfo(Build b)
+        {
+            try { return new JavaScriptSerializer().DeserializeObject(File.ReadAllText(Path.Combine(BuildDir(b), "build.json"))) as Dictionary<string, object> ?? new Dictionary<string, object>(); }
+            catch (Exception) { return new Dictionary<string, object>(); }
+        }
+
         // settings.json: device, firmware repo, ref, battery, usb
         public static Dictionary<string, object> LoadSettings()
         {
@@ -321,6 +345,165 @@ namespace ReaderSimulator
                 if (File.Exists(path)) File.Replace(tmp, path, null); else File.Move(tmp, path);
             }
             catch (Exception) { }
+        }
+    }
+
+    /// <summary>The running simulator's window: screenshots and touch gestures, as the web page does on its canvas.</summary>
+    public static class ReaderWindow
+    {
+        struct RECT { public int Left, Top, Right, Bottom; }
+        [DllImport("user32.dll")] static extern IntPtr SetThreadDpiAwarenessContext(IntPtr ctx);
+        [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr hwnd, out RECT r);
+        [DllImport("user32.dll")] static extern bool PrintWindow(IntPtr hwnd, IntPtr hdc, uint flags);
+        [DllImport("user32.dll")] static extern bool PostMessage(IntPtr hwnd, uint msg, IntPtr w, IntPtr l);
+
+        // program.exe is not DPI-aware: measure, capture and click in its own unscaled pixels
+        static T Unaware<T>(Func<T> f)
+        {
+            var old = SetThreadDpiAwarenessContext(new IntPtr(-1) /* DPI_AWARENESS_CONTEXT_UNAWARE */);
+            try { return f(); } finally { SetThreadDpiAwarenessContext(old); }
+        }
+
+        static System.Drawing.Size ClientSize(IntPtr hwnd) =>
+            Unaware(() => GetClientRect(hwnd, out var r) ? new System.Drawing.Size(r.Right, r.Bottom) : System.Drawing.Size.Empty);
+
+        /// <summary>The screen hole in a window of width x height showing the whole frame. Same rule as the web page:
+        /// when the window is turned (landscape), the hole is turned a quarter to the right.</summary>
+        public static System.Drawing.RectangleF ScreenHole(string frame, int width, int height)
+        {
+            var k = frame == null ? null : Store.FrameBox(frame);
+            if (k == null) return System.Drawing.RectangleF.Empty;
+            int W = k[0], H = k[1], x = k[2], y = k[3], w = k[4], h = k[5];
+            bool turned = (width > height) != (W > H);
+            if (turned) { int t = W; W = H; H = t; int nx = k[1] - y - h, ny = x; x = nx; y = ny; t = w; w = h; h = t; }
+            float sx = (float)width / W, sy = (float)height / H;
+            return new System.Drawing.RectangleF(x * sx, y * sy, w * sx, h * sy);
+        }
+
+        /// <summary>Saves the window as a PNG, whole or only the screen hole. Works while it is covered by other windows.</summary>
+        public static void Screenshot(IntPtr hwnd, string frame, bool screenOnly, string path)
+        {
+            var size = ClientSize(hwnd);
+            if (size.Width <= 0 || size.Height <= 0) throw new InvalidOperationException("The simulator window has no size (is it minimised?).");
+            using (var bmp = new System.Drawing.Bitmap(size.Width, size.Height))
+            {
+                using (var g = System.Drawing.Graphics.FromImage(bmp))
+                {
+                    var hdc = g.GetHdc();
+                    try { if (!Unaware(() => PrintWindow(hwnd, hdc, 3 /* PW_CLIENTONLY | PW_RENDERFULLCONTENT */))) throw new InvalidOperationException("Windows could not copy the simulator window."); }
+                    finally { g.ReleaseHdc(hdc); }
+                }
+                var crop = new System.Drawing.Rectangle(System.Drawing.Point.Empty, size);
+                if (screenOnly) crop = System.Drawing.Rectangle.Intersect(crop, System.Drawing.Rectangle.Round(ScreenHole(frame, size.Width, size.Height)));
+                using (var part = bmp.Clone(crop, bmp.PixelFormat)) part.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+            }
+        }
+
+        static void Mouse(IntPtr hwnd, uint msg, float x, float y) =>
+            PostMessage(hwnd, msg, new IntPtr(msg == 0x202 ? 0 : 1 /* MK_LBUTTON */), new IntPtr(((int)y << 16) | ((int)x & 0xFFFF)));
+
+        static async Task Drag(IntPtr hwnd, float x1, float y1, float x2, float y2, int ms)
+        {
+            Mouse(hwnd, 0x200 /* WM_MOUSEMOVE */, x1, y1);
+            Mouse(hwnd, 0x201 /* WM_LBUTTONDOWN */, x1, y1);
+            int steps = Math.Max(1, ms / 16);
+            for (int i = 1; i <= steps; i++)
+            {
+                await Task.Delay(ms / steps);
+                Mouse(hwnd, 0x200, x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps);
+            }
+            Mouse(hwnd, 0x202 /* WM_LBUTTONUP */, x2, y2);
+        }
+
+        /// <summary>A touch gesture on the screen: left, right, up, down (from the top) or hold. Same moves as the web page.</summary>
+        public static Task Gesture(IntPtr hwnd, string frame, string g)
+        {
+            var size = ClientSize(hwnd);
+            var r = ScreenHole(frame, size.Width, size.Height);
+            if (r.IsEmpty) return Task.CompletedTask;
+            float cx = r.Left + r.Width / 2, cy = r.Top + r.Height / 2, dx = r.Width * 0.3f, dy = r.Height * 0.3f;
+            switch (g)
+            {
+                case "left": return Drag(hwnd, cx + dx, cy, cx - dx, cy, 250);
+                case "right": return Drag(hwnd, cx - dx, cy, cx + dx, cy, 250);
+                case "up": return Drag(hwnd, cx, cy + dy, cx, cy - dy, 250);
+                case "down": return Drag(hwnd, cx, r.Top + 4, cx, r.Top + r.Height * 0.45f, 300);
+                default: return Drag(hwnd, cx, cy, cx, cy, 900);
+            }
+        }
+    }
+
+    /// <summary>eink-qemu (github.com/serialx/eink-qemu, GPL-2.0): a real emulator that runs any firmware .bin.
+    /// Its Windows app is downloaded and installed (per user, no admin) the first time someone runs their own firmware.</summary>
+    public static class Emulator
+    {
+        // shortcut: pinned to one release so the download can be checked; bump all three when a newer eink-qemu is wanted
+        const string Version = "0.8.1";
+        const string SetupSha256 = "649037a2a6832dec9a43102742cf2e5b3e1724da01cceba82efc730da0ffecfc";
+        public const long SetupBytes = 16112865;
+        static readonly Uri SetupUrl = new Uri($"https://github.com/serialx/eink-qemu/releases/download/{Version}/eink-qemu-desktop-{Version}-x86_64-pc-windows-msvc-setup.exe");
+        public const string Site = "https://serialx.github.io/eink-qemu/";
+
+        static string Dir => Path.Combine(Path.GetDirectoryName(Store.Root), "eink-qemu"); // the installer's default folder
+        public static string Cli => Path.Combine(Dir, "eink-qemu.exe");
+        public static bool Installed => File.Exists(Cli);
+
+        /// <summary>Downloads the pinned installer, refuses a SHA-256 mismatch, runs it and waits until it is closed.</summary>
+        public static async Task Install(IProgress<long> progress, CancellationToken ct)
+        {
+            var setup = Path.Combine(Store.Root, "eink-qemu-setup.exe");
+            try
+            {
+                var hash = await Feed.Download(SetupUrl, setup, SetupBytes, progress, ct);
+                if (hash != SetupSha256) throw new InvalidDataException("The eink-qemu download is damaged or not the expected one (SHA-256 mismatch). Nothing was installed.");
+                using (var p = Process.Start(new ProcessStartInfo(setup) { UseShellExecute = true }))
+                    await Task.Run(() => p.WaitForExit());
+            }
+            finally { try { File.Delete(setup); } catch (IOException) { } }
+            if (!Installed) throw new InvalidOperationException("The eink-qemu installer was closed before it finished, or it was installed in another folder (expected " + Dir + ").");
+        }
+
+        public static string Machine(string model) => model == "X4 Pro" ? "x4pro" : model == "X4 Classic" ? "x4" : "x3";
+
+        static ProcessStartInfo Cli_(string args) => new ProcessStartInfo(Cli, args)
+        {
+            WorkingDirectory = Directory.CreateDirectory(Path.Combine(Store.Root, "emulator")).FullName, // its run folders go here
+            UseShellExecute = false, CreateNoWindow = true,
+        };
+
+        static void CliWait(string args)
+        {
+            using (var p = Process.Start(Cli_(args)))
+                if (!p.WaitForExit(120000) || p.ExitCode != 0) throw new InvalidOperationException("eink-qemu could not make the SD card (" + args.Split(' ')[1] + ").");
+        }
+
+        /// <summary>Opens the firmware in eink-qemu's window on the chosen reader. Each reader keeps one SD card image
+        /// (emulator\x4pro.img and so on), made the first time with the same free books and dictionary as the simulator's cards.</summary>
+        public static Process Run(string firmware, string model)
+        {
+            var card = Path.Combine(Store.Root, "emulator", Machine(model) + ".img");
+            if (!File.Exists(card))
+            {
+                var tmp = card + ".new";
+                if (File.Exists(tmp)) File.Delete(tmp);
+                CliWait($"sd new \"{tmp}\"");
+                // a folder is copied as itself, so hand over books\ and dictionaries\ rather than samples\
+                var samples = Directory.Exists(Store.SamplesDir) ? Directory.GetDirectories(Store.SamplesDir) : new string[0];
+                if (samples.Length > 0) CliWait($"sd put \"{tmp}\" " + string.Join(" ", samples.Select(d => "\"" + d + "\"")));
+                File.Move(tmp, card);
+            }
+            // read its records ourselves: it stops when its output has nowhere to go
+            var psi = Cli_($"run \"{firmware}\" --machine {Machine(model)} --sd \"{card}\" --sd-in-place --gui");
+            psi.RedirectStandardOutput = psi.RedirectStandardError = true;
+            var log = TextWriter.Synchronized(new StreamWriter(Path.Combine(Store.Root, "emulator", "last-run.log"), false));
+            var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            p.OutputDataReceived += (s, e) => { if (e.Data != null) log.WriteLine(e.Data); };
+            p.ErrorDataReceived += (s, e) => { if (e.Data != null) log.WriteLine(e.Data); };
+            p.Exited += (s, e) => { p.WaitForExit(); log.Dispose(); };
+            p.Start();
+            p.BeginOutputReadLine();
+            p.BeginErrorReadLine();
+            return p;
         }
     }
 

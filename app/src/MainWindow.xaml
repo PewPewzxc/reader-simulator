@@ -123,6 +123,17 @@
                 </StackPanel>
                 <CheckBox x:Name="Usb" Grid.Column="2" Style="{StaticResource Toggle}" VerticalAlignment="Center" Click="Usb_Click" />
               </Grid>
+              <Border Height="1" Background="{DynamicResource CardStroke}" />
+              <Grid Margin="20,14">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Icon}" Text="&#xE9A6;" Margin="0,0,16,0" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <TextBlock Text="Real size" />
+                  <TextBlock Style="{StaticResource Caption}" Text="Show the reader exactly as big as it is in your hand" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="2" Style="{StaticResource Btn}" Padding="10,5" Margin="12,0,16,0" VerticalAlignment="Center" Content="Measure screen" Click="Measure_Click" />
+                <CheckBox x:Name="RealSize" Grid.Column="3" Style="{StaticResource Toggle}" VerticalAlignment="Center" Click="RealSize_Click" />
+              </Grid>
             </StackPanel>
           </Border>
 
@@ -138,10 +149,44 @@
                 <Button x:Name="BtnFolder" Style="{StaticResource Btn}" Margin="0,0,8,0" Click="OpenCard_Click">
                   <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE8B7;" /><TextBlock Text="Open SD card folder" Margin="8,0,0,0" /></StackPanel>
                 </Button>
-                <Button x:Name="BtnFresh" Style="{StaticResource Btn}" Click="FreshCard_Click">
+                <Button x:Name="BtnFresh" Style="{StaticResource Btn}" Margin="0,0,8,0" Click="FreshCard_Click">
                   <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE72C;" /><TextBlock Text="Fresh SD card" Margin="8,0,0,0" /></StackPanel>
                 </Button>
+                <Button x:Name="BtnZip" Style="{StaticResource Btn}" Click="SdZip_Click" ToolTip="Save everything on the SD card in one .zip file">
+                  <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE896;" /><TextBlock Text="Save SD card as zip" Margin="8,0,0,0" /></StackPanel>
+                </Button>
               </WrapPanel>
+              <!-- the card's files, as on the web page: open folders, upload, new folder, save a copy, delete -->
+              <Grid x:Name="SdBox" Margin="0,14,0,0">
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,6">
+                  <StackPanel x:Name="SdTools" Orientation="Horizontal" DockPanel.Dock="Right">
+                    <Button Style="{StaticResource Btn}" Padding="8,4" Margin="6,0,0,0" ToolTip="Up one folder" Click="SdUp_Click"><TextBlock Style="{StaticResource Icon}" FontSize="13" Text="&#xE74A;" /></Button>
+                    <Button Style="{StaticResource Btn}" Padding="8,4" Margin="6,0,0,0" ToolTip="Upload files to this folder" Click="SdUpload_Click"><TextBlock Style="{StaticResource Icon}" FontSize="13" Text="&#xE898;" /></Button>
+                    <Button Style="{StaticResource Btn}" Padding="8,4" Margin="6,0,0,0" ToolTip="Upload a folder into this folder" Click="SdUploadDir_Click"><TextBlock Style="{StaticResource Icon}" FontSize="13" Text="&#xE8F4;" /></Button>
+                    <Button Style="{StaticResource Btn}" Padding="8,4" Margin="6,0,0,0" ToolTip="New folder" Click="SdNewDir_Click"><TextBlock Style="{StaticResource Icon}" FontSize="13" Text="&#xE710;" /></Button>
+                    <Button Style="{StaticResource Btn}" Padding="8,4" Margin="6,0,0,0" ToolTip="Save a copy of the selected file" Click="SdSave_Click"><TextBlock Style="{StaticResource Icon}" FontSize="13" Text="&#xE74E;" /></Button>
+                    <Button Style="{StaticResource Btn}" Padding="8,4" Margin="6,0,0,0" ToolTip="Delete the selected file or folder" Click="SdDelete_Click"><TextBlock Style="{StaticResource Icon}" FontSize="13" Text="&#xE74D;" /></Button>
+                  </StackPanel>
+                  <TextBlock x:Name="SdPath" Style="{StaticResource Caption}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </DockPanel>
+                <ListBox x:Name="SdList" Grid.Row="1" Foreground="{DynamicResource Text}" ItemContainerStyle="{StaticResource Row}" Background="Transparent"
+                         BorderBrush="{DynamicResource CardStroke}" BorderThickness="1" MinHeight="60" MaxHeight="220"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" MouseDoubleClick="SdList_DoubleClick" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource CardBox}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource H2}" Text="Your own firmware" />
+              <TextBlock Style="{StaticResource Caption}" Margin="0,-4,0,12" TextWrapping="Wrap">
+                Have a firmware .bin that is not in the list? It runs in <Hyperlink Tag="https://serialx.github.io/eink-qemu/" Click="Link_Click">eink-qemu</Hyperlink>,
+                a real emulator by serialx that runs any firmware unchanged, on the device picked above. Its Windows app (16 MB) is downloaded and installed the first time.
+              </TextBlock>
+              <Button x:Name="BtnOwn" Style="{StaticResource Btn}" HorizontalAlignment="Left" Click="OwnFirmware_Click">
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE8E5;" /><TextBlock Text="Run my own firmware…" Margin="8,0,0,0" /></StackPanel>
+              </Button>
             </StackPanel>
           </Border>
         </StackPanel>
@@ -161,12 +206,26 @@
         </Border>
         <StackPanel Grid.Row="1" Margin="4,16,4,0">
           <TextBlock x:Name="PreviewTitle" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-          <TextBlock x:Name="PreviewSub" Style="{StaticResource Caption}" FontSize="13" Margin="0,2,0,14" TextTrimming="CharacterEllipsis" />
+          <TextBlock x:Name="PreviewSub" Style="{StaticResource Caption}" FontSize="13" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+          <TextBlock x:Name="BuildInfo" Style="{StaticResource Caption}" FontSize="12" Margin="0,2,0,14" TextTrimming="CharacterEllipsis" />
           <Button x:Name="BtnStart" Style="{StaticResource AccentBtn}" Padding="20,11" FontSize="15" HorizontalAlignment="Stretch" Click="Start_Click">
             <StackPanel Orientation="Horizontal"><TextBlock x:Name="StartIcon" Style="{StaticResource Icon}" Text="&#xE768;" /><TextBlock x:Name="StartText" Text="Start" Margin="10,0,0,0" /></StackPanel>
           </Button>
           <TextBlock Style="{StaticResource Caption}" Margin="0,10,0,0" TextAlignment="Center"
                      Text="In the simulator: click the drawn keys, or use Esc, Enter and the arrow keys. Every key and gesture: Controls." />
+          <WrapPanel x:Name="RunTools" Margin="0,12,0,0" HorizontalAlignment="Center">
+            <TextBlock Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,8,0" Text="Screenshot:" />
+            <Button Style="{StaticResource Btn}" Padding="10,4" Margin="0,0,6,0" Content="Whole reader" Tag="reader" ToolTip="Save a picture of the whole reader, frame included" Click="Shot_Click" />
+            <Button Style="{StaticResource Btn}" Padding="10,4" Content="Screen only" Tag="screen" ToolTip="Save only what the screen shows" Click="Shot_Click" />
+          </WrapPanel>
+          <WrapPanel x:Name="Gestures" Margin="0,8,0,0" HorizontalAlignment="Center">
+            <TextBlock Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,8,0" Text="Touch:" />
+            <Button Style="{StaticResource Btn}" Padding="10,4" Margin="0,0,6,0" Content="&#x2190;" Tag="left" ToolTip="Swipe left" Click="Gesture_Click" />
+            <Button Style="{StaticResource Btn}" Padding="10,4" Margin="0,0,6,0" Content="&#x2192;" Tag="right" ToolTip="Swipe right" Click="Gesture_Click" />
+            <Button Style="{StaticResource Btn}" Padding="10,4" Margin="0,0,6,0" Content="&#x2191;" Tag="up" ToolTip="Swipe up" Click="Gesture_Click" />
+            <Button Style="{StaticResource Btn}" Padding="10,4" Margin="0,0,6,0" Content="&#x2193;" Tag="down" ToolTip="Swipe down from the top" Click="Gesture_Click" />
+            <Button Style="{StaticResource Btn}" Padding="10,4" Content="Hold" Tag="hold" ToolTip="Hold the middle of the screen" Click="Gesture_Click" />
+          </WrapPanel>
         </StackPanel>
       </Grid>
     </Grid>
