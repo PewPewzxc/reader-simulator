@@ -13,7 +13,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <DebugType>none</DebugType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <Version>1.2.4</Version>
+    <Version>1.3.0</Version>
     <Product>Reader Simulator</Product>
     <AssemblyTitle>Reader Simulator</AssemblyTitle>
     <Company>Reader Simulator contributors</Company>
@@ -23,10 +23,12 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Web.Extensions" />
     <Resource Include="..\ReaderSimulator.ico" Link="ReaderSimulator.ico" />
   </ItemGroup>

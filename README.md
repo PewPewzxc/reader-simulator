@@ -61,7 +61,13 @@ do not need it.
    and run it. No administrator rights are needed; it installs for the current user only.
 2. Choose a device and a firmware and click **Start**. Each firmware is downloaded the first time it is used
    (about 7 MB) and checked against its SHA-256 checksum.
-3. **Open SD card folder** opens the simulated card in Explorer: copy any files onto it.
+3. Everything the web page has is there too: **Real size** with a bank-card screen measure, screenshots (whole
+   reader or screen only), touch buttons for the X4 Pro, and an SD card manager (upload files or folders, new
+   folder, save a copy, delete, save the whole card as a zip). **Open SD card folder** opens the card in Explorer.
+4. **Run my own firmware** opens any firmware `.bin` in [eink-qemu](https://github.com/serialx/eink-qemu), a real
+   emulator by serialx (GPL-2.0). Its Windows app (16 MB) is downloaded from its GitHub release the first time,
+   checked against a fixed SHA-256 checksum, and installed for the current user. Each reader gets its own lasting
+   SD card there, with the same free books.
 
 Windows builds are made on demand rather than weekly, so new firmware versions usually reach the browser first.
 
@@ -73,7 +79,7 @@ Windows builds are made on demand rather than weekly, so new firmware versions u
 ## Supported firmwares
 
 These firmwares run in the browser simulator today. Each one offers up to three of its newest versions; the
-simulator always shows the current list. The Windows app offers a smaller selection.
+simulator always shows the current list. The Windows app gets new versions when its builds are made (on demand).
 
 | Firmware | X4 Pro | X4 Classic | X3 |
 | --- | :---: | :---: | :---: |
@@ -155,7 +161,8 @@ Reader Simulator has no accounts, no cookies, no advertising and no cross-site t
   services from your browser, as a web page would. The reader's Wi-Fi is simulated: no network password is ever
   asked for or sent. Services that do not accept requests from web pages behave as if offline.
 - **Preferences** of the page (such as your last choices) are kept in your browser's local storage.
-- The Windows app sends no data anywhere; it only downloads the firmware list and builds over HTTPS.
+- The Windows app sends no data anywhere; it only downloads the firmware list and builds over HTTPS, and eink-qemu
+  from its GitHub release when you use **Run my own firmware**.
 
 ## Security
 

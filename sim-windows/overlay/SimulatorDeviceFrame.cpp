@@ -26,6 +26,8 @@ SDL_Texture *frameTex = nullptr, *deviceTex = nullptr;
 std::string pressed;
 std::atomic<bool> redraw{false};
 int lastAngle = 0, lastWindowW = 0, lastWindowH = 0;
+float scale = 1.0f;  // window pixels per frame pixel (CROSSPOINT_SIM_SCALE, for Real size)
+int scaledW = 0, scaledH = 0;
 
 void load() {
   if (loaded) return;
@@ -61,6 +63,11 @@ void load() {
     pixels = nullptr;
     return;
   }
+  if (const char *sc = std::getenv("CROSSPOINT_SIM_SCALE")) {
+    const float v = static_cast<float>(std::atof(sc));
+    if (v >= 0.1f && v <= 5.0f) scale = v;
+  }
+  scaledW = static_cast<int>(frameW * scale + 0.5f), scaledH = static_cast<int>(frameH * scale + 0.5f);
   active = true;
   std::cerr << "[SIM FRAME] using " << base << " (" << frameW << "x" << frameH << ", " << keys.size() << " keys)"
             << std::endl;
@@ -76,8 +83,8 @@ void windowToDevice(int x, int y, int *dx, int *dy) {
     case 270: ux = -cy, uy = cx; break;
     default: break;
   }
-  *dx = ux + frameW / 2;
-  *dy = uy + frameH / 2;
+  *dx = static_cast<int>(ux / scale) + frameW / 2;
+  *dy = static_cast<int>(uy / scale) + frameH / 2;
 }
 }  // namespace
 
@@ -87,8 +94,8 @@ bool simFrameActive() {
 }
 
 void simFrameWindowSize(bool portrait, int *w, int *h) {
-  *w = portrait ? frameW : frameH;
-  *h = portrait ? frameH : frameW;
+  *w = portrait ? scaledW : scaledH;
+  *h = portrait ? scaledH : scaledW;
 }
 
 void simFrameRender(SDL_Renderer *renderer, SDL_Texture *panel, const SDL_Rect &src, int deviceAngle, int windowW,
@@ -101,6 +108,7 @@ void simFrameRender(SDL_Renderer *renderer, SDL_Texture *panel, const SDL_Rect &
     pixels = nullptr;
     deviceTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, frameW, frameH);
     SDL_SetTextureBlendMode(deviceTex, SDL_BLENDMODE_BLEND);
+    if (scale != 1.0f) SDL_SetTextureScaleMode(deviceTex, SDL_ScaleModeLinear);  // smooth when shrunk
   }
   lastAngle = deviceAngle, lastWindowW = windowW, lastWindowH = windowH;
 
@@ -123,7 +131,7 @@ void simFrameRender(SDL_Renderer *renderer, SDL_Texture *panel, const SDL_Rect &
   SDL_SetRenderTarget(renderer, nullptr);
   SDL_SetRenderDrawColor(renderer, 236, 235, 230, 255);  // light desk behind the reader
   SDL_RenderClear(renderer);
-  const SDL_Rect dst = {(windowW - frameW) / 2, (windowH - frameH) / 2, frameW, frameH};
+  const SDL_Rect dst = {(windowW - scaledW) / 2, (windowH - scaledH) / 2, scaledW, scaledH};
   SDL_RenderCopyEx(renderer, deviceTex, nullptr, &dst, deviceAngle, nullptr, SDL_FLIP_NONE);
 }
 

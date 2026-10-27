@@ -1,7 +1,8 @@
 #pragma once
 // Device frame around the simulator screen: a picture of the real reader with
 // clickable physical keys. Off unless CROSSPOINT_SIM_FRAME=<dir>/<model> names
-// a frame (<model>.png + <model>.keys from dev/device-frames). Added to the
+// a frame (<model>.png + <model>.keys from dev/device-frames).
+// CROSSPOINT_SIM_SCALE=<factor> draws it bigger or smaller (Real size). Added to the
 // simulator library by dev/sim-windows/patch_libdeps.py.
 #include <SDL.h>
 

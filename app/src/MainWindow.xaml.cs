@@ -45,6 +45,7 @@ namespace ReaderSimulator
             try { if (settings.TryGetValue("battery", out var b)) bv = Convert.ToDouble(b, System.Globalization.CultureInfo.InvariantCulture); } catch (Exception) { }
             Battery.Value = double.IsNaN(bv) || double.IsInfinity(bv) ? 80 : bv; // the slider throws on NaN/Infinity
             Usb.IsChecked = settings.TryGetValue("usb", out var u) && u is bool ub && ub;
+            RealSize.IsChecked = settings.TryGetValue("realSize", out var rs) && rs is bool rb && rb && PxPerMm > 0;
             loading = false;
             BatteryText.Text = (int)Battery.Value + " %";
             var ver = typeof(MainWindow).Assembly.GetName().Version;
@@ -177,7 +178,14 @@ namespace ReaderSimulator
             PreviewTitle.Text = device;
             PreviewSub.Text = b != null ? b.Name + " " + b.Version : repo != null ? "This firmware version has no " + device + " build" : "Pick a firmware";
             bool ready = b != null && Store.Installed(b);
+            var commit = ready && Store.BuildInfo(b).TryGetValue("source_commit", out var sc) && sc is string cs && cs.Length >= 7 ? " (" + cs.Substring(0, 7) + ")" : "";
+            BuildInfo.Text = b != null ? "Built from " + (b.Repo ?? b.Name) + " " + b.Ref + commit : "";
             using (var r = Running(b)) shownRunning = r != null;
+            RunTools.IsEnabled = Gestures.IsEnabled = shownRunning;
+            Gestures.Visibility = device == "X4 Pro" ? Visibility.Visible : Visibility.Collapsed; // the only reader with a touchscreen
+            if (b?.Id != sdBuild) { sdBuild = b?.Id; sdDir = ""; }
+            SdBox.IsEnabled = BtnZip.IsEnabled = b != null && !busy;
+            SdRender();
             StartText.Text = busy ? "Cancel download" : shownRunning ? "Show simulator" : ready ? "Start" : b != null ? "Download and start" : "Start";
             StartIcon.Text = busy ? "" : ready || b == null ? "" : "";
             BtnStart.IsEnabled = b != null || busy;
@@ -214,16 +222,10 @@ namespace ReaderSimulator
         /// <summary>Sizes the preview to the frame and puts the blank page under its screen (from the .keys file).</summary>
         void PlaceScreen(string frame)
         {
-            try
-            {
-                foreach (var line in File.ReadAllLines(Path.Combine(Store.FramesDir, frame + ".keys")))
-                {
-                    var f = line.Split(' ');
-                    if (f[0] == "size") { PreviewFrame.Width = double.Parse(f[1]); PreviewFrame.Height = double.Parse(f[2]); }
-                    if (f[0] == "screen") { PreviewScreen.Margin = new Thickness(double.Parse(f[1]), double.Parse(f[2]), 0, 0); PreviewScreen.Width = double.Parse(f[3]); PreviewScreen.Height = double.Parse(f[4]); }
-                }
-            }
-            catch (Exception) { PreviewScreen.Width = 0; }
+            var k = Store.FrameBox(frame);
+            if (k == null) { PreviewScreen.Width = 0; return; }
+            PreviewFrame.Width = k[0]; PreviewFrame.Height = k[1];
+            PreviewScreen.Margin = new Thickness(k[2], k[3], 0, 0); PreviewScreen.Width = k[4]; PreviewScreen.Height = k[5];
         }
 
         static string Mb(long bytes) => bytes > 0 ? (bytes / 1048576.0).ToString("0.0") + " MB" : "size unknown";
@@ -234,7 +236,7 @@ namespace ReaderSimulator
         {
             if (loading || App.RenderOnly) return;
             settings["device"] = device; settings["repo"] = repo; settings["ref"] = gitRef;
-            settings["battery"] = (int)Battery.Value; settings["usb"] = Usb.IsChecked == true;
+            settings["battery"] = (int)Battery.Value; settings["usb"] = Usb.IsChecked == true; settings["realSize"] = RealSize.IsChecked == true;
             Store.SaveSettings(settings);
         }
 
@@ -298,11 +300,11 @@ namespace ReaderSimulator
 
         // Only these pages open: the links are fixed, not read from the feed.
         static readonly string[] Links = { "https://github.com/PewPewzxc", "https://www.linkedin.com/in/alireza-pakseresht-koubijari/",
-            "https://github.com/PewPewzxc/reader-simulator" };
+            "https://github.com/PewPewzxc/reader-simulator", Emulator.Site };
 
         void Link_Click(object sender, RoutedEventArgs e)
         {
-            var url = (sender as FrameworkElement)?.Tag as string;
+            var url = ((sender as FrameworkElement)?.Tag ?? (sender as FrameworkContentElement)?.Tag) as string; // buttons and hyperlinks
             if (Array.IndexOf(Links, url) < 0) return;
             try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
             catch (Exception ex) { MessageBox.Show(this, "Could not open the browser: " + ex.Message, "Reader Simulator"); }
@@ -353,7 +355,9 @@ namespace ReaderSimulator
             }
             try
             {
-                Store.Start(b, (int)Battery.Value, Usb.IsChecked == true);
+                var scale = RealSize.IsChecked == true && b.Frame != null ? FrameScale(b.Frame) : 0;
+                Store.Start(b, (int)Battery.Value, Usb.IsChecked == true, scale > 0
+                    ? new Dictionary<string, string> { ["CROSSPOINT_SIM_SCALE"] = scale.ToString("0.0000", Invariant) } : null);
                 Refresh();
                 SetStatus("", $"Started {b.Name} {b.Version} on the {b.Model}. Battery {(int)Battery.Value} %, USB {(Usb.IsChecked == true ? "on" : "off")}.");
             }
@@ -415,6 +419,332 @@ namespace ReaderSimulator
                 SetStatus("", $"Copied {Plural(n, "book")} to the SD card.");
             }
             catch (Exception ex) { copying = false; Refresh(); SetStatus("", $"Copied {n}, then failed: " + ex.Message); }
+        }
+
+        // ---- running simulator: screenshots and touch gestures --------------------
+        IntPtr ReaderHwnd(Build b)
+        {
+            using (var p = Running(b)) { if (p == null) return IntPtr.Zero; p.Refresh(); return p.MainWindowHandle; }
+        }
+
+        void Shot_Click(object sender, RoutedEventArgs e)
+        {
+            var b = Current; var hwnd = ReaderHwnd(b);
+            if (hwnd == IntPtr.Zero) { SetStatus("", "Start the simulator first, then take the screenshot."); return; }
+            bool screenOnly = (string)((FrameworkElement)sender).Tag == "screen";
+            if (screenOnly && b.Frame == null) { SetStatus("", "This build has no frame, so the whole picture is the screen: use \"Whole reader\"."); return; }
+            var dlg = new SaveFileDialog { Title = "Save screenshot", Filter = "PNG picture (*.png)|*.png",
+                FileName = b.Id + (screenOnly ? "-screen-" : "-reader-") + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".png",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) };
+            if (dlg.ShowDialog(this) != true) return;
+            try { ReaderWindow.Screenshot(hwnd, b.Frame, screenOnly, dlg.FileName); SetStatus("", "Saved " + Path.GetFileName(dlg.FileName) + "."); }
+            catch (Exception ex) { SetStatus("", "Could not take the screenshot: " + ex.Message); }
+        }
+
+        async void Gesture_Click(object sender, RoutedEventArgs e)
+        {
+            var b = Current; var hwnd = ReaderHwnd(b);
+            if (hwnd == IntPtr.Zero || b.Model != "X4 Pro") { SetStatus("", "Gestures need a running X4 Pro (the only reader with a touchscreen)."); return; }
+            await ReaderWindow.Gesture(hwnd, b.Frame, (string)((FrameworkElement)sender).Tag);
+        }
+
+        // ---- real size --------------------------------------------------------
+        // Real width of each frame in mm (size / px_per_mm in device-frames/frames/<model>.json).
+        static readonly Dictionary<string, double> FrameMm = new Dictionary<string, double> { ["x3"] = 66.66, ["x4-classic"] = 72.05, ["x4-pro"] = 71.94 };
+        const double CardW = 53.98, CardH = 85.6; // ID-1 card (bank card), held upright
+        static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+        [System.Runtime.InteropServices.DllImport("shcore.dll")] static extern int GetDpiForMonitor(IntPtr monitor, int type, out uint x, out uint y);
+
+        /// <summary>App pixels per real mm on this screen, from Measure screen; 0 = not measured yet.</summary>
+        double PxPerMm
+        {
+            get { try { return settings.TryGetValue("pxPerMm", out var v) ? Convert.ToDouble(v, Invariant) : 0; } catch (Exception) { return 0; } }
+        }
+
+        /// <summary>How much the simulator draws its frame bigger or smaller. program.exe is not DPI-aware, so
+        /// Windows draws its pixels as app pixels (1/96 inch as Windows counts it), the unit Measure screen uses.</summary>
+        double FrameScale(string frame)
+        {
+            var k = Store.FrameBox(frame);
+            return k != null && FrameMm.TryGetValue(frame, out var mm) && PxPerMm > 0 ? mm * PxPerMm / k[0] : 0;
+        }
+
+        /// <summary>First guess for Measure screen: the monitor's own size (often missing or a little wrong).</summary>
+        double MonitorPxPerMm()
+        {
+            try
+            {
+                var mon = MonitorFromWindow(new System.Windows.Interop.WindowInteropHelper(this).Handle, 2 /* nearest */);
+                if (GetDpiForMonitor(mon, 2 /* raw */, out var raw, out _) == 0 && GetDpiForMonitor(mon, 0 /* effective */, out var eff, out _) == 0 && raw > 0 && eff > 0)
+                    return raw / 25.4 * 96.0 / eff;
+            }
+            catch (Exception) { }
+            return 96 / 25.4;
+        }
+
+        void RealSize_Click(object sender, RoutedEventArgs e)
+        {
+            if (RealSize.IsChecked == true && PxPerMm <= 0) Measure();
+            SaveSettings();
+            if (RealSize.IsChecked == true || shownRunning) SetStatus("", "The new size is used the next time you start the simulator.");
+        }
+
+        void Measure_Click(object sender, RoutedEventArgs e) => Measure();
+
+        void Measure()
+        {
+            // the box can never be taller than the screen
+            double max = Math.Max(3, Math.Min(9, (SystemParameters.WorkArea.Height - 260) / CardH));
+            var slider = new Slider { Style = (Style)FindResource("FluentSlider"), Minimum = 2, Maximum = max, SmallChange = 0.01, LargeChange = 0.1,
+                Width = 240, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 8, 0) };
+            slider.Value = Math.Max(2, Math.Min(max, PxPerMm > 0 ? PxPerMm : MonitorPxPerMm()));
+            // a drawn bank card with its real size written on it, as on the web page
+            var chip = new Border { Background = (Brush)FindResource("Track"), Opacity = 0.5, CornerRadius = new CornerRadius(3),
+                HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+            var box = new Border { BorderBrush = (Brush)FindResource("Accent"), BorderThickness = new Thickness(2),
+                Background = (Brush)FindResource("Subtle"), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top,
+                Child = new Grid { Children = { chip, new TextBlock { Style = (Style)FindResource("Caption"), TextAlignment = TextAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Text = "Bank card\n85.6 × 54 mm" } } } };
+            void ShowBox()
+            {
+                double s = slider.Value;
+                box.Width = CardW * s; box.Height = CardH * s; box.CornerRadius = new CornerRadius(3.18 * s); // ID-1 corner radius
+                chip.Width = 9 * s; chip.Height = 11 * s; chip.Margin = new Thickness(CardW * s / 2 - 4.5 * s, 12 * s, 0, 0);
+            }
+            slider.ValueChanged += (s, a) => ShowBox();
+            ShowBox();
+            Button Btn(string text) => new Button { Style = (Style)FindResource("Btn"), Content = text, MinWidth = 40 };
+            var smaller = Btn("−"); smaller.Click += (s, a) => slider.Value -= 0.1;
+            var bigger = Btn("+"); bigger.Click += (s, a) => slider.Value += 0.1;
+            var done = new Button { Style = (Style)FindResource("AccentBtn"), Content = "Done", IsDefault = true, MinWidth = 90, Margin = new Thickness(0, 0, 8, 0) };
+            var cancelBtn = Btn("Cancel"); cancelBtn.IsCancel = true; cancelBtn.MinWidth = 90;
+            var dlg = Dialog("Measure your screen");
+            done.Click += (s, a) => { dlg.DialogResult = true; };
+            dlg.Content = new StackPanel
+            {
+                Margin = new Thickness(24), Width = Math.Max(420, CardW * max), Children = {
+                    new TextBlock { Style = (Style)FindResource("Body"), Margin = new Thickness(0, 0, 0, 16), Text =
+                        "Screens don't tell Windows exactly how big they really are, so this is needed once per screen. Hold a bank card (or any ID-size card) upright against the screen and make the box exactly as big as the card." },
+                    new Grid { Height = CardH * max, Children = { box } },
+                    new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 16, 0, 20), Children = { smaller, slider, bigger } },
+                    new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { done, cancelBtn } },
+                },
+            };
+            if (dlg.ShowDialog() == true)
+            {
+                settings["pxPerMm"] = Math.Round(slider.Value, 3);
+                RealSize.IsChecked = true;
+                SetStatus("", "Screen measured. Real size is on; it is used the next time you start the simulator.");
+            }
+            else if (PxPerMm <= 0) RealSize.IsChecked = false;
+            SaveSettings();
+        }
+
+        Window Dialog(string title)
+        {
+            var dlg = new Window
+            {
+                Title = title, Owner = this, SizeToContent = SizeToContent.WidthAndHeight, ResizeMode = ResizeMode.NoResize,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false, Background = (Brush)FindResource("Bg"),
+                Foreground = (Brush)FindResource("Text"), FontFamily = (FontFamily)FindResource("UiFont"), FontSize = 14, UseLayoutRounding = true,
+            };
+            dlg.SourceInitialized += (s, a) => Theme.TitleBar(dlg);
+            return dlg;
+        }
+
+        /// <summary>Asks for one line of text; null when cancelled.</summary>
+        string Ask(string title, string text)
+        {
+            var dlg = Dialog(title);
+            var input = new TextBox { Margin = new Thickness(0, 10, 0, 16), Padding = new Thickness(6, 4, 6, 4) };
+            var ok = new Button { Style = (Style)FindResource("AccentBtn"), Content = "OK", IsDefault = true, MinWidth = 90, Margin = new Thickness(0, 0, 8, 0) };
+            ok.Click += (s, a) => dlg.DialogResult = true;
+            var no = new Button { Style = (Style)FindResource("Btn"), Content = "Cancel", IsCancel = true, MinWidth = 90 };
+            dlg.Content = new StackPanel { Margin = new Thickness(24), Width = 360, Children = {
+                new TextBlock { Style = (Style)FindResource("Body"), Text = text }, input,
+                new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { ok, no } } } };
+            dlg.Loaded += (s, a) => input.Focus();
+            return dlg.ShowDialog() == true ? input.Text.Trim() : null;
+        }
+
+        // ---- SD card files ------------------------------------------------------
+        string sdBuild, sdDir = ""; // sdDir: the open folder, relative to the card, "" = top
+
+        string SdAbs(string rel) => Path.Combine(Store.SdCard(Current), rel.Replace('/', Path.DirectorySeparatorChar));
+
+        void SdRender()
+        {
+            SdList.Items.Clear();
+            var b = Current;
+            SdPath.Text = b == null ? "" : "SD card /" + sdDir;
+            if (b == null) return;
+            var dir = SdAbs(sdDir);
+            if (!Directory.Exists(dir)) { if (sdDir != "") { sdDir = ""; SdRender(); } return; }
+            try
+            {
+                var entries = new DirectoryInfo(dir).GetFileSystemInfos()
+                    .Where(i => !(sdDir == "" && i.Name == ".rsim-samples"))
+                    .OrderBy(i => i is FileInfo).ThenBy(i => i.Name, StringComparer.OrdinalIgnoreCase);
+                foreach (var i in entries)
+                {
+                    var row = new DockPanel();
+                    var size = new TextBlock { Style = (Style)FindResource("Caption"), Text = i is FileInfo f ? Mb(f.Length) : "" };
+                    DockPanel.SetDock(size, Dock.Right);
+                    row.Children.Add(size);
+                    row.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = {
+                        new TextBlock { Style = (Style)FindResource("Icon"), FontSize = 14, Text = i is FileInfo ? "" : "", Margin = new Thickness(0, 0, 10, 0) },
+                        new TextBlock { Text = i.Name, TextTrimming = TextTrimming.CharacterEllipsis } } });
+                    SdList.Items.Add(new ListBoxItem { Content = row, Tag = (sdDir == "" ? "" : sdDir + "/") + i.Name });
+                }
+            }
+            catch (Exception ex) { SdPath.Text += "  (could not read: " + ex.Message + ")"; }
+            if (SdList.Items.Count == 0) SdList.Items.Add(new ListBoxItem { IsEnabled = false, Content = new TextBlock { Style = (Style)FindResource("Caption"), Text = "This folder is empty." } });
+        }
+
+        string SdSelected => (SdList.SelectedItem as ListBoxItem)?.Tag as string;
+
+        void SdList_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var rel = SdSelected;
+            if (rel == null) return;
+            if (Directory.Exists(SdAbs(rel))) { sdDir = rel; SdRender(); }
+            else try { Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + SdAbs(rel) + "\"") { UseShellExecute = false }); } catch (Exception) { }
+        }
+
+        void SdUp_Click(object sender, RoutedEventArgs e)
+        {
+            int cut = sdDir.LastIndexOf('/');
+            sdDir = cut < 0 ? "" : sdDir.Substring(0, cut);
+            SdRender();
+        }
+
+        async Task SdCopy(IList<string> paths)
+        {
+            var dest = SdAbs(sdDir);
+            Directory.CreateDirectory(dest);
+            int n = 0;
+            copying = true; Refresh();
+            try
+            {
+                foreach (var src in paths)
+                {
+                    SetStatus("", $"Copying {Path.GetFileName(src)} ({n + 1} of {paths.Count})…");
+                    await Task.Run(() =>
+                    {
+                        if (Directory.Exists(src)) CopyDir(src, Path.Combine(dest, Path.GetFileName(src)));
+                        else File.Copy(src, Path.Combine(dest, Path.GetFileName(src)), true);
+                    });
+                    n++;
+                }
+                copying = false; Refresh();
+                SetStatus("", $"Put {Plural(n, "item")} on the SD card in /{sdDir}.");
+            }
+            catch (Exception ex) { copying = false; Refresh(); SetStatus("", $"Copied {n}, then failed: " + ex.Message); }
+        }
+
+        static void CopyDir(string src, string dst)
+        {
+            Directory.CreateDirectory(dst);
+            foreach (var f in Directory.GetFiles(src)) File.Copy(f, Path.Combine(dst, Path.GetFileName(f)), true);
+            foreach (var d in Directory.GetDirectories(src)) CopyDir(d, Path.Combine(dst, Path.GetFileName(d)));
+        }
+
+        async void SdUpload_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog { Title = "Upload files to /" + sdDir, Multiselect = true, Filter = "All files (*.*)|*.*" };
+            if (dlg.ShowDialog(this) == true) await SdCopy(dlg.FileNames);
+        }
+
+        async void SdUploadDir_Click(object sender, RoutedEventArgs e)
+        {
+            string picked = null;
+            using (var dlg = new System.Windows.Forms.FolderBrowserDialog { Description = "Upload a folder into /" + sdDir })
+                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK) picked = dlg.SelectedPath;
+            if (picked != null) await SdCopy(new[] { picked });
+        }
+
+        void SdNewDir_Click(object sender, RoutedEventArgs e)
+        {
+            var name = Ask("New folder", "Name of the new folder in /" + sdDir + ":");
+            if (string.IsNullOrEmpty(name)) return;
+            if (name == "." || name == ".." || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) { SetStatus("", "That is not a valid folder name."); return; }
+            try { Directory.CreateDirectory(SdAbs((sdDir == "" ? "" : sdDir + "/") + name)); SdRender(); }
+            catch (Exception ex) { SetStatus("", "Could not make the folder: " + ex.Message); }
+        }
+
+        void SdSave_Click(object sender, RoutedEventArgs e)
+        {
+            var rel = SdSelected;
+            if (rel == null || !File.Exists(SdAbs(rel))) { SetStatus("", "Select a file in the list first."); return; }
+            var dlg = new SaveFileDialog { Title = "Save a copy", FileName = Path.GetFileName(rel), Filter = "All files (*.*)|*.*" };
+            if (dlg.ShowDialog(this) != true) return;
+            try { File.Copy(SdAbs(rel), dlg.FileName, true); SetStatus("", "Saved " + Path.GetFileName(dlg.FileName) + "."); }
+            catch (Exception ex) { SetStatus("", "Could not save it: " + ex.Message); }
+        }
+
+        void SdDelete_Click(object sender, RoutedEventArgs e)
+        {
+            var rel = SdSelected;
+            if (rel == null) { SetStatus("", "Select a file or folder in the list first."); return; }
+            var abs = SdAbs(rel); bool dir = Directory.Exists(abs);
+            if (MessageBox.Show(this, $"Delete /{rel}{(dir ? " and everything in it" : "")} from the simulated SD card?", "Delete",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            try { if (dir) Directory.Delete(abs, true); else File.Delete(abs); SdRender(); SetStatus("", "Deleted /" + rel + "."); }
+            catch (Exception ex) { SetStatus("", "Could not delete it: " + ex.Message); }
+        }
+
+        async void SdZip_Click(object sender, RoutedEventArgs e)
+        {
+            var b = Current; if (b == null) return;
+            var dlg = new SaveFileDialog { Title = "Save the SD card as a zip file", Filter = "Zip file (*.zip)|*.zip", FileName = b.Id + "-sd-card.zip" };
+            if (dlg.ShowDialog(this) != true) return;
+            try
+            {
+                Directory.CreateDirectory(Store.SdCard(b));
+                if (File.Exists(dlg.FileName)) File.Delete(dlg.FileName); // the dialog already asked to replace it
+                await Task.Run(() => System.IO.Compression.ZipFile.CreateFromDirectory(Store.SdCard(b), dlg.FileName));
+                SetStatus("", "Saved " + Path.GetFileName(dlg.FileName) + ".");
+            }
+            catch (Exception ex) { SetStatus("", "Could not save the zip: " + ex.Message); }
+        }
+
+        // ---- your own firmware (eink-qemu) ----------------------------------------
+        async void OwnFirmware_Click(object sender, RoutedEventArgs e)
+        {
+            if (busy) return;
+            var dlg = new OpenFileDialog { Title = $"Pick a firmware to run on the {device}", Filter = "Firmware (*.bin;*.xota)|*.bin;*.xota|All files (*.*)|*.*" };
+            if (dlg.ShowDialog(this) != true) return;
+            if (!Emulator.Installed)
+            {
+                if (MessageBox.Show(this, $"Your own firmware runs in eink-qemu, a free emulator by serialx (GPL-2.0 licence).\n\nDownload its Windows app ({Mb(Emulator.SetupBytes)} from github.com/serialx/eink-qemu) and open its installer now? It installs for you only and needs no administrator rights.",
+                        "Run my own firmware", MessageBoxButton.OKCancel, MessageBoxImage.Information, MessageBoxResult.OK) != MessageBoxResult.OK) return;
+                busy = true; cancel = new System.Threading.CancellationTokenSource(); Refresh();
+                Progress.Visibility = Visibility.Visible; Progress.Value = 0;
+                try
+                {
+                    await Emulator.Install(new Progress<long>(n =>
+                    {
+                        Progress.Value = Math.Min(1, (double)n / Emulator.SetupBytes);
+                        SetStatus("", n < Emulator.SetupBytes ? $"Downloading eink-qemu… {Mb(n)} of {Mb(Emulator.SetupBytes)}" : "Finish the eink-qemu installer window to go on.");
+                    }), cancel.Token);
+                }
+                catch (Exception ex)
+                {
+                    bool cancelled = cancel.IsCancellationRequested;
+                    busy = false; cancel = null; Progress.Visibility = Visibility.Collapsed; Refresh();
+                    SetStatus(cancelled ? "" : "", cancelled ? "Download cancelled. Nothing was installed." : ex.Message);
+                    return;
+                }
+                busy = false; cancel = null; Progress.Visibility = Visibility.Collapsed; Refresh();
+            }
+            try
+            {
+                Emulator.Run(dlg.FileName, device);
+                SetStatus("", $"Opened {Path.GetFileName(dlg.FileName)} on the {device} in eink-qemu. Its window has its own SD card, keys and touch.");
+            }
+            catch (Exception ex) { SetStatus("", "Could not start eink-qemu: " + ex.Message); }
         }
     }
 }
