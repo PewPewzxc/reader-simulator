@@ -44,7 +44,9 @@ def private_words():
     Not written here (this script is published): the Windows user name, the part of git's e-mail before
     the @ (git's user name is the public GitHub name, which firmwares rightly contain), RSIM_PRIVATE_WORDS
     (comma-separated)."""
-    words = {os.environ.get("USERNAME", ""), os.path.basename(os.environ.get("USERPROFILE", "") or os.path.expanduser("~"))}
+    # On GitHub's machines the account ("runner", "runneradmin") is public, and "runner" is in firmware code (LuaRunner).
+    words = set() if os.environ.get("GITHUB_ACTIONS") == "true" else \
+        {os.environ.get("USERNAME", ""), os.path.basename(os.environ.get("USERPROFILE", "") or os.path.expanduser("~"))}
     email = subprocess.run(["git", "config", "user.email"], capture_output=True, text=True).stdout.strip()
     words.add(email.split("@")[0])
     words.update(os.environ.get("RSIM_PRIVATE_WORDS", "").split(","))

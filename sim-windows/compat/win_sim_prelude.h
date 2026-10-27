@@ -75,11 +75,12 @@ inline void *aligned_alloc(size_t alignment, size_t bytes) {
 }  // namespace std
 #endif
 
-#ifdef RSIM_CROSSPOINT_COMPAT  // only in builds whose simulator setup adapter.py wrote (CrossPoint)
 #include <sys/time.h>
-// MinGW has gettimeofday but no settimeofday (CrossPoint 2.0's TrustedTime sets the clock from the
-// network); the simulator keeps the PC's clock, so accept and ignore.
+// MinGW has gettimeofday but no settimeofday (CrossPoint 2.0's TrustedTime, CrossPlant's pet clock set
+// the clock); the simulator keeps the PC's clock, so accept and ignore.
 static inline int settimeofday(const struct timeval *tv, const void *tz) { (void)tv; (void)tz; return 0; }
+
+#ifdef RSIM_CROSSPOINT_COMPAT  // only in builds whose simulator setup adapter.py wrote (CrossPoint)
 
 #include <ctype.h>
 #include <string.h>
