@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Automation;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
@@ -52,13 +54,15 @@ namespace ReaderSimulator
             AboutTitle.Text = $"Reader Simulator {ver.Major}.{ver.Minor}.{ver.Build}";
             foreach (var m in Feed.Models)
             {
-                var tile = new RadioButton { Style = (Style)FindResource("Tile"), Tag = m, GroupName = "device", Margin = new Thickness(0, 0, m == "X3" ? 0 : 8, 0) };
+                var tile = new RadioButton { Style = (Style)FindResource("Tile"), Tag = m, GroupName = "device", Margin = new Thickness(0, 0, 8, 0) };
+                AutomationProperties.SetName(tile, m);
                 tile.Content = new StackPanel { Children = {
                     new TextBlock { Text = m, FontWeight = FontWeights.SemiBold },
                     new TextBlock { Style = (Style)FindResource("Caption"), Margin = new Thickness(0, 2, 0, 0) } } };
                 tile.Checked += (s, e) => { device = (string)((RadioButton)s).Tag; Refresh(); };
                 DevicePanel.Children.Add(tile);
             }
+            foreach (RadioButton tb in ThemePanel.Children) tb.IsChecked = (string)tb.Tag == App.ThemeMode;
             SourceInitialized += (s, e) => Theme.TitleBar(this);
             SystemEvents.UserPreferenceChanged += OnThemeChanged;
             Closed += (s, e) => SystemEvents.UserPreferenceChanged -= OnThemeChanged;
@@ -70,7 +74,7 @@ namespace ReaderSimulator
 
         void OnThemeChanged(object s, UserPreferenceChangedEventArgs e)
         {
-            if (e.Category != UserPreferenceCategory.General || App.ForcedTheme != null) return;
+            if (e.Category != UserPreferenceCategory.General || App.ThemeMode != "system") return;
             Dispatcher.BeginInvoke(new Action(() => { Theme.Apply(Theme.SystemDark()); Theme.TitleBar(this); }));
         }
 
@@ -114,25 +118,39 @@ namespace ReaderSimulator
                 row.ColumnDefinitions.Add(new ColumnDefinition());
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 row.Children.Add(new StackPanel { Children = {
-                    new TextBlock { Text = first.Name, FontWeight = FontWeights.SemiBold },
-                    new TextBlock { Text = (first.Repo ?? "") + "  ·  " + Plural(g.Select(b => b.Ref).Distinct().Count(), "version"), Style = (Style)FindResource("Caption") } } });
-                var chips = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-                foreach (var m in Feed.Models.Where(m => g.Any(b => b.Model == m))) chips.Children.Add(Chip(m));
-                Grid.SetColumn(chips, 1);
-                row.Children.Add(chips);
-                FirmwareList.Items.Add(new ListBoxItem { Content = row, Tag = g.Key });
+                    new TextBlock { Text = first.Name, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis },
+                    new TextBlock { Text = (first.Repo ?? "") + "  ·  " + Plural(g.Select(b => b.Ref).Distinct().Count(), "version"), Style = (Style)FindResource("Caption"),
+                        TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = first.Repo } } });
+                // most firmwares run on every reader: only name the readers when some are missing
+                var models = Feed.Models.Where(m => g.Any(b => b.Model == m)).ToList();
+                if (models.Count < Feed.Models.Length)
+                {
+                    var chip = Chip(string.Join(", ", models) + " only");
+                    chip.VerticalAlignment = VerticalAlignment.Center;
+                    Grid.SetColumn(chip, 1);
+                    row.Children.Add(chip);
+                }
+                var item = new ListBoxItem { Content = row, Tag = g.Key };
+                AutomationProperties.SetName(item, first.Name);
+                FirmwareList.Items.Add(item);
             }
             var pick = FirmwareList.Items.Cast<ListBoxItem>().FirstOrDefault(i => (string)i.Tag == repo) ?? FirmwareList.Items.Cast<ListBoxItem>().FirstOrDefault();
             if (pick != null) FirmwareList.SelectedItem = pick; else Refresh();
             if (builds.Count == 0 && NoFeed.Visibility != Visibility.Visible) { NoFeed.Text = "The firmware list is empty."; NoFeed.Visibility = Visibility.Visible; }
         }
 
-        Border Chip(string text) => new Border
+        // Colours by resource reference, not FindResource: the Theme switch replaces the brushes, and these must follow it.
+        static T Themed<T>(T e, params (DependencyProperty p, string key)[] refs) where T : FrameworkElement
         {
-            Background = (Brush)FindResource("Subtle"), BorderBrush = (Brush)FindResource("ControlStroke"), BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 1, 8, 2), Margin = new Thickness(6, 0, 0, 0),
-            Child = new TextBlock { Text = text, FontSize = 11.5, Foreground = (Brush)FindResource("Text2") },
-        };
+            foreach (var (p, key) in refs) e.SetResourceReference(p, key);
+            return e;
+        }
+
+        Border Chip(string text) => Themed(new Border
+        {
+            BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 2, 8, 2), Margin = new Thickness(8, 0, 0, 0),
+            Child = Themed(new TextBlock { Text = text, FontSize = 11.5 }, (TextBlock.ForegroundProperty, "Text2")),
+        }, (Border.BackgroundProperty, "Subtle"), (Border.BorderBrushProperty, "ControlStroke"));
 
         // The order every firmware list in the app uses: VARAGH, CrossPoint Reader, CrossInk, then the rest.
         static readonly string[] First = { "PewPewzxc/VARAGH", "crosspoint-reader/crosspoint-reader", "uxjulia/crossink" };
@@ -246,7 +264,42 @@ namespace ReaderSimulator
             if (SimPage == null) return;
             SimPage.Visibility = NavSim.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             AboutPage.Visibility = NavAbout.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-            ControlsPage.Visibility = NavControls.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        void Theme_Checked(object sender, RoutedEventArgs e)
+        {
+            var mode = (string)((RadioButton)sender).Tag;
+            if (loading || mode == App.ThemeMode) return;
+            App.ThemeMode = mode;
+            Theme.Apply(mode == "system" ? Theme.SystemDark() : mode == "dark");
+            Theme.TitleBar(this);
+            settings["theme"] = mode;
+            SaveSettings();
+        }
+
+        // ---- Controls panel (F1) ------------------------------------------------
+        IInputElement focusBeforeControls; // where focus goes back to when the panel closes
+
+        public void ShowControls(bool show)
+        {
+            if (show) focusBeforeControls = Keyboard.FocusedElement;
+            ControlsOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (show) BtnCloseControls.Focus();
+            else if (!((focusBeforeControls as UIElement)?.Focus() ?? false) && SimPage.IsVisible) BtnControls.Focus();
+        }
+
+        void Controls_Click(object sender, RoutedEventArgs e) => ShowControls(true);
+        void CloseControls_Click(object sender, RoutedEventArgs e) => ShowControls(false);
+
+        void ControlsOverlay_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!ControlsCard.IsMouseOver) ShowControls(false); // a click on the dimmed area, not on the panel
+        }
+
+        void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F1) { ShowControls(ControlsOverlay.Visibility != Visibility.Visible); e.Handled = true; }
+            else if (e.Key == Key.Escape && ControlsOverlay.Visibility == Visibility.Visible) { ShowControls(false); e.Handled = true; }
         }
 
         static readonly System.Text.RegularExpressions.Regex RepoRe = new System.Text.RegularExpressions.Regex(@"\A[A-Za-z0-9-]{1,39}/[A-Za-z0-9_.-]{1,100}\z");
@@ -256,41 +309,52 @@ namespace ReaderSimulator
         void FillCredits()
         {
             FirmwareCredits.Children.Clear();
+            AboutStats.Inlines.Clear();
+            foreach (var (n, what) in new[] { (builds.Select(b => b.Repo ?? b.Name).Distinct().Count(), "firmwares"),
+                (builds.Select(b => (b.Repo ?? b.Name) + "@" + b.Ref).Distinct().Count(), "versions"), (builds.Select(b => b.Model).Distinct().Count(), "readers") })
+            {
+                if (AboutStats.Inlines.Count > 0) AboutStats.Inlines.Add(new System.Windows.Documents.Run("   ·   "));
+                var num = new System.Windows.Documents.Run(n.ToString()) { FontWeight = FontWeights.SemiBold };
+                num.SetResourceReference(System.Windows.Documents.TextElement.ForegroundProperty, "Text");
+                AboutStats.Inlines.Add(num);
+                AboutStats.Inlines.Add(new System.Windows.Documents.Run(" " + what));
+            }
             bool firstRow = true;
             foreach (var g in builds.GroupBy(b => b.Repo ?? b.Name).OrderBy(g => FirstRank(g.Key)))
             {
                 var first = g.First();
+                bool hasRepo = first.Repo != null && RepoRe.IsMatch(first.Repo);
                 var row = new StackPanel();
-                var name = new TextBlock { FontSize = 15, FontWeight = FontWeights.SemiBold };
-                if (first.Repo != null && RepoRe.IsMatch(first.Repo))
-                {
-                    var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(first.Name))
-                    {
-                        NavigateUri = new Uri("https://github.com/" + first.Repo), Foreground = (Brush)FindResource("Text"), TextDecorations = null,
-                    };
-                    link.RequestNavigate += (s, e) =>
-                    {
-                        try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); } catch (Exception) { }
-                    };
-                    name.Inlines.Add(link);
-                    row.Children.Add(name);
-                    row.Children.Add(new TextBlock { Style = (Style)FindResource("Caption"), FontSize = 12.5, Margin = new Thickness(0, 1, 0, 6),
+                row.Children.Add(new TextBlock { FontSize = 15, FontWeight = FontWeights.SemiBold, Text = first.Name, Margin = new Thickness(0, 0, 0, hasRepo ? 0 : 8) });
+                if (hasRepo)
+                    row.Children.Add(new TextBlock { Style = (Style)FindResource("Caption"), FontSize = 12.5, Margin = new Thickness(0, 4, 0, 8),
                         Text = $"by {first.Repo.Split('/')[0]} and contributors" });
-                }
-                else { name.Text = first.Name; name.Margin = new Thickness(0, 0, 0, 6); row.Children.Add(name); }
                 var chips = new WrapPanel();
                 foreach (var v in g.Select(b => b.Version).Distinct())
-                    chips.Children.Add(new Border
+                    chips.Children.Add(Themed(new Border
                     {
-                        Background = (Brush)FindResource("AccentSoft"), CornerRadius = new CornerRadius(9), Padding = new Thickness(8, 1, 8, 2),
-                        Margin = new Thickness(0, 0, 6, 4), Child = new TextBlock { Text = v, FontSize = 12 },
-                    });
+                        CornerRadius = new CornerRadius(9), Padding = new Thickness(8, 1, 8, 2),
+                        Margin = new Thickness(0, 0, 8, 8), Child = new TextBlock { Text = v, FontSize = 12 },
+                    }, (Border.BackgroundProperty, "AccentSoft")));
                 row.Children.Add(chips);
-                FirmwareCredits.Children.Add(new Border
+                if (hasRepo)
                 {
-                    BorderBrush = (Brush)FindResource("CardStroke"), BorderThickness = new Thickness(0, firstRow ? 0 : 1, 0, 0),
-                    Padding = new Thickness(0, 12, 0, 8), Child = row,
-                });
+                    // like the website's Licence link: the licence is in the firmware's own repository
+                    var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run("Source code and licence →"))
+                        { NavigateUri = new Uri("https://github.com/" + first.Repo) };
+                    System.Windows.Automation.AutomationProperties.SetName(link, first.Name + ": source code and licence");
+                    link.RequestNavigate += (s, e) =>
+                    {
+                        e.Handled = true;
+                        try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); }
+                        catch (Exception ex) { MessageBox.Show(this, "Could not open the browser: " + ex.Message, "Reader Simulator"); }
+                    };
+                    row.Children.Add(new TextBlock { FontSize = 13, Margin = new Thickness(0, 0, 0, 8), Inlines = { link } });
+                }
+                FirmwareCredits.Children.Add(Themed(new Border
+                {
+                    BorderThickness = new Thickness(0, firstRow ? 0 : 1, 0, 0), Padding = new Thickness(0, 12, 0, 4), Child = row,
+                }, (Border.BorderBrushProperty, "CardStroke")));
                 firstRow = false;
             }
             if (builds.Count == 0)
@@ -300,7 +364,9 @@ namespace ReaderSimulator
 
         // Only these pages open: the links are fixed, not read from the feed.
         static readonly string[] Links = { "https://github.com/PewPewzxc", "https://www.linkedin.com/in/alireza-pakseresht-koubijari/",
-            "https://github.com/PewPewzxc/reader-simulator", Emulator.Site };
+            "https://github.com/PewPewzxc/reader-simulator", Emulator.Site, "https://buymeacoffee.com/pewpewzxc", "https://pewpewzxc.github.io/reader-simulator/",
+            "https://github.com/uxjulia/crosspoint-simulator", "https://github.com/uxjulia/crossink-simulator", "https://www.libsdl.org/",
+            "https://standardebooks.org/", "https://wordnet.princeton.edu/" };
 
         void Link_Click(object sender, RoutedEventArgs e)
         {
@@ -558,7 +624,7 @@ namespace ReaderSimulator
         string Ask(string title, string text)
         {
             var dlg = Dialog(title);
-            var input = new TextBox { Margin = new Thickness(0, 10, 0, 16), Padding = new Thickness(6, 4, 6, 4) };
+            var input = new TextBox { Margin = new Thickness(0, 8, 0, 16), Padding = new Thickness(6, 4, 6, 4) };
             var ok = new Button { Style = (Style)FindResource("AccentBtn"), Content = "OK", IsDefault = true, MinWidth = 90, Margin = new Thickness(0, 0, 8, 0) };
             ok.Click += (s, a) => dlg.DialogResult = true;
             var no = new Button { Style = (Style)FindResource("Btn"), Content = "Cancel", IsCancel = true, MinWidth = 90 };
@@ -579,9 +645,10 @@ namespace ReaderSimulator
             SdList.Items.Clear();
             var b = Current;
             SdPath.Text = b == null ? "" : "SD card /" + sdDir;
+            SdEmpty.Text = b == null ? "Pick a firmware to see its SD card." : "";
             if (b == null) return;
             var dir = SdAbs(sdDir);
-            if (!Directory.Exists(dir)) { if (sdDir != "") { sdDir = ""; SdRender(); } return; }
+            if (!Directory.Exists(dir)) { if (sdDir != "") { sdDir = ""; SdRender(); } else SdEmpty.Text = "Start the firmware once to make its SD card."; return; }
             try
             {
                 var entries = new DirectoryInfo(dir).GetFileSystemInfos()
@@ -594,12 +661,15 @@ namespace ReaderSimulator
                     DockPanel.SetDock(size, Dock.Right);
                     row.Children.Add(size);
                     row.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = {
-                        new TextBlock { Style = (Style)FindResource("Icon"), FontSize = 14, Text = i is FileInfo ? "" : "", Margin = new Thickness(0, 0, 10, 0) },
+                        new TextBlock { Style = (Style)FindResource("Icon"), FontSize = 14, Text = i is FileInfo ? "" : "", Margin = new Thickness(0, 0, 8, 0) },
                         new TextBlock { Text = i.Name, TextTrimming = TextTrimming.CharacterEllipsis } } });
-                    SdList.Items.Add(new ListBoxItem { Content = row, Tag = (sdDir == "" ? "" : sdDir + "/") + i.Name });
+                    var sdItem = new ListBoxItem { Content = row, Tag = (sdDir == "" ? "" : sdDir + "/") + i.Name };
+                    AutomationProperties.SetName(sdItem, i.Name);
+                    SdList.Items.Add(sdItem);
                 }
             }
             catch (Exception ex) { SdPath.Text += "  (could not read: " + ex.Message + ")"; }
+            if (SdList.Items.Count == 0) SdEmpty.Text = "This folder is empty.";
             if (SdList.Items.Count == 0) SdList.Items.Add(new ListBoxItem { IsEnabled = false, Content = new TextBlock { Style = (Style)FindResource("Caption"), Text = "This folder is empty." } });
         }
 
@@ -718,7 +788,10 @@ namespace ReaderSimulator
             if (dlg.ShowDialog(this) != true) return;
             if (!Emulator.Installed)
             {
-                if (MessageBox.Show(this, $"Your own firmware runs in eink-qemu, a free emulator by serialx (GPL-2.0 licence).\n\nDownload its Windows app ({Mb(Emulator.SetupBytes)} from github.com/serialx/eink-qemu) and open its installer now? It installs for you only and needs no administrator rights.",
+                if (MessageBox.Show(this, $"Your own firmware runs in eink-qemu, a separate free emulator by serialx (GPL-2.0 licence). It is not installed yet.\n\n" +
+                        $"1. Its Windows app ({Mb(Emulator.SetupBytes)}) is downloaded from github.com/serialx/eink-qemu and checked.\n" +
+                        "2. Its installer opens: click through it. It installs for you only, without administrator rights.\n" +
+                        $"3. {Path.GetFileName(dlg.FileName)} then opens on the {device} in eink-qemu's own window, with the free books and dictionary on its SD card.\n\nThis happens only the first time. Download eink-qemu now?",
                         "Run my own firmware", MessageBoxButton.OKCancel, MessageBoxImage.Information, MessageBoxResult.OK) != MessageBoxResult.OK) return;
                 busy = true; cancel = new System.Threading.CancellationTokenSource(); Refresh();
                 Progress.Visibility = Visibility.Visible; Progress.Value = 0;

@@ -20,7 +20,7 @@ namespace ReaderSimulator
 
     public partial class App : Application
     {
-        public static bool? ForcedTheme; // --theme light|dark
+        public static string ThemeMode = "system"; // system | light | dark: the sidebar switch, or --theme for this run
         public static bool RenderOnly;
         static Mutex instance; // held for the app's lifetime
 
@@ -32,8 +32,9 @@ namespace ReaderSimulator
         {
             var a = e.Args;
             var theme = Arg(a, "--theme");
-            if (theme != null) ForcedTheme = theme == "dark";
-            Theme.Apply(ForcedTheme ?? Theme.SystemDark());
+            ThemeMode = theme ?? (Store.LoadSettings().TryGetValue("theme", out var tm) ? tm as string : null) ?? "system";
+            if (ThemeMode != "light" && ThemeMode != "dark") ThemeMode = "system";
+            Theme.Apply(ThemeMode == "system" ? Theme.SystemDark() : ThemeMode == "dark");
             var feedArg = Arg(a, "--feed");
             Uri feed = null;
             try { feed = feedArg != null ? Feed.ToUri(feedArg) : Feed.FEED_URL != "" ? new Uri(Feed.FEED_URL) : null; }
@@ -55,9 +56,11 @@ namespace ReaderSimulator
             if (render != null)
             {
                 RenderOnly = true;
+                if (int.TryParse(Arg(a, "--width"), out var rw)) w.Width = rw; // e.g. the smallest window, 940
+                if (int.TryParse(Arg(a, "--height"), out var rh)) w.Height = rh; // tall, to see a whole page without scrolling
                 ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 if (Arg(a, "--page") == "about") w.NavAbout.IsChecked = true;
-                if (Arg(a, "--page") == "controls") w.NavControls.IsChecked = true;
+                if (Arg(a, "--page") == "controls") w.ShowControls(true);
                 await w.LoadFeed(feed);
                 Shutdown(RenderUi(w, Path.GetFullPath(render)) ? 0 : 1);
                 return;

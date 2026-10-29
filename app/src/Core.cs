@@ -537,7 +537,8 @@ namespace ReaderSimulator
             var a = Accent(dark);
             r["Accent"] = Freeze(a);
             r["AccentSoft"] = Freeze(Color.FromArgb(dark ? (byte)0x30 : (byte)0x1C, a.R, a.G, a.B));
-            r["OnAccent"] = Freeze(dark ? Colors.Black : Colors.White);
+            r["OnAccent"] = Freeze(Luminance(a) > 0.179 ? Colors.Black : Colors.White); // whichever contrasts more (WCAG), e.g. black on a yellow accent
+            r["Link"] = Freeze(dark ? Color.FromRgb(0x99, 0xEB, 0xFF) : Color.FromRgb(0x00, 0x3E, 0x92)); // Windows 11 hyperlink colours
             if (dark)
             {
                 Set("Bg", 0xFF202020); Set("Card", 0xFF2B2B2B); Set("CardStroke", 0xFF1D1D1D); Set("Text", 0xFFFFFFFF);
@@ -553,6 +554,12 @@ namespace ReaderSimulator
         }
 
         static SolidColorBrush Freeze(Color c) { var b = new SolidColorBrush(c); b.Freeze(); return b; }
+
+        static double Luminance(Color c)
+        {
+            double Lin(byte v) { double s = v / 255.0; return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4); }
+            return 0.2126 * Lin(c.R) + 0.7152 * Lin(c.G) + 0.0722 * Lin(c.B);
+        }
 
         [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
 

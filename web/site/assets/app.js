@@ -619,6 +619,15 @@ $('measureCancel').onclick = () => measureClosed(false);
 $('measureDlg').oncancel = e => { e.preventDefault(); measureClosed(false); };  // Esc
 new MutationObserver(applyRealSize).observe($('canvas'), { attributes: true, attributeFilter: ['width', 'height'] });
 addEventListener('hashchange', showView);
+
+// Theme switch in the top bar: System follows the device; Light / Dark are kept in this browser.
+function showTheme() {
+  const t = store.get('theme', 'system');
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  for (const b of $('theme').children) b.setAttribute('aria-pressed', String(b.dataset.theme === (t === 'light' || t === 'dark' ? t : 'system')));
+}
+for (const b of $('theme').children) b.onclick = () => { store.set('theme', b.dataset.theme); showTheme(); };
+showTheme();
 addEventListener('pagehide', () => { saveCard(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveCard(); });
 showView();

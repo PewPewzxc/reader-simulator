@@ -12,7 +12,7 @@
       <Setter Property="BorderBrush" Value="{DynamicResource CardStroke}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="8" />
-      <Setter Property="Padding" Value="20,16" />
+      <Setter Property="Padding" Value="20" />
       <Setter Property="Margin" Value="0,0,0,12" />
     </Style>
 
@@ -26,7 +26,7 @@
       <Setter Property="FontSize" Value="15" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{DynamicResource Text}" />
-      <Setter Property="Margin" Value="0,0,0,10" />
+      <Setter Property="Margin" Value="0,0,0,12" />
     </Style>
     <Style x:Key="Body" TargetType="TextBlock">
       <Setter Property="FontSize" Value="14" />
@@ -37,6 +37,14 @@
       <Setter Property="FontSize" Value="12" />
       <Setter Property="Foreground" Value="{DynamicResource Text2}" />
       <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style TargetType="Hyperlink">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Foreground" Value="{DynamicResource Link}" />
+      <Setter Property="TextDecorations" Value="{x:Null}" />
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True"><Setter Property="TextDecorations" Value="Underline" /></Trigger>
+      </Style.Triggers>
     </Style>
     <Style x:Key="Icon" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="{StaticResource Icons}" />
@@ -50,7 +58,7 @@
       <Setter Property="Foreground" Value="{DynamicResource Text}" />
       <Setter Property="BorderBrush" Value="{DynamicResource ControlStroke}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Padding" Value="14,7" />
+      <Setter Property="Padding" Value="12,6" />
       <Setter Property="FontSize" Value="14" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -66,6 +74,34 @@
               <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource ControlPressed}" /></Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Text}" /></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter TargetName="b" Property="Opacity" Value="0.45" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="IconBtn" TargetType="Button" BasedOn="{StaticResource Btn}">
+      <Setter Property="Width" Value="32" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="Padding" Value="0" />
+    </Style>
+    <!-- Buy me a coffee: their yellow and black, drawn here so no picture is loaded from their server -->
+    <Style x:Key="CoffeeBtn" TargetType="Button" BasedOn="{StaticResource Btn}">
+      <Setter Property="Background" Value="#FFDD00" />
+      <Setter Property="Foreground" Value="Black" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="16,8" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="#FFE53D" /></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Background" Value="#F2D200" /></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Text}" /><Setter TargetName="b" Property="BorderThickness" Value="2" /></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
@@ -105,7 +141,7 @@
             <Border x:Name="b" Background="Transparent" CornerRadius="6" Height="38">
               <Grid>
                 <Border x:Name="pill" Width="3" Height="16" CornerRadius="1.5" Background="{DynamicResource Accent}" HorizontalAlignment="Left" Visibility="Collapsed" />
-                <ContentPresenter Margin="14,0,8,0" VerticalAlignment="Center" />
+                <ContentPresenter Margin="12,0,8,0" VerticalAlignment="Center" />
               </Grid>
             </Border>
             <ControlTemplate.Triggers>
@@ -127,19 +163,21 @@
       <Setter Property="BorderBrush" Value="{DynamicResource ControlStroke}" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-      <Setter Property="Padding" Value="14,10" />
+      <Setter Property="Padding" Value="16,12" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                    CornerRadius="8" Padding="{TemplateBinding Padding}">
-              <ContentPresenter />
-            </Border>
+            <Grid>
+              <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                      CornerRadius="8" Padding="{TemplateBinding Padding}">
+                <ContentPresenter />
+              </Border>
+              <Border x:Name="ring" BorderBrush="{DynamicResource Accent}" BorderThickness="2" CornerRadius="8" Visibility="Collapsed" IsHitTestVisible="False" />
+            </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource ControlHover}" /></Trigger>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}" />
-                <Setter TargetName="b" Property="BorderThickness" Value="2" />
+                <Setter TargetName="ring" Property="Visibility" Value="Visible" />
                 <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}" />
               </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Text}" /></Trigger>
@@ -149,9 +187,19 @@
       </Setter>
     </Style>
     <Style x:Key="Chip" TargetType="RadioButton" BasedOn="{StaticResource Tile}">
-      <Setter Property="Padding" Value="12,5" />
+      <Setter Property="Padding" Value="12,6" />
       <Setter Property="Margin" Value="0,0,8,8" />
       <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <!-- small segmented choice (theme), text centred -->
+    <Style x:Key="Seg" TargetType="RadioButton" BasedOn="{StaticResource Chip}">
+      <Setter Property="Padding" Value="0,6" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+      <Setter Property="FontSize" Value="13" />
+      <Style.Resources>
+        <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Center" /></Style>
+      </Style.Resources>
     </Style>
 
     <!-- Toggle switch -->
@@ -248,9 +296,9 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ListBoxItem">
-            <Border x:Name="b" Background="Transparent" CornerRadius="6" Padding="14,9">
+            <Border x:Name="b" Background="Transparent" CornerRadius="6" Padding="12,8">
               <Grid>
-                <Border x:Name="pill" Width="3" Height="18" CornerRadius="1.5" Margin="-14,0,0,0" Background="{DynamicResource Accent}" HorizontalAlignment="Left" Visibility="Collapsed" />
+                <Border x:Name="pill" Width="3" Height="18" CornerRadius="1.5" Margin="-12,0,0,0" Background="{DynamicResource Accent}" HorizontalAlignment="Left" Visibility="Collapsed" />
                 <ContentPresenter />
               </Grid>
             </Border>
