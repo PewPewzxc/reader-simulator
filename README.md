@@ -96,30 +96,42 @@ simulator always shows the current list. The Windows app gets new versions when 
 | [CrossMux](https://github.com/0x1abin/crossmux) | — | ✓ | ✓ |
 | [CrossPlant](https://github.com/0xKnowles/CrossPlant) | — | ✓ | — |
 
-### Not working yet
+### Runs in the emulator
 
-These firmwares were tried but do not build or run in the simulator yet. Each needs a change from its author:
+These firmwares can't be rebuilt for the simulator yet, so the list offers the author's own release `.bin`, unchanged,
+in [eink-qemu](https://github.com/serialx/eink-qemu) (a real ESP32 emulator by serialx, GPL-2.0, a separate project).
+On the website, the button opens eink-qemu's page in a new tab (Chrome) with the firmware already loaded. In the Windows app, it
+downloads the file from its author, checks it, and opens it in eink-qemu's own window. Each one was booted and tested with
+[`emulator/check.py`](emulator/check.py) before it was listed.
 
-| Firmware | What is needed from its author |
-| --- | --- |
-| [inkMOD](https://github.com/alpzoloto-sudo/inkmod) | A simulator build setup (`[env:simulator]`) with stand-ins for its extra hardware functions (boot log, reset reason, OTA partition, charge times) and its version flags. |
-| [CrossLink](https://github.com/DaisonChun/crosslink) | An update to the current simulator interface (it uses the May 2026 `setSimulatorOrientation`), or a newer release. |
-| [Witchhunt Reader](https://github.com/jpirnay/witchhunt-reader) | A simulator library with its newer display, clock and font functions (second display buffer, `formatLogTime`, `FlashFontPartition.h`). |
-| [xpoint](https://github.com/belphemur/xpoint) | A simulator library with its newer hardware layer (`displayBufferAsync`, `refreshBusy`, PSRAM, `JPEGDEC::openRAM`). |
-| [InkPointX](https://github.com/yokki-vans/InkPointX) | Simulator support for its new display functions (dark mode, clean and full refresh) and `replaceFileFromTemp`, and a tagged release. |
-| [inx](https://github.com/obijuankenobiii/inx) | Simulator support for its clock (`readDateTime`) and its own file type, and an OTA interface that matches the simulator's. |
-| [cpr-vcodex](https://github.com/franssjz/cpr-vcodex) | Stand-ins for NVS storage, wolfSSL AES and `memcpy_P` in its simulator library branch. |
-| [vcodex on steroids](https://github.com/marcoand75/cpr-vcodex-steroids) | The `freeink-sdk` commit its submodule points to pushed to GitHub (it is missing, so the source cannot be downloaded). |
-| [CrossInk Bookorbit](https://github.com/agosez/CrossInk-Bookorbit) | `HalClock::syncSystemTimeFromNTP` and `canDisplayTime` in its simulator setup, or those calls skipped in the simulator build. |
-| [CrossPDF](https://github.com/davemessew/CrossPDF) | A simulator build that compiles: `epub_` and `icon_pointer_off_24` are not declared there. |
-| [Ink-boy](https://github.com/hellominecraft913-dev/Ink-boy) | `src/walnut_cgb_impl.c` built without the simulator's C++-only `esp_heap_caps.h` (for example compiled as C++). |
-| [aalu](https://github.com/dawsonfi/aalu) | A newer crosspoint-simulator pin: the pinned one (`efe37c6`) has no input scripts or screenshots, so it cannot be tested. |
-| [Foulad eInk](https://github.com/sfoulad/foulad-eink) | The FreeInk UI library (`FreeInkApp.h`) added to its simulator setup. |
-| [Folio Nooir](https://github.com/toshio2011/folio-nooir) | `<stdint.h>` instead of its own `uint32_t` in the `tjpgd.h` of its freeink-sdk (fails on Windows; the browser build has not been tried yet). |
-| [KatiePoint](https://github.com/InsiderPhD/crosspoint-reader) | The simulator library's GitHub address in its simulator setup (it expects a local `../crosspoint-simulator` folder). |
-| [CrumBLE](https://github.com/imshentastic/CrumBLE) | `readFileWithFallback` and `freertos/portmacro.h` in its simulator setup. |
+| Firmware | Version | Readers | Note |
+| --- | --- | --- | --- |
+| [inkMOD](https://github.com/alpzoloto-sudo/inkmod) | v1.1.10 | X4 Classic, X3 |  |
+| [Witchhunt Reader](https://github.com/jpirnay/witchhunt-reader) | 2.40 | X4 Pro, X3 |  |
+| [Xerif (xpoint)](https://github.com/Belphemur/Xerif-eReader) | v2.13.0 | X4 Pro, X4 Classic, X3 |  |
+| [InkPointX](https://github.com/yokki-vans/InkPointX) | v2.3.6 | X4 Classic, X3 |  |
+| [inx](https://github.com/obijuankenobiii/inx) | 1.0.19 | X4 Classic, X3 |  |
+| [cpr-vcodex](https://github.com/franssjz/cpr-vcodex) | 1.6.5.7-cpr-vcodex | X4 Classic, X3 |  |
+| [vcodex on steroids](https://github.com/marcoand75/cpr-vcodex-steroids) | 1.6.0.38-dev1-cpr-vcodex-steroids | X4 Classic, X3 |  |
+| [CrossInk Bookorbit](https://github.com/agosez/CrossInk-Bookorbit) | v1.6.1+bookorbit.3 | X4 Pro, X4 Classic, X3 |  |
+| [Ink-boy](https://github.com/hellominecraft913-dev/Ink-boy) | 1.2.0 | X4 Pro |  |
+| [Foulad eInk](https://github.com/sfoulad/foulad-eink) | v1.8.57 | X4 Classic, X3 |  |
+| [Folio Nooir](https://github.com/toshio2011/folio-nooir) | 1.6.6 | X3 |  |
+| [KatiePoint](https://github.com/InsiderPhD/crosspoint-reader) | 1.12.0 | X4 Classic, X3 |  |
+| [CrumBLE](https://github.com/imshentastic/CrumBLE) | crumble-v4.7.3 | X4 Classic, X3 |  |
+| Xteink official | V6.5.5, V7.6.8 | X4 Pro, X4 Classic, X3 |  |
+| [aalu](https://github.com/dawsonfi/aalu) | v3.3.0 | X4 Classic | Windows app only (no licence, so the website does not host a copy) |
+| [CrossPDF](https://github.com/davemessew/CrossPDF) | crosspdf-v1.5.0.19 | X4 Classic, X3 |  |
 
-**Xteink's official firmware** is not supported: it is closed source, and Xteink said they cannot provide it.
+**Not working yet:** [CrossLink](https://github.com/DaisonChun/crosslink) (its full-flash images turn themselves off at
+boot in the emulator; the Windows app still runs its X4 Classic simulator build). inkMOD and KatiePoint for X4 Pro, and
+some X4 Classic files, crash or turn off in the emulator, so they are left out.
+
+**Xteink's official firmware** runs in the emulator too. The X3 and X4 Classic files come straight from
+crosspointreader.com. The X4 Pro needs Xteink's own bootloader, so it uses a full flash image from the
+[emulator-files](https://github.com/PewPewzxc/reader-simulator/releases/tag/emulator-files) release: the 7.6.8 app from
+crosspointreader.com, unchanged, with the bootloader and partition table of Xteink's public 7.4.4 full package. Xteink's
+firmware is closed source and belongs to Xteink.
 
 **Add a firmware:** it needs public source code on GitHub and a PlatformIO project in the CrossPoint, CrossInk or
 FreeInk family. The simulator adds its own setup to firmwares that do not ship one, without changing their code.

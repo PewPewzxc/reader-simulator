@@ -60,7 +60,7 @@ function render() {
     el.className = 'fw' + (r.repo === sel.repo ? ' on' : '') + (forModel.length ? '' : ' off');
     el.innerHTML = '<div><b></b><span></span></div><span class="badge"></span>';
     el.querySelector('b').textContent = r.name;
-    el.querySelector('div span').textContent = r.repo + ' · ' + (forModel.length || 'no') + ' version' + (forModel.length === 1 ? '' : 's') + ' for ' + sel.model;
+    el.querySelector('div span').textContent = (mine.every(x => x.emu) ? 'eink-qemu · ' : '') + r.repo + ' · ' + (forModel.length || 'no') + ' version' + (forModel.length === 1 ? '' : 's') + ' for ' + sel.model;
     el.querySelector('.badge').textContent = [...new Set(mine.map(x => x.model))].join(', ');
     el.onclick = () => {
       sel.repo = r.repo;
@@ -77,9 +77,12 @@ function render() {
     el.onclick = () => { sel.ref = x.ref; render(); };
     return el;
   }));
-  const size = b.files.reduce((n, f) => n + f.size, 0);
-  $('buildinfo').textContent = 'Built from ' + b.repo + ' ' + b.ref + (b.source_commit ? ' (' + b.source_commit.slice(0, 7) + ')' : '') +
-    ' · ' + mb(size) + ' download, kept by the browser after the first time · licence ' + b.licence;
+  const size = b.emu ? b.size : b.files.reduce((n, f) => n + f.size, 0);
+  $('buildinfo').textContent = b.emu
+    ? (b.repo.includes('/') ? 'The author’s own ' + b.repo : 'Xteink’s own') + ' ' + b.ref + ' file, unchanged · runs in eink-qemu, a separate emulator, in a new tab (Chrome) · ' +
+      mb(size) + ' download · licence ' + b.licence
+    : 'Built from ' + b.repo + ' ' + b.ref + (b.source_commit ? ' (' + b.source_commit.slice(0, 7) + ')' : '') +
+      ' · ' + mb(size) + ' download, kept by the browser after the first time · licence ' + b.licence;
   $('devTitle').textContent = b.model;
   $('fwTitle').textContent = b.name + ' ' + b.version;
   if (!running) {
@@ -87,14 +90,20 @@ function render() {
     $('framePreview').hidden = !b.frame;
   }
   const same = running && running.id === b.id;
-  $('start').querySelector('span').textContent = !same ? 'Start' : runningSettings === settings() ? 'Restart' : 'Restart with changes';
-  $('fresh').disabled = false;
+  $('start').querySelector('span').textContent = b.emu ? 'Open in eink-qemu' : !same ? 'Start' : runningSettings === settings() ? 'Restart' : 'Restart with changes';
+  $('fresh').disabled = !!b.emu;
   applyRealSize();
 }
 
 // ---- running a build ----
+// eink-qemu's page reads the firmware from a link. GitHub release files can't be read by other sites, so the Pages
+// build keeps a copy of those next to this page (emu/<id>.bin); other links are used as they are.
+const emuLink = b => 'https://serialx.github.io/eink-qemu/?' + new URLSearchParams({
+  flash: b.url.startsWith('https://github.com/') ? new URL('emu/' + b.id + '.bin', location.href).href : b.url, device: b.machine });
+
 function start() {
   const b = current();
+  if (b.emu) { window.open(emuLink(b), '_blank', 'noopener'); return; }
   const q = new URLSearchParams({ b: b.id, battery: $('battery').value, usb: $('usb').checked ? '1' : '0' });
   location.assign('?' + q);  // a fresh page per run: one WebAssembly instance per page
 }
@@ -558,9 +567,10 @@ function credits() {
     li.innerHTML = '<div class="fw-main"><a target="_blank" rel="noopener noreferrer"></a><span class="fw-by"></span></div>' +
       '<div class="fw-versions"></div><div class="fw-meta"><span class="lic"></span><a class="fw-lic">Licence</a></div>';
     const name = li.querySelector('a');
-    name.href = 'https://github.com/' + r.repo;
+    const gh = r.repo.includes('/');  // the official firmware has no source to link to
+    name.href = gh ? 'https://github.com/' + r.repo : 'https://www.xteink.com/';
     name.textContent = r.name;
-    li.querySelector('.fw-by').textContent = 'by ' + r.repo.split('/')[0] + ' and contributors';
+    li.querySelector('.fw-by').textContent = gh ? 'by ' + r.repo.split('/')[0] + ' and contributors' : 'by Xteink · runs in eink-qemu';
     li.querySelector('.fw-versions').replaceChildren(...versionsOf(r).map(v => {
       const c = document.createElement('span');
       c.className = 'vchip';
@@ -568,7 +578,7 @@ function credits() {
       return c;
     }));
     li.querySelector('.lic').textContent = r.licence;
-    li.querySelector('.fw-lic').href = 'builds/' + r.id + '/LICENSE-firmware.txt';
+    li.querySelector('.fw-lic').href = !r.emu ? 'builds/' + r.id + '/LICENSE-firmware.txt' : gh ? 'https://github.com/' + r.repo + '#license' : 'https://www.xteink.com/';
     return li;
   }));
 }
@@ -636,8 +646,11 @@ showView();
 // updated between releases. A build from a branch is named by the branch, with that number: dev (2.3.6).
 const versionLabel = b => /^v?\d/.test(b.ref) ? b.ref.replace(/^v(?=\d)/, '') : b.version && b.version !== b.ref ? b.ref + ' (' + b.version + ')' : b.ref;
 
-fetch('builds.json').then(r => r.json()).then(j => {
-  builds = j.builds;
+const emuBuilds = () => fetch('emulator.json').then(r => r.json()).then(j => j.builds.filter(b => b.copy).map(b => ({ ...b, emu: true })))
+  .catch(() => []);  // the simulator list still works without the emulator one
+
+Promise.all([fetch('builds.json').then(r => r.json()), emuBuilds()]).then(([j, emu]) => {
+  builds = j.builds.concat(emu);
   for (const b of builds) b.version = versionLabel(b);
   const b = builds.find(x => x.id === params.get('b'));
   if (b) sel = { model: b.model, repo: b.repo, ref: b.ref };
@@ -646,5 +659,5 @@ fetch('builds.json').then(r => r.json()).then(j => {
   else sel = { model: sel.model, repo: FIRST[0] };
   render();
   credits();
-  if (b) boot(b);
+  if (b && !b.emu) boot(b);
 }).catch(() => status('Could not load the list of builds.'));

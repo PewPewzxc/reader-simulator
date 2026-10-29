@@ -124,6 +124,12 @@ namespace ReaderSimulator
             var nlSha = Feed.Parse("{\"schema\":1,\"builds\":[{\"id\":\"a\",\"name\":\"a\",\"ref\":\"1\",\"model\":\"X3\",\"sha256\":\"" + new string('0', 64) + "\\n\",\"url\":\"https://github.com/x\"}]}", new Uri("https://github.com/f/index.json"));
             if (nlSha.Count != 0) throw new Exception("feed validation let a sha256 ending in a newline through");
             if (Store.Installed(new Build { Id = "a\0b", Sha256 = new string('0', 64) })) throw new Exception("bad path counted as installed");
+            string emu(string id, string url, string machine) => "{\"schema\":1,\"builds\":[{\"id\":\"" + id + "\",\"name\":\"a\",\"ref\":\"1\",\"model\":\"X3\",\"frame\":\"x3\",\"machine\":\"" + machine +
+                "\",\"size\":1,\"sha256\":\"" + new string('0', 64) + "\",\"url\":\"" + url + "\",\"power_hold\":3000}]}";
+            if (Feed.ParseEmu(emu("a", "https://github.com/a/b/releases/download/t/x.bin", "x3")).Count != 1
+                || Feed.ParseEmu(emu("..", "https://github.com/x", "x3")).Count != 0 || Feed.ParseEmu(emu("a", "https://evil.example/x.bin", "x3")).Count != 0
+                || Feed.ParseEmu(emu("a", "https://github.com/x", "x4pro")).Count != 0)
+                throw new Exception("emulator list validation failed");
             Log("allow-list and feed validation: ok");
 
             // a damaged settings.json must not stop the window from opening (I-002)

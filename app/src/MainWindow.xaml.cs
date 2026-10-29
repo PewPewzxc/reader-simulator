@@ -104,7 +104,25 @@ namespace ReaderSimulator
                 NoFeed.Text = "Could not read the firmware list (" + ex.Message + ")." + (builds.Count > 0 ? " Showing the last list." : "");
                 NoFeed.Visibility = Visibility.Visible;
             }
+            builds.AddRange(await LoadEmu());
             Populate();
+        }
+
+        /// <summary>The firmwares that run in eink-qemu; the last list read when offline, none when there never was one.</summary>
+        static async Task<List<Build>> LoadEmu()
+        {
+            var cache = Path.Combine(Store.Root, "emulator-cache.json");
+            try
+            {
+                var json = await Feed.FetchText(Feed.EmuUrl);
+                var list = Feed.ParseEmu(json);
+                try { File.WriteAllText(cache, json); } catch (IOException) { }
+                return list;
+            }
+            catch (Exception)
+            {
+                try { return Feed.ParseEmu(File.ReadAllText(cache)); } catch (Exception) { return new List<Build>(); }
+            }
         }
 
         void Populate()
@@ -119,7 +137,7 @@ namespace ReaderSimulator
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 row.Children.Add(new StackPanel { Children = {
                     new TextBlock { Text = first.Name, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis },
-                    new TextBlock { Text = (first.Repo ?? "") + "  ·  " + Plural(g.Select(b => b.Ref).Distinct().Count(), "version"), Style = (Style)FindResource("Caption"),
+                    new TextBlock { Text = (g.All(b => b.Emu) ? "eink-qemu  ·  " : "") + (first.Repo ?? "") + "  ·  " + Plural(g.Select(b => b.Ref).Distinct().Count(), "version"), Style = (Style)FindResource("Caption"),
                         TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = first.Repo } } });
                 // most firmwares run on every reader: only name the readers when some are missing
                 var models = Feed.Models.Where(m => g.Any(b => b.Model == m)).ToList();
@@ -195,24 +213,28 @@ namespace ReaderSimulator
             var b = Current;
             PreviewTitle.Text = device;
             PreviewSub.Text = b != null ? b.Name + " " + b.Version : repo != null ? "This firmware version has no " + device + " build" : "Pick a firmware";
-            bool ready = b != null && Store.Installed(b);
-            var commit = ready && Store.BuildInfo(b).TryGetValue("source_commit", out var sc) && sc is string cs && cs.Length >= 7 ? " (" + cs.Substring(0, 7) + ")" : "";
-            BuildInfo.Text = b != null ? "Built from " + (b.Repo ?? b.Name) + " " + b.Ref + commit : "";
+            bool emu = b?.Emu == true;
+            bool ready = b != null && (emu ? Emulator.HasBin(b) : Store.Installed(b));
+            var commit = ready && !emu && Store.BuildInfo(b).TryGetValue("source_commit", out var sc) && sc is string cs && cs.Length >= 7 ? " (" + cs.Substring(0, 7) + ")" : "";
+            BuildInfo.Text = b == null ? "" : emu ? (b.Repo != null && b.Repo.Contains("/") ? "The author's own " : "Xteink's own ") + b.Ref + " file, unchanged · runs in eink-qemu's own window"
+                : "Built from " + (b.Repo ?? b.Name) + " " + b.Ref + commit;
             using (var r = Running(b)) shownRunning = r != null;
             RunTools.IsEnabled = Gestures.IsEnabled = shownRunning;
             Gestures.Visibility = device == "X4 Pro" ? Visibility.Visible : Visibility.Collapsed; // the only reader with a touchscreen
             if (b?.Id != sdBuild) { sdBuild = b?.Id; sdDir = ""; }
-            SdBox.IsEnabled = BtnZip.IsEnabled = b != null && !busy;
+            SdBox.IsEnabled = BtnZip.IsEnabled = b != null && !busy && !emu; // eink-qemu's window has its own SD card
             SdRender();
-            StartText.Text = busy ? "Cancel download" : shownRunning ? "Show simulator" : ready ? "Start" : b != null ? "Download and start" : "Start";
+            StartText.Text = busy ? "Cancel download" : emu ? "Open in eink-qemu" : shownRunning ? "Show simulator" : ready ? "Start" : b != null ? "Download and start" : "Start";
             StartIcon.Text = busy ? "" : ready || b == null ? "" : "";
             BtnStart.IsEnabled = b != null || busy;
-            BtnFolder.IsEnabled = BtnFresh.IsEnabled = b != null && !busy;
-            BtnBooks.IsEnabled = b != null && !busy && !copying;
+            BtnFolder.IsEnabled = BtnFresh.IsEnabled = b != null && !busy && !emu;
+            BtnBooks.IsEnabled = b != null && !busy && !copying && !emu;
             if (!busy)
             {
                 if (b == null) SetStatus("", repo == null ? "No firmware to show." : $"No {device} build of this version. Devices it has: " +
                     string.Join(", ", builds.Where(x => (x.Repo ?? x.Name) == repo && x.Ref == gitRef).Select(x => x.Model)) + ".");
+                else if (emu) SetStatus(ready ? "" : "", (ready ? "Downloaded and checked." : $"Not downloaded yet ({Mb(b.Size)}): the author's file is downloaded and checked the first time.") +
+                    " It opens in eink-qemu, a separate emulator, whose window has its own SD card, keys and touch.");
                 else if (shownRunning) SetStatus("", $"{b.Name} {b.Version} is running on the {b.Model}. Close its window to stop it.");
                 else if (ready) SetStatus("", "Downloaded and checked. Ready to start.");
                 else SetStatus("", $"Not downloaded yet ({Mb(b.Size)}). It is downloaded and checked the first time you start it.");
@@ -390,6 +412,7 @@ namespace ReaderSimulator
             if (busy) { cancel?.Cancel(); return; }
             var b = Current;
             if (b == null) return;
+            if (b.Emu) { await StartEmu(b); return; }
             if (Running(b) is Process r)
             {
                 r.Refresh();
@@ -786,36 +809,74 @@ namespace ReaderSimulator
             if (busy) return;
             var dlg = new OpenFileDialog { Title = $"Pick a firmware to run on the {device}", Filter = "Firmware (*.bin;*.xota)|*.bin;*.xota|All files (*.*)|*.*" };
             if (dlg.ShowDialog(this) != true) return;
-            if (!Emulator.Installed)
+            if (!await EnsureEmulator(Path.GetFileName(dlg.FileName), "Your own firmware", "Run my own firmware")) return;
+            try
             {
-                if (MessageBox.Show(this, $"Your own firmware runs in eink-qemu, a separate free emulator by serialx (GPL-2.0 licence). It is not installed yet.\n\n" +
-                        $"1. Its Windows app ({Mb(Emulator.SetupBytes)}) is downloaded from github.com/serialx/eink-qemu and checked.\n" +
-                        "2. Its installer opens: click through it. It installs for you only, without administrator rights.\n" +
-                        $"3. {Path.GetFileName(dlg.FileName)} then opens on the {device} in eink-qemu's own window, with the free books and dictionary on its SD card.\n\nThis happens only the first time. Download eink-qemu now?",
-                        "Run my own firmware", MessageBoxButton.OKCancel, MessageBoxImage.Information, MessageBoxResult.OK) != MessageBoxResult.OK) return;
+                Emulator.Run(dlg.FileName, device);
+                SetStatus("", $"Opened {Path.GetFileName(dlg.FileName)} on the {device} in eink-qemu. Its window has its own SD card, keys and touch.");
+            }
+            catch (Exception ex) { SetStatus("", "Could not start eink-qemu: " + ex.Message); }
+        }
+
+        /// <summary>Installs eink-qemu the first time (asks first); false when the person said no or it failed.</summary>
+        async Task<bool> EnsureEmulator(string what, string who, string title)
+        {
+            if (Emulator.Installed) return true;
+            if (MessageBox.Show(this, $"{who} runs in eink-qemu, a separate free emulator by serialx (GPL-2.0 licence). It is not installed yet.\n\n" +
+                    $"1. Its Windows app ({Mb(Emulator.SetupBytes)}) is downloaded from github.com/serialx/eink-qemu and checked.\n" +
+                    "2. Its installer opens: click through it. It installs for you only, without administrator rights.\n" +
+                    $"3. {what} then opens on the {device} in eink-qemu's own window, with the free books and dictionary on its SD card.\n\nThis happens only the first time. Download eink-qemu now?",
+                    title, MessageBoxButton.OKCancel, MessageBoxImage.Information, MessageBoxResult.OK) != MessageBoxResult.OK) return false;
+            busy = true; cancel = new System.Threading.CancellationTokenSource(); Refresh();
+            Progress.Visibility = Visibility.Visible; Progress.Value = 0;
+            try
+            {
+                await Emulator.Install(new Progress<long>(n =>
+                {
+                    Progress.Value = Math.Min(1, (double)n / Emulator.SetupBytes);
+                    SetStatus("", n < Emulator.SetupBytes ? $"Downloading eink-qemu… {Mb(n)} of {Mb(Emulator.SetupBytes)}" : "Finish the eink-qemu installer window to go on.");
+                }), cancel.Token);
+            }
+            catch (Exception ex)
+            {
+                bool cancelled = cancel.IsCancellationRequested;
+                busy = false; cancel = null; Progress.Visibility = Visibility.Collapsed; Refresh();
+                SetStatus(cancelled ? "" : "", cancelled ? "Download cancelled. Nothing was installed." : ex.Message);
+                return false;
+            }
+            busy = false; cancel = null; Progress.Visibility = Visibility.Collapsed; Refresh();
+            return true;
+        }
+
+        /// <summary>A list entry that runs in eink-qemu: download the author's .bin once (checked), then open it.</summary>
+        async Task StartEmu(Build b)
+        {
+            if (!await EnsureEmulator($"{b.Name} {b.Version}", b.Name, b.Name + " in eink-qemu")) return;
+            if (!Emulator.HasBin(b))
+            {
                 busy = true; cancel = new System.Threading.CancellationTokenSource(); Refresh();
                 Progress.Visibility = Visibility.Visible; Progress.Value = 0;
                 try
                 {
-                    await Emulator.Install(new Progress<long>(n =>
+                    await Emulator.GetBin(b, new Progress<long>(n =>
                     {
-                        Progress.Value = Math.Min(1, (double)n / Emulator.SetupBytes);
-                        SetStatus("", n < Emulator.SetupBytes ? $"Downloading eink-qemu… {Mb(n)} of {Mb(Emulator.SetupBytes)}" : "Finish the eink-qemu installer window to go on.");
+                        Progress.Value = Math.Min(1, (double)n / b.Size);
+                        SetStatus("", $"Downloading {b.Name} {b.Version} for {b.Model}… {Mb(n)} of {Mb(b.Size)}");
                     }), cancel.Token);
                 }
                 catch (Exception ex)
                 {
                     bool cancelled = cancel.IsCancellationRequested;
                     busy = false; cancel = null; Progress.Visibility = Visibility.Collapsed; Refresh();
-                    SetStatus(cancelled ? "" : "", cancelled ? "Download cancelled. Nothing was installed." : ex.Message);
+                    SetStatus(cancelled ? "" : "", cancelled ? "Download cancelled. Nothing was kept." : "Download failed: " + ex.Message);
                     return;
                 }
                 busy = false; cancel = null; Progress.Visibility = Visibility.Collapsed; Refresh();
             }
             try
             {
-                Emulator.Run(dlg.FileName, device);
-                SetStatus("", $"Opened {Path.GetFileName(dlg.FileName)} on the {device} in eink-qemu. Its window has its own SD card, keys and touch.");
+                Emulator.Run(Emulator.BinPath(b), b.Model, b.PowerHold);
+                SetStatus("", $"Opened {b.Name} {b.Version} on the {b.Model} in eink-qemu. Its window has its own SD card, keys and touch.");
             }
             catch (Exception ex) { SetStatus("", "Could not start eink-qemu: " + ex.Message); }
         }
