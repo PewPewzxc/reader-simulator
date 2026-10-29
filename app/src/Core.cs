@@ -24,12 +24,18 @@ namespace ReaderSimulator
         public string Id, Name, Repo, Ref, Version, Model, Frame, Sha256;
         public Uri Url;
         public long Size;
+        // runs in eink-qemu: the author's own .bin, not rebuilt (emulator.json)
+        public bool Emu;
+        public string Machine;
+        public int PowerHold;
     }
 
     public static class Feed
     {
         // The download list the Build firmwares workflow keeps up to date: every version offered, newest first.
         public const string FEED_URL = "https://github.com/PewPewzxc/reader-simulator/releases/download/feed/index.json";
+        // Firmwares that run in eink-qemu instead (tested by emulator/check.py); the website reads the same list.
+        public static readonly Uri EmuUrl = new Uri("https://pewpewzxc.github.io/reader-simulator/emulator.json");
         public static readonly string[] Models = { "X4 Pro", "X4 Classic", "X3" };
         public static readonly string[] Frames = { "x4-pro", "x4-classic", "x3" };
         // No trailing dot/dash (Windows strips trailing dots) and no reserved device names (con, nul, com1...).
@@ -41,7 +47,9 @@ namespace ReaderSimulator
         public static TimeSpan StallTimeout = TimeSpan.FromSeconds(30);
         static readonly Regex HexRe = new Regex(@"\A[0-9a-f]{64}\z");
         // release-assets.githubusercontent.com: where github.com release downloads redirect to since 2025.
-        static readonly string[] Hosts = { "github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com" };
+        // pewpewzxc.github.io: the emulator list; crosspointreader.com: Xteink's official firmware files.
+        static readonly string[] Hosts = { "github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com",
+            "pewpewzxc.github.io", "crosspointreader.com" };
 
         public static bool Allowed(Uri u, bool allowFile) =>
             u != null && u.IsAbsoluteUri && (u.IsFile ? allowFile && !u.IsUnc
@@ -87,6 +95,33 @@ namespace ReaderSimulator
                     };
                     if (ValidId(b.Id) && HexRe.IsMatch(b.Sha256) && Models.Contains(b.Model) && b.Name != null && b.Ref != null
                         && (b.Frame == null || Frames.Contains(b.Frame)) && Allowed(b.Url, feed.IsFile))
+                        list.Add(b);
+                }
+                catch (Exception) { /* skip a malformed entry */ }
+            }
+            return list;
+        }
+
+        /// <summary>Valid entries of emulator.json; anything malformed or not allowed is skipped.</summary>
+        public static List<Build> ParseEmu(string json)
+        {
+            var root = (Dictionary<string, object>)new JavaScriptSerializer { MaxJsonLength = MaxFeedBytes }.DeserializeObject(json);
+            if (Convert.ToInt32(root["schema"]) != 1) throw new InvalidDataException("Unknown emulator list schema.");
+            var list = new List<Build>();
+            foreach (var o in (object[])root["builds"])
+            {
+                try
+                {
+                    var d = (Dictionary<string, object>)o;
+                    string S(string k) => d.TryGetValue(k, out var v) && v != null ? Convert.ToString(v) : null;
+                    var b = new Build
+                    {
+                        Id = S("id"), Name = S("name"), Repo = S("repo"), Ref = S("ref"), Version = VersionLabel(S("ref"), null),
+                        Model = S("model"), Frame = S("frame"), Sha256 = (S("sha256") ?? "").ToLowerInvariant(), Size = Convert.ToInt64(d["size"]),
+                        Url = new Uri(S("url")), Emu = true, Machine = S("machine"), PowerHold = d.TryGetValue("power_hold", out var ph) && ph != null ? Convert.ToInt32(ph) : 0,
+                    };
+                    if (ValidId(b.Id) && HexRe.IsMatch(b.Sha256) && Models.Contains(b.Model) && b.Name != null && b.Ref != null && b.Size > 0
+                        && Frames.Contains(b.Frame) && Emulator.Machine(b.Model) == b.Machine && b.PowerHold >= 0 && b.PowerHold <= 10000 && Allowed(b.Url, false))
                         list.Add(b);
                 }
                 catch (Exception) { /* skip a malformed entry */ }
@@ -438,9 +473,9 @@ namespace ReaderSimulator
     public static class Emulator
     {
         // shortcut: pinned to one release so the download can be checked; bump all three when a newer eink-qemu is wanted
-        const string Version = "0.8.1";
-        const string SetupSha256 = "649037a2a6832dec9a43102742cf2e5b3e1724da01cceba82efc730da0ffecfc";
-        public const long SetupBytes = 16112865;
+        const string Version = "0.9.2";
+        const string SetupSha256 = "41f04ffdc1c93d9572e0814aec3bc3de34290f5a798078b20f3c9700e5491ba1";
+        public const long SetupBytes = 17594663;
         static readonly Uri SetupUrl = new Uri($"https://github.com/serialx/eink-qemu/releases/download/{Version}/eink-qemu-desktop-{Version}-x86_64-pc-windows-msvc-setup.exe");
         public const string Site = "https://serialx.github.io/eink-qemu/";
 
@@ -479,7 +514,24 @@ namespace ReaderSimulator
 
         /// <summary>Opens the firmware in eink-qemu's window on the chosen reader. Each reader keeps one SD card image
         /// (emulator\x4pro.img and so on), made the first time with the same free books and dictionary as the simulator's cards.</summary>
-        public static Process Run(string firmware, string model)
+        public static string BinPath(Build b) => Path.Combine(Store.Root, "emulator", "firmware", b.Id + ".bin");
+        public static bool HasBin(Build b) => File.Exists(BinPath(b) + ".sha256") && File.ReadAllText(BinPath(b) + ".sha256").Trim() == b.Sha256;
+
+        /// <summary>Downloads a list entry's .bin from its author (or Xteink) and keeps it only when its SHA-256 matches the tested one.</summary>
+        public static async Task GetBin(Build b, IProgress<long> progress, CancellationToken ct)
+        {
+            var tmp = BinPath(b) + ".download";
+            try
+            {
+                var hash = await Feed.Download(b.Url, tmp, b.Size, progress, ct);
+                if (hash != b.Sha256) throw new InvalidDataException("The download is not the file that was tested (SHA-256 mismatch). The author may have replaced it; nothing was kept.");
+                File.Copy(tmp, BinPath(b), true);
+                File.WriteAllText(BinPath(b) + ".sha256", hash);
+            }
+            finally { try { File.Delete(tmp); } catch (IOException) { } }
+        }
+
+        public static Process Run(string firmware, string model, int powerHold = 0)
         {
             var card = Path.Combine(Store.Root, "emulator", Machine(model) + ".img");
             if (!File.Exists(card))
@@ -493,7 +545,7 @@ namespace ReaderSimulator
                 File.Move(tmp, card);
             }
             // read its records ourselves: it stops when its output has nowhere to go
-            var psi = Cli_($"run \"{firmware}\" --machine {Machine(model)} --sd \"{card}\" --sd-in-place --gui");
+            var psi = Cli_($"run \"{firmware}\" --machine {Machine(model)} --sd \"{card}\" --sd-in-place --gui" + (powerHold > 0 ? $" --power-hold {powerHold}" : ""));
             psi.RedirectStandardOutput = psi.RedirectStandardError = true;
             var log = TextWriter.Synchronized(new StreamWriter(Path.Combine(Store.Root, "emulator", "last-run.log"), false));
             var p = new Process { StartInfo = psi, EnableRaisingEvents = true };

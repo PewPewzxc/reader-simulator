@@ -1,0 +1,226 @@
+{
+ "_about": "Firmwares the simulator cannot rebuild, run unchanged in eink-qemu instead. check.py downloads each .bin, boots it headless and writes web/site/emulator.json with the ones that pass. A plain .bin for the ESP32-C3 is tried on both X3 and X4 Classic; 'models' pins it. 'copy': false = never host a copy (no licence); 'url' = a file not on GitHub.",
+ "firmwares": [
+  {
+   "name": "inkMOD",
+   "repo": "alpzoloto-sudo/inkmod",
+   "tag": "v1.1.10",
+   "licence": "MIT",
+   "bins": {
+    "firmware-x3x4-v1.1.10.bin": [
+     "X3",
+     "X4 Classic"
+    ],
+    "firmware-x4classic-v1.1.10.bin": [
+     "X4 Classic"
+    ],
+    "firmware-x4pro-v1.1.10.bin": [
+     "X4 Pro"
+    ]
+   }
+  },
+  {
+   "name": "CrossLink",
+   "repo": "DaisonChun/crosslink",
+   "tag": "v20260524",
+   "licence": "MIT",
+   "bins": {
+    "crosslink_x3_full_flash_20260524.bin": [
+     "X3"
+    ],
+    "crosslink_x4_full_flash_20260524.bin": [
+     "X4 Classic"
+    ]
+   }
+  },
+  {
+   "name": "Witchhunt Reader",
+   "repo": "jpirnay/witchhunt-reader",
+   "tag": "2.40",
+   "licence": "MIT",
+   "bins": {
+    "firmware.bin": null,
+    "firmware-x4pro.bin": [
+     "X4 Pro"
+    ]
+   }
+  },
+  {
+   "name": "Xerif (xpoint)",
+   "repo": "Belphemur/Xerif-eReader",
+   "tag": "v2.13.0",
+   "licence": "MIT",
+   "bins": {
+    "xerif-2.13.0-x3-x4.bin": [
+     "X3",
+     "X4 Classic"
+    ],
+    "xerif-2.13.0-x4pro.bin": [
+     "X4 Pro"
+    ]
+   }
+  },
+  {
+   "name": "InkPointX",
+   "repo": "yokki-vans/InkPointX",
+   "tag": "v2.3.6",
+   "licence": "MIT",
+   "bins": {
+    "InkPointX-v2.3.6-X3.bin": [
+     "X3"
+    ],
+    "InkPointX-v2.3.6-X4.bin": [
+     "X4 Classic"
+    ]
+   }
+  },
+  {
+   "name": "inx",
+   "repo": "obijuankenobiii/inx",
+   "tag": "1.0.19",
+   "licence": "MIT",
+   "bins": {
+    "firmware.bin": null
+   }
+  },
+  {
+   "name": "cpr-vcodex",
+   "repo": "franssjz/cpr-vcodex",
+   "tag": "1.6.5.7-cpr-vcodex",
+   "licence": "MIT",
+   "bins": {
+    "1.6.5.7-cpr-vcodex.bin": null
+   }
+  },
+  {
+   "name": "vcodex on steroids",
+   "repo": "marcoand75/cpr-vcodex-steroids",
+   "tag": "1.6.0.38-dev1-cpr-vcodex-steroids",
+   "licence": "MIT",
+   "bins": {
+    "1.6.0.38.dev1-2957619f-cpr-vcodex-steroids.bin": null
+   }
+  },
+  {
+   "name": "CrossInk Bookorbit",
+   "repo": "agosez/CrossInk-Bookorbit",
+   "tag": "v1.6.1+bookorbit.3",
+   "licence": "MIT",
+   "bins": {
+    "firmware-x3-x4-v1.6.1-bookorbit.3.bin": [
+     "X3",
+     "X4 Classic"
+    ],
+    "firmware-x4-classic-v1.6.1-bookorbit.3.bin": [
+     "X4 Classic"
+    ],
+    "firmware-x4-pro-v1.6.1-bookorbit.3.bin": [
+     "X4 Pro"
+    ]
+   }
+  },
+  {
+   "name": "CrossPDF",
+   "repo": "davemessew/CrossPDF",
+   "tag": "crosspdf-v1.5.0.19",
+   "licence": "MIT",
+   "bins": {
+    "firmware-tiny-crosspdf-v1.5.0.19.bin": null
+   }
+  },
+  {
+   "name": "Ink-boy",
+   "repo": "hellominecraft913-dev/Ink-boy",
+   "tag": "1.2.0",
+   "licence": "MIT",
+   "bins": {
+    "firmware.bin": null
+   }
+  },
+  {
+   "name": "aalu",
+   "repo": "dawsonfi/aalu",
+   "tag": "v3.3.0",
+   "licence": "none",
+   "copy": false,
+   "bins": {
+    "firmware.bin": [
+     "X4 Classic"
+    ]
+   }
+  },
+  {
+   "name": "Foulad eInk",
+   "repo": "sfoulad/foulad-eink",
+   "tag": "v1.8.57",
+   "licence": "MIT",
+   "bins": {
+    "firmware.bin": null
+   }
+  },
+  {
+   "name": "Folio Nooir",
+   "repo": "toshio2011/folio-nooir",
+   "tag": "1.6.6",
+   "licence": "MIT",
+   "bins": {
+    "firmware.bin": null
+   }
+  },
+  {
+   "name": "KatiePoint",
+   "repo": "InsiderPhD/crosspoint-reader",
+   "tag": "1.12.0",
+   "licence": "MIT",
+   "bins": {
+    "firmware.bin": [
+     "X3",
+     "X4 Classic"
+    ],
+    "x4c_firmware.bin": [
+     "X4 Classic"
+    ],
+    "x4pro_firmware.bin": [
+     "X4 Pro"
+    ]
+   }
+  },
+  {
+   "name": "CrumBLE",
+   "repo": "imshentastic/CrumBLE",
+   "tag": "crumble-v4.7.3",
+   "licence": "MIT",
+   "bins": {
+    "crumble-firmware-4.7.3.bin": null
+   }
+  },
+  {
+   "name": "Xteink official",
+   "repo": "xteink",
+   "tag": "V6.5.5",
+   "licence": "Xteink (closed source)",
+   "power_hold": 3000,
+   "bins": {
+    "https://crosspointreader.com/api/firmware/stock?model=x3&lang=en": [
+     "X3"
+    ],
+    "https://crosspointreader.com/api/firmware/stock?model=x4&lang=en": [
+     "X4 Classic"
+    ]
+   }
+  },
+  {
+   "name": "Xteink official",
+   "repo": "xteink",
+   "tag": "V7.6.8",
+   "licence": "Xteink (closed source)",
+   "power_hold": 3000,
+   "bins": {
+    "xteink-x4pro-flash-7.6.8-emulator.bin": [
+     "X4 Pro"
+    ]
+   },
+   "release": "PewPewzxc/reader-simulator/emulator-files"
+  }
+ ]
+}

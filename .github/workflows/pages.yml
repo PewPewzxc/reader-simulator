@@ -256,6 +256,14 @@ jobs:
             mkdir -p "_site/builds/$id"
             cp "dl/$rel/$asset" "_site/builds/$id/$name"
           done
+          # emulator builds: eink-qemu's page can read files from this site, not from GitHub releases, so copy them here
+          mkdir -p _site/emu
+          jq -r '.builds[] | select(.copy and (.url | startswith("https://github.com/"))) | [.id, .url, .sha256] | @tsv' web/site/emulator.json |
+          while IFS=$'\t' read -r id url sum; do
+            case "$id" in *[!a-z0-9.-]*|.*) echo "bad emulator entry: $id"; exit 1;; esac
+            curl -fsSL --retry 3 --retry-all-errors -o "_site/emu/$id.bin" "$url"
+            echo "$sum  _site/emu/$id.bin" | sha256sum --check --strict --quiet -
+          done
           python -I web/ci_site.py capmem _site/builds  # older builds: 512 MB shared memory, so tablets start them
           du -sh _site
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

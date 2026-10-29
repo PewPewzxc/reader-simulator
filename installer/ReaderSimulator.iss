@@ -2,7 +2,7 @@
 ; Build: ..\tools\inno\ISCC.exe ReaderSimulator.iss   (after ..\app\build.ps1)
 #define AppName "Reader Simulator"
 #ifndef AppVersion
-  #define AppVersion "1.3.1"
+  #define AppVersion "1.4.0"
 #endif
 #define AppExe "ReaderSimulator.exe"
 #define Bin "..\app\bin"
